@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}Radiology Atlas · Quản lý{% endblock %}</title>
+<link rel="stylesheet" href="/portal/static/portal.css"></head><body>
+<header><a class="brand" href="/">RADIOLOGY <strong>ATLAS</strong></a><nav>
+{% if current_user %}<a href="/">Home</a><a href="/anatomy">Anatomy</a><a href="/account">Tài khoản</a>
+{% if current_user.role == 'root' %}<a href="/admin">Quản trị</a>{% endif %}
+<form action="/logout" method="post"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><button>Đăng xuất</button></form>{% endif %}
+</nav></header><main>
+{% for category,message in get_flashed_messages(with_categories=true) %}<p role="status" class="notice {{ category }}">{{ message }}</p>{% endfor %}
+{% block content %}{% endblock %}</main></body></html>

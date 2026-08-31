@@ -1,0 +1,12 @@
+<dialog id="loginDialog" class="login-dialog" aria-labelledby="loginTitle" aria-describedby="loginDescription" {% if login_open %}data-open-on-load="true"{% endif %}>
+<button type="button" class="dialog-close" data-close-login aria-label="Đóng bảng đăng nhập">×</button>
+<div class="login-icon" aria-hidden="true">↗</div><p class="section-eyebrow">YOUR ANATOMY SPACE</p><h2 id="loginTitle">Chào mừng trở lại.</h2>
+<p id="loginDescription">Đăng nhập bằng tài khoản được cấp để khám phá thư viện Anatomy.</p>
+<form id="siteLoginForm" action="/login" method="post">
+<input type="hidden" name="csrf" value="{{ csrf_token() }}"><input type="hidden" name="next" value="{{ next_url|default('/anatomy') }}">
+<label for="siteUsername">Tên đăng nhập</label><input id="siteUsername" name="username" autocomplete="username" required maxlength="48" placeholder="Tên đăng nhập của bạn">
+<label for="sitePassword">Mật khẩu</label><input id="sitePassword" name="password" type="password" autocomplete="current-password" required maxlength="256" placeholder="Nhập mật khẩu">
+<p id="loginError" class="form-error" role="alert" {% if not error %}hidden{% endif %}>{{ error|default('') }}</p>
+<button class="button button-primary login-submit" type="submit">Đăng nhập <span aria-hidden="true">→</span></button>
+</form><p class="login-footnote">Chưa có tài khoản hoặc quên mật khẩu?<br>Liên hệ quản trị viên để được cấp quyền truy cập.</p>
+</dialog>

@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#071012">
+  <meta name="description" content="Multi-module radiology and anatomy atlas for offline study.">
+  <title>Radiology Atlas · Offline anatomy viewer</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div id="app" class="app-shell menu-open" aria-busy="true">
+    <header class="topbar luxury-nav">
+      <div class="left-topbar-controls" role="toolbar" aria-label="Left-side viewer panels">
+        <button id="optionsMenuButton" class="tool-button menu-button" type="button" aria-expanded="true" aria-controls="optionsMenu"><span class="tool-icon">☰</span><span>Menu</span></button>
+        <button id="detailDrawerButton" class="tool-button detail-toggle-button" type="button" aria-expanded="true" aria-controls="detailPanel" title="Show or hide Detail"><span class="tool-icon">◉</span><span>Detail</span></button>
+      </div>
+      <div class="module-catalogue-control">
+        <button id="moduleCatalogueButton" class="study-heading" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="moduleCataloguePopover">
+          <span><span id="studyEyebrow" class="eyebrow">LOCAL LIBRARY</span><strong id="studyTitle">Choose a module</strong></span>
+          <i aria-hidden="true">⌄</i>
+        </button>
+        <section id="moduleCataloguePopover" class="module-catalogue-popover" aria-label="Module catalogue" hidden>
+          <div class="catalogue-popover-header"><div><span class="section-kicker">CATALOGUE</span><h2>Select module</h2></div><span id="moduleCount" class="count-badge">0</span></div>
+          <label class="panel-search" for="moduleSearch"><span>⌕</span><input id="moduleSearch" type="search" placeholder="Filter modules"></label>
+          <div class="library-filter-row" role="group" aria-label="Module availability">
+            <button id="capturedFilter" class="chip active" type="button" aria-pressed="true">Available</button>
+            <button id="allModulesFilter" class="chip" type="button" aria-pressed="false">All modules</button>
+            <button id="refreshLibraryButton" class="refresh-button" type="button" title="Refresh module library">↻</button>
+          </div>
+          <div id="moduleTree" class="module-tree catalogue-module-tree" role="tree" aria-label="Modules by anatomical region"></div>
+        </section>
+      </div>
+      <label class="global-search" for="globalSearch">
+        <span aria-hidden="true">⌕</span>
+        <input id="globalSearch" type="search" autocomplete="off" placeholder="Search anatomy in this module">
+        <kbd>/</kbd>
+      </label>
+      <div class="topbar-status">
+        <span id="dataBadge" class="status-pill">LOADING</span>
+        <span class="status-pill status-local"><i></i>LOCAL</span>
+        <button id="helpButton" class="icon-button" type="button" title="Keyboard shortcuts" aria-label="Open keyboard shortcuts">?</button>
+      </div>
+    </header>
+
+    <div class="workspace">
+  <aside id="optionsMenu" class="options-menu open" aria-label="Viewer options menu" aria-hidden="false">
+    <header class="options-menu-header">
+      <div class="options-title-block">
+        <div class="options-title-line"><span class="section-kicker">ANATOMY CONTROLS</span><span class="luxury-ui-badge">LOCAL</span></div>
+        <h2>Anatomical parts</h2>
+      </div>
+      <div class="options-header-actions">
+        <button id="optionsMenuPinButton" class="pin-button" type="button" aria-pressed="false" title="Keep menu open" aria-label="Keep menu open">●</button>
+        <button id="optionsMenuCloseButton" class="close-button" type="button" aria-label="Close menu">×</button>
+      </div>
+    </header>
+
+
+
+    <div class="anatomy-language-control">
+      <label for="anatomyLanguageSelect">Anatomy language / Ngôn ngữ giải phẫu</label>
+      <select id="anatomyLanguageSelect" aria-describedby="anatomyLanguageStatus"><option value="en">English</option><option value="vi">Tiếng Việt</option></select>
+      <small id="anatomyLanguageStatus" role="status">Original anatomical content</small>
+    </div>
+    <section class="options-section options-section-card anatomy-parts-section">
+      <div class="options-section-heading"><span>Anatomical parts</span><span class="heading-symbol">＋</span></div>
+      <label class="switch-row select-all-row"><span><b>Select all</b><small>Show all anatomical structures</small></span><input id="menuSelectAllFilters" type="checkbox" checked><i class="switch-control"></i></label>
+      <p id="anatomyNameStatus" class="options-help anatomy-name-status" aria-live="polite"></p>
+      <div class="filter-actions"><button id="showAllAnatomyButton" type="button">Show all names</button><button id="sourceFilterDefaultsButton" type="button">Source defaults</button></div>
+      <p id="filterMetadataStatus" class="options-help" hidden></p>
+      <label class="switch-row"><span><b>Overlays</b></span><input id="menuOverlaysToggle" type="checkbox" checked><i class="switch-control"></i></label>
+      <div class="overlay-opacity-control"><label for="overlayOpacitySlider">Overlay opacity</label><input id="overlayOpacitySlider" type="range" min="0" max="100" value="70"><input id="overlayOpacityNumber" type="number" min="0" max="100" value="70" aria-label="Overlay opacity percent"><span>%</span></div>
+      <p id="overlayCoverageStatus" class="overlay-coverage-status" role="status">Overlay data unavailable</p>
+      <div id="menuFilterList" class="menu-filter-list" role="group" aria-label="Anatomical part visibility"></div>
+    </section>
+    <details id="displayOptionsDetails" class="options-section options-section-card">
+      <summary class="options-section-heading"><span>Display options</span><span class="heading-symbol">⌄</span></summary>
+      <div class="switch-list" role="group" aria-label="Show or hide viewer elements">
+        <label class="switch-row"><span><i class="display-icon label-icon">A</i><b>Labels</b><small>Names in the selected anatomy language</small></span><input id="menuLabelsToggle" type="checkbox" checked><i class="switch-control"></i></label>
+        <label class="switch-row"><span><i class="display-icon line-icon">╱</i><b>Leader lines</b><small>Connections to anatomical targets</small></span><input id="menuLeadersToggle" type="checkbox" checked><i class="switch-control"></i></label>
+        <label class="switch-row"><span><i class="display-icon target-icon">•</i><b>Markers</b><small>Visible and verified hidden targets</small></span><input id="menuTargetsToggle" type="checkbox" checked><i class="switch-control"></i></label>
+        <label class="switch-row"><span><i class="display-icon">R/L</i><b>Orientation markers</b><small>Anterior, posterior, right and left</small></span><input id="menuOrientationToggle" type="checkbox" checked><i class="switch-control"></i></label>
+        <label class="switch-row"><span><i class="display-icon">▦</i><b>Slice filmstrip</b><small>Adjacent image thumbnails</small></span><input id="menuFilmstripToggle" type="checkbox" checked><i class="switch-control"></i></label>
+        <label class="switch-row"><span><i class="display-icon">ⓘ</i><b>Detail</b><small>Structure list and definitions</small></span><input id="menuDetailsToggle" type="checkbox" checked><i class="switch-control"></i></label>
+        <label class="switch-row"><span><i class="display-icon">◐</i><b>Image controls</b><small>Brightness and contrast sliders</small></span><input id="menuAdjustmentsToggle" type="checkbox" checked><i class="switch-control"></i></label>
+      </div>
+    </details>
+  </aside>
+      <aside id="mprPanel" class="mpr-panel panel" aria-label="Multiplanar reference views">
+        <div id="mprContent" class="mpr-content" hidden>
+          <header>
+            <div><span class="section-kicker">REFERENCE</span><h2>Multiplanar views</h2></div>
+            <div class="mpr-header-actions">
+              <button id="mprFitWidthButton" class="mpr-header-button" type="button" aria-pressed="false" title="Fit complete reference images to panel width">FIT WIDTH</button>
+              <button id="mprCloseButton" class="close-button" type="button" aria-label="Close MPR panel">×</button>
+            </div>
+          </header>
+          <p>Cross-reference position follows the active slice.</p>
+          <div id="mprViews" class="mpr-views"></div>
+        </div>
+        <div id="mprResizeHandle" class="mpr-resize-handle" role="separator" tabindex="0" aria-label="Resize MPR panel" aria-orientation="vertical" aria-valuemin="240" aria-valuemax="620" aria-valuenow="320" hidden></div>
+      </aside>
+
+      <main class="viewer-column">
+        <nav class="viewer-toolbar luxury-toolbar" aria-label="Viewer tools">
+          <button id="mprToggleButton" class="tool-button mpr-toolbar-button" type="button" aria-expanded="false" aria-controls="mprContent" title="Show or hide multiplanar reference views"><span class="tool-icon">✣</span><span>MPR</span></button>
+          <label class="toolbar-series" for="toolbarWeightingSelect"><span>Series</span><select id="toolbarWeightingSelect" class="weighting-select" aria-label="Select series or weighting" disabled><option>No series</option></select></label>
+          <span class="toolbar-divider"></span>
+          <div class="tool-group mode-group" role="group" aria-label="Interaction mode">
+            <button id="scrollModeButton" class="tool-button mode-button active" type="button" aria-pressed="true" title="Hold left mouse and drag down/up for next/previous slices, or use the wheel"><span class="tool-icon">↕</span><span>Scroll</span></button>
+            <button id="panModeButton" class="tool-button mode-button" type="button" aria-pressed="false" title="Hold left mouse and drag to move the image"><span class="tool-icon">✥</span><span>Pan</span></button>
+            <button id="zoomModeButton" class="tool-button mode-button" type="button" aria-pressed="false" title="Hold left mouse and drag up to zoom in, down to zoom out, or use the wheel"><span class="tool-icon">⌕</span><span>Zoom</span></button>
+          </div>
+          <span class="toolbar-divider"></span>
+          <div class="tool-group" role="group" aria-label="Zoom controls">
+            <button id="zoomOutButton" class="tool-button square" type="button" aria-label="Zoom out">−</button>
+            <button id="fitButton" class="tool-button compact" type="button" title="Fit image to viewport">FIT</button>
+            <button id="zoomInButton" class="tool-button square" type="button" aria-label="Zoom in">+</button>
+            <span id="zoomValue" class="zoom-value">100%</span>
+          </div>
+          <span class="toolbar-divider"></span>
+          <div class="tool-group" role="group" aria-label="Anatomy overlay">
+            <button id="labelsButton" class="tool-button toggle active" type="button" aria-pressed="true"><span class="layer-dot"></span>Labels</button>
+            <button id="targetsButton" class="tool-button toggle active" type="button" aria-pressed="true"><span class="target-dot"></span>Targets</button>
+          </div>
+          <span class="toolbar-divider"></span>
+          <div class="tool-group image-adjustments" aria-label="Image adjustment">
+            <label title="Brightness">☀ <input id="brightnessSlider" type="range" min="50" max="160" value="100"></label>
+            <label title="Contrast">◐ <input id="contrastSlider" type="range" min="50" max="180" value="100"></label>
+            <button id="resetImageButton" class="tool-button compact" type="button">RESET</button>
+          </div>
+          <div class="toolbar-spacer"></div>
+          <span id="sliceMeta" class="slice-meta">NO SERIES</span>
+          <button id="fullscreenButton" class="tool-button square" type="button" title="Fullscreen" aria-label="Toggle fullscreen">⛶</button>
+        </nav>
+
+        <section id="anatomyViewport" class="viewport" aria-label="Anatomy image viewer" tabindex="0">
+          <div class="viewport-grid" aria-hidden="true"></div>
+          <div id="sceneAnchor" class="scene-anchor">
+            <div id="scene" class="scene">
+              <img id="anatomyImage" alt="Selected radiology anatomy slice" draggable="false">
+              <svg id="annotationLayer" class="annotation-layer" viewBox="0 0 1890 1091" role="img" aria-label="Interactive anatomical labels"></svg>
+            </div>
+          </div>
+          <div class="orientation-marker orientation-top">A</div>
+          <div class="orientation-marker orientation-bottom">P</div>
+          <div class="orientation-marker orientation-left">R</div>
+          <div class="orientation-marker orientation-right">L</div>
+          <div id="anatomyTooltip" class="anatomy-tooltip" role="tooltip" hidden></div>
+          <div id="emptyState" class="empty-state">
+            <span class="empty-orbit" aria-hidden="true"><i></i><i></i></span>
+            <strong>Your anatomy library is ready</strong>
+            <p>Select a module and a series from the library.</p>
+          </div>
+          <div id="loadingState" class="loading-state" hidden><span class="loader"></span><strong>Loading slice data…</strong></div>
+          <div id="errorState" class="error-state" hidden><strong>Slice unavailable</strong><p id="errorMessage"></p></div>
+          <div id="captureStatus" class="capture-status" hidden></div>
+        </section>
+
+        <section class="timeline" aria-label="Slice navigation">
+          <div class="transport-controls">
+            <button id="previousSliceButton" type="button" aria-label="Previous slice">‹</button>
+            <button id="cineButton" class="cine-button" type="button" aria-label="Play slices" aria-pressed="false">▶</button>
+            <button id="nextSliceButton" type="button" aria-label="Next slice">›</button>
+          </div>
+          <div class="slice-readout"><strong id="sliceNumber">—</strong><small id="sliceTotal">/ —</small></div>
+          <div class="slider-wrap">
+            <input id="sliceSlider" type="range" min="1" max="1" value="1" aria-label="Current slice" disabled>
+            <div class="slider-labels"><span>FIRST</span><span id="sliceIdLabel">SLICE ID —</span><span>LAST</span></div>
+          </div>
+          <div id="filmstrip" class="filmstrip" aria-label="Nearby slices"></div>
+        </section>
+      </main>
+
+      <aside id="detailPanel" class="detail-panel panel" aria-label="Detail: anatomical structures and definitions">
+        <section class="detail-search-section">
+          <label class="panel-search detail-search" for="structureSearch"><span>⌕</span><input id="structureSearch" type="search" placeholder="Search anatomy in module"></label>
+          <div class="detail-tabs" role="tablist">
+            <button id="sliceStructuresTab" class="detail-tab active" type="button" role="tab" aria-selected="true">This slice</button>
+            <button id="searchStructuresTab" class="detail-tab" type="button" role="tab" aria-selected="false">Search</button>
+          </div>
+        </section>
+
+        <section class="structure-list-section">
+          <div class="section-heading"><div><span class="section-kicker">ANATOMY</span><h2 id="structureListTitle">Structures on this slice</h2></div><span id="structureCount" class="count-badge">0</span></div>
+          <div id="structureList" class="structure-list" role="list"></div>
+          <p id="structureEmpty" class="structure-empty">Select a slice to inspect its anatomy.</p>
+        </section>
+
+        <section id="definitionPanel" class="definition-panel" aria-live="polite">
+          <div class="definition-placeholder"><span>＋</span><strong>Select an anatomical structure</strong><p>Click a label, marker, or structure name to view the English definition and Latin terminology.</p></div>
+        </section>
+
+        <section class="filter-section">
+          <details>
+            <summary><span>Layer filters</span><span id="filterCount" class="count-badge">0</span></summary>
+            <div id="filterList" class="filter-list"></div>
+          </details>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+
+
+  <dialog id="shortcutDialog" class="shortcut-dialog">
+    <form method="dialog">
+      <header><div><span class="section-kicker">KEYBOARD</span><h2>Viewer shortcuts</h2></div><button class="icon-button" value="close" aria-label="Close">×</button></header>
+      <div class="shortcut-grid">
+        <span>Previous / next slice</span><kbd>←</kbd><kbd>→</kbd>
+        <span>Scroll slices</span><kbd>Wheel</kbd><i></i>
+        <span>Zoom mode</span><kbd>Z</kbd><i></i>
+        <span>Pan mode</span><kbd>P</kbd><i></i>
+        <span>Fit to viewport</span><kbd>0</kbd><i></i>
+        <span>Toggle labels</span><kbd>L</kbd><i></i>
+        <span>Play / pause cine</span><kbd>Space</kbd><i></i>
+        <span>Search</span><kbd>/</kbd><i></i>
+        <span>Options menu</span><kbd>M</kbd><i></i>
+        <span>Fullscreen</span><kbd>F</kbd><i></i>
+      </div>
+      <p>The mouse wheel scrolls slices by default. Select the dedicated Zoom tool before using the wheel to zoom.</p>
+    </form>
+  </dialog>
+
+  <noscript>This offline anatomy viewer requires JavaScript.</noscript>
+  <script src="./anatomy_language.js" defer></script>
+  <script src="./resource_cache.js" defer></script>
+  <script src="./app.js" defer></script>
+</body>
+</html>

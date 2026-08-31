@@ -1,0 +1,1 @@
+.atlas-session-nav{position:fixed;right:12px;bottom:5px;z-index:90;display:flex;gap:6px}.atlas-account-link,.atlas-library-link{border:1px solid #36515d;border-radius:6px;background:#111c25e8;color:#b8e9e2;padding:4px 9px;font:11px system-ui;text-decoration:none}.atlas-session-nav a:hover,.atlas-session-nav a:focus{background:#18463f;color:white;outline:1px solid #42cdb9}

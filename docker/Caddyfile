@@ -1,0 +1,11 @@
+{
+  admin off
+}
+{$DDNS_HOST} {
+  header Strict-Transport-Security "max-age=31536000"
+  encode zstd gzip
+  reverse_proxy viewer:8080 {
+    header_up X-Forwarded-For {remote_host}
+    header_up X-Forwarded-Proto {scheme}
+  }
+}

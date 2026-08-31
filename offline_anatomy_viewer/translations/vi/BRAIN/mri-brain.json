@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "locale": "vi",
+  "source_locale": "en",
+  "module_key": "BRAIN/mri-brain",
+  "structures": {},
+  "filters": {},
+  "labels": {},
+  "texts": {}
+}

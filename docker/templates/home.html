@@ -1,0 +1,21 @@
+{% extends "site_base.html" %}
+{% block content %}
+<section class="home-hero" aria-labelledby="homeTitle"><div class="hero-seal"><img src="/portal/static/site-mark.svg" alt="" width="50" height="50"></div>
+<p class="hero-eyebrow">ANATOMY · IMAGING · DISCOVERY</p><h1 id="homeTitle">Một góc nhìn mới.<br><span>Một thế giới giải phẫu.</span></h1>
+<p class="hero-description">Kết nối kiến thức giải phẫu với từng hình ảnh.<br>Khám phá, đối chiếu và học tập trong không gian của bạn.</p>
+<a class="button button-white" href="/anatomy" data-anatomy-link>Khám phá Anatomy <span aria-hidden="true">→</span></a>
+<a class="hero-secondary" href="#intro">Tìm hiểu thêm <span aria-hidden="true">↓</span></a>
+</section>
+<main id="main-content" class="home-surface"><nav class="section-nav" aria-label="Nội dung Home"><a href="#intro">Giới thiệu</a><a href="/anatomy" data-anatomy-link>Anatomy</a><a href="#experience">Trải nghiệm</a><a href="#guide">Bắt đầu</a></nav>
+<section id="intro" class="home-intro"><div><p class="section-eyebrow">THE ANATOMY LIBRARY</p><h2>Giải phẫu hình ảnh,<br>trong một không gian.</h2><div class="gradient-rule"></div><p>Tìm đúng vùng cần khám phá, chọn loại hình ảnh học và đi thẳng đến module. Mỗi cấu trúc được kết nối với hình ảnh và thông tin giải phẫu trong viewer.</p><a href="/anatomy" class="button button-outline" data-anatomy-link>Mở thư viện Anatomy <span aria-hidden="true">↗</span></a></div>
+<div class="intro-visual" aria-hidden="true"><div class="visual-orbit orbit-one"></div><div class="visual-orbit orbit-two"></div><div class="visual-core"><img src="/portal/static/site-mark.svg" alt="" width="84" height="84"><span>ANATOMY</span></div><span class="orbit-label label-mri">MRI</span><span class="orbit-label label-ct">CT</span><span class="orbit-label label-atlas">ILLUSTRATIONS</span></div>
+</section>
+<section id="experience" class="home-features"><header><p class="section-eyebrow">EXPLORE YOUR WAY</p><h2>Từ tổng quan đến từng cấu trúc.</h2><div class="gradient-rule centered"></div></header><div class="feature-grid">
+<article><div class="feature-icon pink" aria-hidden="true">◎</div><h3>Theo vùng giải phẫu</h3><p>Nhóm module theo vùng cơ thể để bạn định hướng và tìm kiếm nhanh hơn.</p></article>
+<article><div class="feature-icon violet" aria-hidden="true">▤</div><h3>Theo loại hình ảnh học</h3><p>Lọc MRI, CT, X-quang, chụp mạch và các loại hình có trong thư viện.</p></article>
+<article><div class="feature-icon blue" aria-hidden="true">↗</div><h3>Đi thẳng vào viewer</h3><p>Mở đúng module, khám phá từng slice và tương tác trực tiếp với labels giải phẫu.</p></article>
+</div></section>
+<section id="guide" class="home-guide"><div><p class="section-eyebrow">GET STARTED</p><h2>Không gian riêng.<br>Kiến thức được kết nối.</h2><p>Thư viện Anatomy dành cho tài khoản được quản trị viên cấp quyền. Đăng nhập một lần, truy cập những module dành cho bạn.</p></div><ol class="guide-steps"><li><span>01</span><div><h3>Đăng nhập</h3><p>Sử dụng tài khoản được cấp.</p></div></li><li><span>02</span><div><h3>Chọn vùng và modality</h3><p>Lọc danh mục theo nội dung cần xem.</p></div></li><li><span>03</span><div><h3>Khám phá module</h3><p>Chọn một module để mở viewer.</p></div></li></ol></section>
+<section class="home-cta"><h2>Bắt đầu hành trình khám phá.</h2><a class="button button-primary" href="/anatomy" data-anatomy-link>Vào Anatomy <span aria-hidden="true">→</span></a></section>
+</main>
+{% endblock %}

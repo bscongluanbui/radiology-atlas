@@ -1,0 +1,9 @@
+[worker.oci]
+  gc = true
+  reservedSpace = "256MB"
+  maxUsedSpace = "2GB"
+
+[worker.containerd]
+  gc = true
+  reservedSpace = "256MB"
+  maxUsedSpace = "2GB"

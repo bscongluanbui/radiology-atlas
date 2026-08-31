@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "source_locale": "en",
+  "languages": [
+    {"code": "en", "label": "English"},
+    {"code": "vi", "label": "Tiếng Việt"}
+  ]
+}

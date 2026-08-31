@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% macro policy(user=none) %}
+<label>Vai trò<select name="role">{% for role in ['standard','admin','root'] %}<option value="{{ role }}" {% if (user and user.role == role) or (not user and role == 'standard') %}selected{% endif %}>{{ role_labels[role] }}</option>{% endfor %}</select></label>
+<fieldset class="region-permissions"><legend>Vùng giải phẫu được phép xem · Standard</legend><p class="muted">Tick các vùng bạn muốn cấp quyền. Bao gồm tất cả module hiện tại và bổ sung sau trong vùng đó. Root và Admin tự động xem toàn bộ, không cần tick.</p><div class="region-grants">
+{% for region in regions %}<label class="region-grant"><input type="checkbox" name="regions" value="{{ region.key }}" {% if user and region.key in user.regions %}checked{% endif %}><span><strong>{{ region.vi }}</strong><small>{{ region.label }} · {{ region.modules|length }} module</small></span></label>{% endfor %}
+</div></fieldset>
+<details><summary>Quyền module riêng / tương thích tài khoản cũ{% if user %} · {{ user.modules|length }}{% endif %}</summary><p class="muted">Giữ nguyên các module đã cấp ở bản cũ, không tự mở rộng thành toàn bộ vùng. Quyền Standard = vùng đã tick + module được cấp riêng. Bỏ tick cả hai để thu hồi quyền xem.</p><div class="module-grid">
+{% for module in modules %}<label class="check"><input type="checkbox" name="modules" value="{{ module.key }}" {% if user and module.key in user.modules %}checked{% endif %}> {{ module.title }} <small>{{ module.region }}</small></label>{% endfor %}
+</div></details>
+{% endmacro %}
+{% block content %}<p class="eyebrow">ROOT CONTROL</p><h1>Quản trị Radiology Atlas</h1>
+<p class="muted">Bạn đang đăng nhập bằng {{ current_user.username }} · Root. Chỉ Root quản lý tài khoản, phân quyền và cache.</p>
+<div class="role-overview"><div><strong>Root</strong><p>Quản lý hệ thống và mọi tài khoản. Xem toàn bộ giải phẫu.</p></div><div><strong>Admin</strong><p>Xem toàn bộ giải phẫu. Không quản lý tài khoản, quyền hoặc cache hệ thống.</p></div><div><strong>Standard</strong><p>Chỉ xem các vùng / module được Root cấp. Mặc định chưa có quyền xem.</p></div></div>
+<section class="card"><h2>Tạo tài khoản</h2><form action="/admin/users" method="post"><input type="hidden" name="csrf" value="{{ csrf_token() }}">
+<div class="row"><label>Tên đăng nhập<input name="username" required pattern="[a-z0-9][a-z0-9_.\-]{2,47}" maxlength="48" autocomplete="off"></label>
+<label>Mật khẩu ban đầu<input type="password" name="password" required minlength="12" maxlength="256" autocomplete="new-password"></label></div>
+{{ policy() }}<button class="primary">Tạo tài khoản</button></form></section>
+<section class="card"><h2>Tài khoản hiện có · {{ users|length }}/500</h2><p class="muted">Lưu quyền, đổi mật khẩu hoặc khóa tài khoản sẽ thu hồi tất cả phiên của tài khoản đó.</p>
+{% for user in users %}<details class="user"><summary>{{ user.username }} · {{ role_labels[user.role] }} · {{ 'Đang hoạt động' if user.active else 'Đã khóa' }}{% if user.role == 'standard' %} · {{ user.regions|length }} vùng · {{ user.modules|length }} module riêng{% endif %}</summary>
+<form action="/admin/users/{{ user.id }}/update" method="post"><input type="hidden" name="csrf" value="{{ csrf_token() }}">
+<label class="check"><input type="checkbox" name="active" {% if user.active %}checked{% endif %}> Cho phép đăng nhập</label>
+{{ policy(user) }}<label>Mật khẩu thay thế (để trống nếu giữ nguyên)<input type="password" name="password" minlength="12" maxlength="256" autocomplete="new-password"></label>
+<button class="primary">Lưu {{ user.username }}</button></form>
+<div class="row actions"><form action="/admin/users/{{ user.id }}/revoke" method="post"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><button>Đăng xuất mọi thiết bị</button></form>
+<details><summary class="danger">Xóa tài khoản</summary><p>Thao tác này xóa tài khoản {{ user.username }} và các phiên đăng nhập.</p><form action="/admin/users/{{ user.id }}/delete" method="post"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><button class="danger">Xác nhận xóa {{ user.username }}</button></form></details></div>
+</details>{% endfor %}</section>
+<section class="card"><h2>Cache và dung lượng</h2><p>Cache ảnh trên đĩa server: <strong>0</strong>. Ảnh được đọc trực tiếp từ data.</p>
+<table><thead><tr><th>Cache RAM metadata</th><th>Số mục</th><th>Đang dùng / giới hạn</th></tr></thead><tbody>
+{% for name,stat in cache_stats.items() %}<tr><td>{{ name }}</td><td>{{ stat.entries }}/8</td><td>{{ (stat.bytes/1048576)|round(1) }} / {{ (stat.limit_bytes/1048576)|round(1) }} MiB</td></tr>{% endfor %}</tbody></table>
+<p>Cache ảnh nén của mỗi tab: tối đa {{ browser_cache_mib }} MiB; ảnh giải mã: tối đa 24 ảnh, tính riêng. TTL khi không sử dụng: {{ ttl }} giây. Server và tab đang mở dọn mỗi 60 giây; đổi series sẽ xóa cache ảnh tab.</p>
+<p class="muted">Nhật ký Docker: tối đa 3 × 10 MB mỗi dịch vụ. Audit: 30 ngày hoặc 10.000 sự kiện. SQLite: tối đa 64 MiB dữ liệu chính; WAL được checkpoint định kỳ.</p>
+<form action="/admin/cache/clear" method="post"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><button>Dọn cache server ngay</button></form></section>
+<section class="card"><h2>50 hoạt động gần nhất</h2><div class="table-scroll"><table><thead><tr><th>Thời gian</th><th>Người thực hiện</th><th>Hành động</th><th>Đối tượng</th></tr></thead><tbody>
+{% for row in audit %}<tr><td>{{ row.at|timestamp }}</td><td>{{ row.actor }}</td><td>{{ row.action }}</td><td>{{ row.target }}</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

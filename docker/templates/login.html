@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% block title %}Đăng nhập · Radiology Atlas{% endblock %}
+{% block content %}<section class="card login"><p class="eyebrow">PRIVATE ANATOMY VIEWER</p><h1>Đăng nhập</h1>
+<p class="muted">Tài khoản do quản trị viên cấp.</p>
+{% if error %}<p role="alert" class="notice error">{{ error }}</p>{% endif %}
+<form method="post"><input type="hidden" name="csrf" value="{{ csrf_token() }}">
+<input type="hidden" name="next" value="{{ next_url|default('/anatomy') }}">
+<label>Tên đăng nhập<input name="username" autocomplete="username" required maxlength="48" autofocus></label>
+<label>Mật khẩu<input name="password" type="password" autocomplete="current-password" required maxlength="256"></label>
+<button class="primary">Đăng nhập</button></form></section>{% endblock %}

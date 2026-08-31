@@ -1,0 +1,8 @@
+[Unit]
+Description=Prune only Radiology Atlas build cache and untagged images
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /opt/radiology-atlas/docker/cleanup.sh

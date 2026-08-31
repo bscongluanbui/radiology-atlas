@@ -1,0 +1,849 @@
+{
+  "schema_version": 1,
+  "source": "https://www.imaios.com/en/e-anatomy",
+  "retrieved_on": "2026-08-30",
+  "attribution": "IMAIOS e-Anatomy. Original catalogue thumbnails; all rights remain with IMAIOS.",
+  "mapping": "Exact catalogue title/order checked against source catalogue; indexed by region/slug and verified module URL.",
+  "icons": {
+    "BRAIN/mri-brain": {
+      "title": "MRI brain",
+      "source_url": "https://www.imaios.com/en/e-anatomy/brain/mri-brain",
+      "image_url": "https://cdn1.imaios.com/i/images/4/2/6/0/310624-3-eng-GB/f9296ee2c558-brain3dmri.png?q=75&s=6419caa48600b24d59e4ff706f7222d3&w=230",
+      "file": "mri-brain.png",
+      "sha256": "2fc7ddae634b074989241e25771edfb102483e3499ea9b752f6661e31b654fe3",
+      "bytes": 73647,
+      "width": 230,
+      "height": 230
+    },
+    "BRAIN/mri-axial-brain": {
+      "title": "MRI axial brain",
+      "source_url": "https://www.imaios.com/en/e-anatomy/brain/mri-axial-brain",
+      "image_url": "https://cdn1.imaios.com/i/images/7/0/5/0/310507-3-eng-GB/8e9d6b5348c0-cerveau.png?q=75&s=894b4aa98935c59886c5fceb2c1b00a6&w=230",
+      "file": "mri-axial-brain.png",
+      "sha256": "dc34801f7866d3c9c819018fa91d38300c1f7e5b77082d528d992eab2abd622e",
+      "bytes": 45992,
+      "width": 230,
+      "height": 230
+    },
+    "BRAIN/ct-brain": {
+      "title": "CT brain",
+      "source_url": "https://www.imaios.com/en/e-anatomy/brain/ct-brain",
+      "image_url": "https://cdn1.imaios.com/i/images/5/8/5/0/310585-3-eng-GB/0a8f1dd62341-brain-ct.png?q=75&s=e2205d9962bc65dab16ad83e39523668&w=230",
+      "file": "ct-brain.png",
+      "sha256": "8971ca92998e3e4aba7951e63d59ec15ebc9b310a8785006bd4c3a0527f05358",
+      "bytes": 48498,
+      "width": 230,
+      "height": 230
+    },
+    "BRAIN/brain": {
+      "title": "Brain",
+      "source_url": "https://www.imaios.com/en/e-anatomy/brain/brain",
+      "image_url": "https://cdn1.imaios.com/i/images/0/1/5/1/311510-3-eng-GB/7af754ba4ae8-cerveau-anatomie.png?q=75&s=97278c3a1d204f5b72393e7fd5ab2dc2&w=230",
+      "file": "brain.png",
+      "sha256": "fb50de7937e388d7c66985c35ee144ea5eb6df341c2fbd226e7eb538f9e78cb6",
+      "bytes": 40506,
+      "width": 230,
+      "height": 230
+    },
+    "BRAIN/mra-brain": {
+      "title": "MRA brain",
+      "source_url": "https://www.imaios.com/en/e-anatomy/brain/mra-brain",
+      "image_url": "https://cdn1.imaios.com/i/images/1/1/8/0/310811-3-eng-GB/c35f9475ac49-brain-tof.png?q=75&s=39a91bff957fe33af2d2b13682bcd4ee&w=230",
+      "file": "mra-brain.png",
+      "sha256": "159b4ca3a6f288002aba7e17e5c4fe4bfa35fa2ca082e23587eecaa0dcfc9100",
+      "bytes": 51530,
+      "width": 230,
+      "height": 230
+    },
+    "BRAIN/mr-cerebral-venography": {
+      "title": "MR cerebral venography",
+      "source_url": "https://www.imaios.com/en/e-anatomy/brain/mr-cerebral-venography",
+      "image_url": "https://cdn1.imaios.com/i/images/2/0/0/3/9623002-1-eng-GB/brain-venography-mr.png?q=75&s=7df186bb8eb87ff1fb5d0acf4044bbb5&w=230",
+      "file": "mr-cerebral-venography.png",
+      "sha256": "26567ded8abb0918ad97b1578b31a11ca3c5a4694e28574b31c78494abd8fafb",
+      "bytes": 64402,
+      "width": 230,
+      "height": 230
+    },
+    "BRAIN/arteriography-brain": {
+      "title": "Arteriography brain",
+      "source_url": "https://www.imaios.com/en/e-anatomy/brain/arteriography-brain",
+      "image_url": "https://cdn1.imaios.com/i/images/3/0/4/9/309403-3-eng-GB/b6bc3714dad8-brain-angiogram-dsa.png?q=75&s=89b4ddd3f22bcefab02c8c17f04e9242&w=230",
+      "file": "arteriography-brain.png",
+      "sha256": "967bf325a38d8ac76e044694184a64e89f7f0bbdac758fea52cfacaf0383ad1e",
+      "bytes": 65756,
+      "width": 230,
+      "height": 230
+    },
+    "BRAIN/cranial-nerves-mri": {
+      "title": "Cranial nerves MRI",
+      "source_url": "https://www.imaios.com/en/e-anatomy/brain/cranial-nerves-mri",
+      "image_url": "https://cdn1.imaios.com/i/images/9/4/5/7/10677549-1-eng-GB/0aeb5ec57740-cranial-nerves-mr.png?q=75&s=5fde71fc9835a5de0675f10e023102c6&w=230",
+      "file": "cranial-nerves-mri.png",
+      "sha256": "10c28f6a272177baafb24f9e88ee486ff79b2717b0a979c6d8a349ab67ca49dc",
+      "bytes": 59496,
+      "width": 230,
+      "height": 230
+    },
+    "BRAIN/cranial-nerves": {
+      "title": "Cranial nerves",
+      "source_url": "https://www.imaios.com/en/e-anatomy/brain/cranial-nerves",
+      "image_url": "https://cdn1.imaios.com/i/images/9/5/6/1/311659-4-eng-GB/1a8f1ad32d81-nerfs-craniens-anatomie.png?q=75&s=50109ade9f02db0177855793ef473443&w=230",
+      "file": "cranial-nerves.png",
+      "sha256": "a6e09ce05d0a3f1a659b5616278c729eb5961157691bb453633f4a714333f559",
+      "bytes": 50836,
+      "width": 230,
+      "height": 230
+    },
+    "HEAD AND NECK/mri-head-and-neck": {
+      "title": "MRI head and neck",
+      "source_url": "https://www.imaios.com/en/e-anatomy/head-and-neck/mri-head-and-neck",
+      "image_url": "https://cdn1.imaios.com/i/images/9/8/7/1/131789-4-eng-GB/c6bebf7ff1ab-face-cou-irm.png?q=75&s=087d01272591ee8c405465980d03f4f8&w=230",
+      "file": "mri-head-and-neck.png",
+      "sha256": "79c8357027cf92cdeb18dbe35cc2b8c19dccd309cacbc7b949f8a4bcefca3254",
+      "bytes": 65131,
+      "width": 230,
+      "height": 230
+    },
+    "HEAD AND NECK/ct-head-and-neck": {
+      "title": "CT head and neck",
+      "source_url": "https://www.imaios.com/en/e-anatomy/head-and-neck/ct-head-and-neck",
+      "image_url": "https://cdn1.imaios.com/i/images/2/9/7/1/131792-4-eng-GB/caebb438ec94-Head-Neck-CT.png?q=75&s=ff1fb7b910c5e632425be1b464c46e63&w=230",
+      "file": "ct-head-and-neck.png",
+      "sha256": "045d34c4bf229fbe7eb6b796699d9eac462e7a5c8819d1f7cadabd7cda4c5afa",
+      "bytes": 58142,
+      "width": 230,
+      "height": 230
+    },
+    "HEAD AND NECK/ct-face": {
+      "title": "CT face",
+      "source_url": "https://www.imaios.com/en/e-anatomy/head-and-neck/ct-face",
+      "image_url": "https://cdn1.imaios.com/i/images/6/8/7/1/131786-5-eng-GB/e4a720e3e88b-face.png?q=75&s=abfc4f7f9c056c02ed7ebf8e8f5863ee&w=230",
+      "file": "ct-face.png",
+      "sha256": "d62e3146d2c9330287f777299958bdc17220bfb4b9176de65b6ebf4ed07d1d89",
+      "bytes": 45066,
+      "width": 230,
+      "height": 230
+    },
+    "HEAD AND NECK/dental-cbct": {
+      "title": "Dental CBCT",
+      "source_url": "https://www.imaios.com/en/e-anatomy/head-and-neck/dental-cbct",
+      "image_url": "https://cdn1.imaios.com/i/images/5/8/5/5/485585-1-eng-GB/dental-cbct.png?q=75&s=609ba0c1973c4c6142aef2a54e6c2416&w=230",
+      "file": "dental-cbct.png",
+      "sha256": "ac2f237589ea66cd26af63d8d773c32774b54a0f71f518b185f71991f3e33c11",
+      "bytes": 59180,
+      "width": 230,
+      "height": 230
+    },
+    "HEAD AND NECK/skull": {
+      "title": "Skull",
+      "source_url": "https://www.imaios.com/en/e-anatomy/head-and-neck/skull",
+      "image_url": "https://cdn1.imaios.com/i/images/4/7/7/1/131774-4-eng-GB/e5508d522d8f-cranium-illustrations.png?q=75&s=64d51722694b311a1552aa29b8e41439&w=230",
+      "file": "skull.png",
+      "sha256": "0ba2a9a1a618769525843372ee62680d25bb17a216f9080aa8eb9211fa91232c",
+      "bytes": 61491,
+      "width": 230,
+      "height": 230
+    },
+    "HEAD AND NECK/orbit-mri": {
+      "title": "Orbit MRI",
+      "source_url": "https://www.imaios.com/en/e-anatomy/head-and-neck/orbit-mri",
+      "image_url": "https://cdn1.imaios.com/i/images/6/3/6/5/7335636-2-eng-GB/eye-mri.png?q=75&s=810c80005f1a9373ebbd639101e17162&w=230",
+      "file": "orbit-mri.png",
+      "sha256": "b8bfd4d63fa9179766ef3d4ae5af5d3c6750fbcb86e589264801ac42d569b998",
+      "bytes": 85123,
+      "width": 230,
+      "height": 230
+    },
+    "HEAD AND NECK/eye": {
+      "title": "Eye",
+      "source_url": "https://www.imaios.com/en/e-anatomy/head-and-neck/eye",
+      "image_url": "https://cdn1.imaios.com/i/images/3/8/7/1/131783-4-eng-GB/241d63a7d89e-eye-illustrations.png?q=75&s=61b7afec332fb2176a7ff3c0aaaf4ed0&w=230",
+      "file": "eye.png",
+      "sha256": "f5da041114d158cf7381f6c59c34c3eee9ede483dd8422e5f8640e7eff3f98cc",
+      "bytes": 77150,
+      "width": 230,
+      "height": 230
+    },
+    "HEAD AND NECK/nasal-cavity": {
+      "title": "Nasal cavity",
+      "source_url": "https://www.imaios.com/en/e-anatomy/head-and-neck/nasal-cavity",
+      "image_url": "https://cdn1.imaios.com/i/images/2/8/3/2/392382-3-eng-GB/c39b052a4751-nose-nasal-cavity-illustrations.png?q=75&s=0b06510cdd61fe65c88071e1962e8f74&w=230",
+      "file": "nasal-cavity.png",
+      "sha256": "fef25f02dccf9b41a6b4fa3349d8293f1d1850b6da1dd8be498d4c9f241ac04b",
+      "bytes": 92875,
+      "width": 230,
+      "height": 230
+    },
+    "HEAD AND NECK/oral-cavity": {
+      "title": "Oral cavity",
+      "source_url": "https://www.imaios.com/en/e-anatomy/head-and-neck/oral-cavity",
+      "image_url": "https://cdn1.imaios.com/i/images/2/9/3/2/392392-3-eng-GB/6ad06b76f8fa-mouth-oral-cavity-illustrations.png?q=75&s=3ed90ca3c2604b2dc583c4857bf0865a&w=230",
+      "file": "oral-cavity.png",
+      "sha256": "4baa58e024284805322988265844a3e93d22a769abb62fd5f481f35536e7e7ae",
+      "bytes": 71226,
+      "width": 230,
+      "height": 230
+    },
+    "HEAD AND NECK/teeth": {
+      "title": "Teeth",
+      "source_url": "https://www.imaios.com/en/e-anatomy/head-and-neck/teeth",
+      "image_url": "https://cdn1.imaios.com/i/images/8/5/1/8/478158-2-eng-GB/dental-anatomy-illustrations.png?q=75&s=159493ebda12ed391f2f23c49d18db10&w=230",
+      "file": "teeth.png",
+      "sha256": "da1053a57881ef825d5c84d7ee1c803ef3ea4959fd62fff47dbd3f993ba715ad",
+      "bytes": 26556,
+      "width": 230,
+      "height": 230
+    },
+    "HEAD AND NECK/ct-temporal-bone": {
+      "title": "CT temporal bone",
+      "source_url": "https://www.imaios.com/en/e-anatomy/head-and-neck/ct-temporal-bone",
+      "image_url": "https://cdn1.imaios.com/i/images/9/8/8/0/310889-3-eng-GB/20f6136a1276-rocher.png?q=75&s=b81e6b55fef2c059926768851a4e7555&w=230",
+      "file": "ct-temporal-bone.png",
+      "sha256": "ce003b135b87399e8fc99f6dc8d2aa977a6914ff5863eab8c33104d5f94c525e",
+      "bytes": 64279,
+      "width": 230,
+      "height": 230
+    },
+    "HEAD AND NECK/mri-inner-ear-and-iac": {
+      "title": "MRI inner ear and IAC",
+      "source_url": "https://www.imaios.com/en/e-anatomy/head-and-neck/mri-inner-ear-and-iac",
+      "image_url": "https://cdn1.imaios.com/i/images/6/3/3/0/390336-3-eng-GB/d5ca7c57d9d8-inner-ear-mri.png?q=75&s=74e48cff71c580cffc1f3a5e9e7ea225&w=230",
+      "file": "mri-inner-ear-and-iac.png",
+      "sha256": "31cbb4300accbd09f3ace052ec917feb25ebd8c0c6c8cbe863f68de48a0fe7bf",
+      "bytes": 56560,
+      "width": 230,
+      "height": 230
+    },
+    "HEAD AND NECK/ear": {
+      "title": "Ear",
+      "source_url": "https://www.imaios.com/en/e-anatomy/head-and-neck/ear",
+      "image_url": "https://cdn1.imaios.com/i/images/7/7/5/0/470577-1-eng-GB/ear-illustrations.png?q=75&s=3f4f7e306d2d00f4621c7878aa13acf9&w=230",
+      "file": "ear.png",
+      "sha256": "053c19c806818af27245ac03308318939b04145bb6b9660a29bcf1f3b7e56553",
+      "bytes": 82040,
+      "width": 230,
+      "height": 230
+    },
+    "HEAD AND NECK/temporomandibular-joint": {
+      "title": "Temporomandibular joint",
+      "source_url": "https://www.imaios.com/en/e-anatomy/head-and-neck/temporomandibular-joint",
+      "image_url": "https://cdn1.imaios.com/i/images/5/5/4/3/8523455-2-eng-GB/temporomandibular-joint-mri.png?q=75&s=d210e1577baf93622d721894ab54af9f&w=230",
+      "file": "temporomandibular-joint.png",
+      "sha256": "33d9f28e5b4200a84b0589095b8fb28d06163bf4ea4cd7f2319337133b21b914",
+      "bytes": 70955,
+      "width": 230,
+      "height": 230
+    },
+    "HEAD AND NECK/nasal-fibroscopy": {
+      "title": "Nasal fibroscopy",
+      "source_url": "https://www.imaios.com/en/e-anatomy/head-and-neck/nasal-fibroscopy",
+      "image_url": "https://cdn1.imaios.com/i/images/0/9/9/1/9121990-3-eng-GB/1be8ae001876-nasal-cavity-larynx-endoscopy.png?q=75&s=c4329123a45ee48e08f2b252a6e34dd1&w=230",
+      "file": "nasal-fibroscopy.png",
+      "sha256": "22abfb3af67f0d0f4c26138c457b052155add88cae16e4a25cdabfaaa45a61cb",
+      "bytes": 157311,
+      "width": 230,
+      "height": 230
+    },
+    "HEAD AND NECK/carotid-artery-surgical-approach": {
+      "title": "Carotid artery - Surgical approach",
+      "source_url": "https://www.imaios.com/en/e-anatomy/head-and-neck/carotid-artery-surgical-approach",
+      "image_url": "https://cdn1.imaios.com/i/images/9/9/8/7/427899-3-eng-GB/65437474abea-surgical-approach-carotid.png?q=75&s=c1e42c59e9c2a608fe0f2a0a0432f850&w=230",
+      "file": "carotid-artery-surgical-approach.png",
+      "sha256": "5d313af15c6cb994852e5ba70d2f87618facb0ac5d3efaad635930edb878aaf7",
+      "bytes": 165261,
+      "width": 230,
+      "height": 230
+    },
+    "SPINE/mri-cervical-spine": {
+      "title": "MRI cervical spine",
+      "source_url": "https://www.imaios.com/en/e-anatomy/spine/mri-cervical-spine",
+      "image_url": "https://cdn1.imaios.com/i/images/5/3/7/1/131735-3-eng-GB/ce0f1ce03657-cervical-spine-mri.png?q=75&s=1fa324b450d74a2b19a517f45ab2f5d3&w=230",
+      "file": "mri-cervical-spine.png",
+      "sha256": "c0ea972309256d1676ee4d85ab46f7f43cdb4d5e928c09ee3e82b0b62cb24293",
+      "bytes": 65610,
+      "width": 230,
+      "height": 230
+    },
+    "SPINE/mri-lumbar-spine": {
+      "title": "MRI lumbar spine",
+      "source_url": "https://www.imaios.com/en/e-anatomy/spine/mri-lumbar-spine",
+      "image_url": "https://cdn1.imaios.com/i/images/7/8/0/0/460087-2-eng-GB/95c684afdf4e-lumbar-spine-mri.png?q=75&s=ff4c05c22f7cf136b37185de1a7db329&w=230",
+      "file": "mri-lumbar-spine.png",
+      "sha256": "344380fe65cd1812b5c5ff4905e06b9705fa3f7f68cdafcd1f5b5731367b63db",
+      "bytes": 59435,
+      "width": 230,
+      "height": 230
+    },
+    "SPINE/ct-lumbar-spine": {
+      "title": "CT lumbar spine",
+      "source_url": "https://www.imaios.com/en/e-anatomy/spine/ct-lumbar-spine",
+      "image_url": "https://cdn1.imaios.com/i/images/8/3/7/1/131738-3-eng-GB/080c9bb3cb09-lumbar-spine-ct.png?q=75&s=51f61d0d7765ccb3c5bd461d51974a8c&w=230",
+      "file": "ct-lumbar-spine.png",
+      "sha256": "b23a85fa2db78f7fcabcae095111858a615ab302e68616a7230d24fadcd85597",
+      "bytes": 65925,
+      "width": 230,
+      "height": 230
+    },
+    "SPINE/spine": {
+      "title": "Spine",
+      "source_url": "https://www.imaios.com/en/e-anatomy/spine/spine",
+      "image_url": "https://cdn1.imaios.com/i/images/7/4/7/1/131747-3-eng-GB/b1061b046aa7-rachis-dos-anatomie.png?q=75&s=f5592938d5483805268c9a3ff423ef87&w=230",
+      "file": "spine.png",
+      "sha256": "095d631c7413f8fc8d88004637d2c3cd29425d888435c0a61c1cd4c72d56f84d",
+      "bytes": 35851,
+      "width": 230,
+      "height": 230
+    },
+    "SPINE/radiography-spine": {
+      "title": "Radiography spine",
+      "source_url": "https://www.imaios.com/en/e-anatomy/spine/radiography-spine",
+      "image_url": "https://cdn1.imaios.com/i/images/0/5/7/1/131750-4-eng-GB/162569cf6565-rachis-radios.png?q=75&s=d61be33be8efd2e21a276e9624d819c8&w=230",
+      "file": "radiography-spine.png",
+      "sha256": "1723099829c6d19cd4e1a2847c174075435bb224393cd61b23f731ba7193e68d",
+      "bytes": 62320,
+      "width": 230,
+      "height": 230
+    },
+    "SPINE/spinal-cord": {
+      "title": "Spinal cord",
+      "source_url": "https://www.imaios.com/en/e-anatomy/spine/spinal-cord",
+      "image_url": "https://cdn1.imaios.com/i/images/4/4/7/1/131744-4-eng-GB/e1dee303a436-moelle-spinale-anatomie.png?q=75&s=aab2b597c02b5dfd07f19aaf7987ea3f&w=230",
+      "file": "spinal-cord.png",
+      "sha256": "07c3dc7201eb947c07ab25d8e69252068c23ad464f2ae832969738144379932b",
+      "bytes": 25625,
+      "width": 230,
+      "height": 230
+    },
+    "WHOLE BODY/ct-body-lymph-nodes": {
+      "title": "CT body (lymph nodes)",
+      "source_url": "https://www.imaios.com/en/e-anatomy/whole-body/ct-body-lymph-nodes",
+      "image_url": "https://cdn1.imaios.com/i/images/3/5/4/0/310453-3-eng-GB/9b48c06243a6-aires-radiotherapie.png?q=75&s=1f7bcac75a4a0a7563ace0fa47a11c56&w=230",
+      "file": "ct-body-lymph-nodes.png",
+      "sha256": "0f1b50cdf4bef8f83444ac067ede04457b6be58f903040f69ac9a7b5f0dbf44d",
+      "bytes": 63241,
+      "width": 230,
+      "height": 230
+    },
+    "WHOLE BODY/fdg-pet-ct-whole-body": {
+      "title": "FDG-PET/CT whole body",
+      "source_url": "https://www.imaios.com/en/e-anatomy/whole-body/fdg-pet-ct-whole-body",
+      "image_url": "https://cdn1.imaios.com/i/images/1/2/5/0/310521-3-eng-GB/c4d8862f6f56-pet-ct.png?q=75&s=da7ad755a3e1e6afe3eae523eed9c888&w=230",
+      "file": "fdg-pet-ct-whole-body.png",
+      "sha256": "aa2052f4a75a8073c8479726c7b49fe31cf6b3cf2805be6b17391b5b9f10ed4d",
+      "bytes": 74297,
+      "width": 230,
+      "height": 230
+    },
+    "WHOLE BODY/visible-human-project": {
+      "title": "Visible Human Project",
+      "source_url": "https://www.imaios.com/en/e-anatomy/whole-body/visible-human-project",
+      "image_url": "https://cdn1.imaios.com/i/images/5/7/5/0/310575-3-eng-GB/b864f0993343-vhp-male-whole-body.png?q=75&s=915db53346b49f1274fe14869645c9b4&w=230",
+      "file": "visible-human-project.png",
+      "sha256": "5fb6fdbc500e3cafa83bcdd84f73ce910dd6a270dde580f67f88edeb66443167",
+      "bytes": 97684,
+      "width": 230,
+      "height": 230
+    },
+    "WHOLE BODY/radiography-chest-abdomen-pelvis": {
+      "title": "Radiography chest abdomen pelvis",
+      "source_url": "https://www.imaios.com/en/e-anatomy/whole-body/radiography-chest-abdomen-pelvis",
+      "image_url": "https://cdn1.imaios.com/i/images/2/4/4/2/392442-3-eng-GB/f4e86dc63077-thorax-abdomen-radiographs.png?q=75&s=4030600bbdc499aad9ba338a4d38ff14&w=230",
+      "file": "radiography-chest-abdomen-pelvis.png",
+      "sha256": "2e7f364da64742be040de94626cae75ac88da549acc3257d8d0c1a7b210d5f8c",
+      "bytes": 51266,
+      "width": 230,
+      "height": 230
+    },
+    "WHOLE BODY/autonomic-nervous-system": {
+      "title": "Autonomic nervous system",
+      "source_url": "https://www.imaios.com/en/e-anatomy/whole-body/autonomic-nervous-system",
+      "image_url": "https://cdn1.imaios.com/i/images/2/0/7/1/311702-3-eng-GB/0e2a5a3ada57-sna-anatomie.png?q=75&s=85e9fafb7da49050b1d7b8805c116d4d&w=230",
+      "file": "autonomic-nervous-system.png",
+      "sha256": "078e407b33bfd531985c26e2b6eecdf5d651ec06650744330cab9acc62afce74",
+      "bytes": 35216,
+      "width": 230,
+      "height": 230
+    },
+    "THORAX/lungs": {
+      "title": "Lungs",
+      "source_url": "https://www.imaios.com/en/e-anatomy/thorax/lungs",
+      "image_url": "https://cdn1.imaios.com/i/images/2/6/6/0/310662-3-eng-GB/8afd4f7efecf-poumons-illustrations.png?q=75&s=28834a0e82a06a2a503bf81242cbc74e&w=230",
+      "file": "lungs.png",
+      "sha256": "f5d568cc445c77602e246a18276b9322635f92a9b64da3634c415e7012b7203e",
+      "bytes": 62738,
+      "width": 230,
+      "height": 230
+    },
+    "THORAX/mediastinum": {
+      "title": "Mediastinum",
+      "source_url": "https://www.imaios.com/en/e-anatomy/thorax/mediastinum",
+      "image_url": "https://cdn1.imaios.com/i/images/8/1/8/0/310818-3-eng-GB/5b143099d561-mediastin-illustrations.png?q=75&s=1ae3c4393f4cf4c90492e0fded81be9b&w=230",
+      "file": "mediastinum.png",
+      "sha256": "24ab4f19b3c91c94e7109bb6abb5fbc0a7640604a4fccbdc0fa383ebeeceee4b",
+      "bytes": 64344,
+      "width": 230,
+      "height": 230
+    },
+    "THORAX/thoracic-wall-breast": {
+      "title": "Thoracic wall-Breast",
+      "source_url": "https://www.imaios.com/en/e-anatomy/thorax/thoracic-wall-breast",
+      "image_url": "https://cdn1.imaios.com/i/images/6/9/8/0/310896-3-eng-GB/729db5772476-paroi-thorax-sein-illustrations.png?q=75&s=51b590e978b5bf0738cfe4d627012f9d&w=230",
+      "file": "thoracic-wall-breast.png",
+      "sha256": "bec7246b954a42bebc509ba957bb4d5fb6eddbff71a3eaf5bd770dd12bb0dea7",
+      "bytes": 64548,
+      "width": 230,
+      "height": 230
+    },
+    "THORAX/ct-axial-chest": {
+      "title": "CT axial chest",
+      "source_url": "https://www.imaios.com/en/e-anatomy/thorax/ct-axial-chest",
+      "image_url": "https://cdn1.imaios.com/i/images/9/5/1/1/311159-5-eng-GB/686203b08da4-thorax.png?q=75&s=3238dc3c9b34c0477182df07e6389490&w=230",
+      "file": "ct-axial-chest.png",
+      "sha256": "559ffc1575f167569ab7144e6852c43bbaa8d4d1b2299f99cf5440779b17937d",
+      "bytes": 50417,
+      "width": 230,
+      "height": 230
+    },
+    "THORAX/ct-chest": {
+      "title": "CT chest",
+      "source_url": "https://www.imaios.com/en/e-anatomy/thorax/ct-chest",
+      "image_url": "https://cdn1.imaios.com/i/images/9/4/4/2/392449-3-eng-GB/60d46b18ea19-thorax-ct.png?q=75&s=80984337addab14f888bbcff40b0064a&w=230",
+      "file": "ct-chest.png",
+      "sha256": "237f9f1b75d0a81d8da6a8ea53c1a19cc61048d55be010bb852a2c7e6bba3904",
+      "bytes": 72833,
+      "width": 230,
+      "height": 230
+    },
+    "THORAX/cardiac-mri": {
+      "title": "Cardiac MRI",
+      "source_url": "https://www.imaios.com/en/e-anatomy/thorax/cardiac-mri",
+      "image_url": "https://cdn1.imaios.com/i/images/9/5/0/7/13757059-1-eng-GB/e000b8c26283-cardiac-mri.png?q=75&s=7200d09b5fb71e9ebb9bf94150034ba3&w=230",
+      "file": "cardiac-mri.png",
+      "sha256": "740379cee7d9339122ebac90651a0da2b8bf38a484120108c61faee172effbe0",
+      "bytes": 51836,
+      "width": 230,
+      "height": 230
+    },
+    "THORAX/heart": {
+      "title": "Heart",
+      "source_url": "https://www.imaios.com/en/e-anatomy/thorax/heart",
+      "image_url": "https://cdn1.imaios.com/i/images/8/9/1/1/311198-4-eng-GB/9ce53dec6bf8-coeur-illustrations.png?q=75&s=89e64d463c303e4490bd4c56b78d8e4a&w=230",
+      "file": "heart.png",
+      "sha256": "badfc449e77650bed6048ebdd13f5a6a7a66e084d045020d04a0d73d8bc6774b",
+      "bytes": 121158,
+      "width": 230,
+      "height": 230
+    },
+    "THORAX/cta-coronary-arteries": {
+      "title": "CTA coronary arteries",
+      "source_url": "https://www.imaios.com/en/e-anatomy/thorax/cta-coronary-arteries",
+      "image_url": "https://cdn1.imaios.com/i/images/7/3/2/1/311237-4-eng-GB/983b0aa0ecb4-coeur.png?q=75&s=597a6c84439a69dd4a9339ffe583c09e&w=230",
+      "file": "cta-coronary-arteries.png",
+      "sha256": "10b452d46938583aefba86a76c84b67e8fe381fbc40e7f9c76e5a8bb79f800b0",
+      "bytes": 58976,
+      "width": 230,
+      "height": 230
+    },
+    "THORAX/coronarography": {
+      "title": "Coronarography",
+      "source_url": "https://www.imaios.com/en/e-anatomy/thorax/coronarography",
+      "image_url": "https://cdn1.imaios.com/i/images/6/7/2/1/311276-4-eng-GB/24135fc8330e-coronarographie.png?q=75&s=a958fc1b3e7208cf1bcd98cea9561c90&w=230",
+      "file": "coronarography.png",
+      "sha256": "b303be9c6f89092b92a79765326158abf008394109741f43c83ad15631ff022b",
+      "bytes": 70799,
+      "width": 230,
+      "height": 230
+    },
+    "THORAX/integumentary-system": {
+      "title": "Integumentary system",
+      "source_url": "https://www.imaios.com/en/e-anatomy/thorax/integumentary-system",
+      "image_url": "https://cdn1.imaios.com/i/images/0/5/1/0/460150-2-eng-GB/fb62715215fe-integument-illustrations.png?q=75&s=b3fd9d2ec4426d4d9bb216e7f027ca99&w=230",
+      "file": "integumentary-system.png",
+      "sha256": "7ef21711501061d404fb04d9033baa695274dd43724ea97d4367800a3224c71d",
+      "bytes": 82888,
+      "width": 230,
+      "height": 230
+    },
+    "THORAX/bronchoscopy": {
+      "title": "Bronchoscopy",
+      "source_url": "https://www.imaios.com/en/e-anatomy/thorax/bronchoscopy",
+      "image_url": "https://cdn1.imaios.com/i/images/2/5/4/3/8523452-2-eng-GB/bronchi-endoscopy.png?q=75&s=a24836335ed64915c08803f2883bc740&w=230",
+      "file": "bronchoscopy.png",
+      "sha256": "ecfa60067f619aa1113e2d0361bcfbe3c5eb6caf411781e5c8570a79ffe3a943",
+      "bytes": 124996,
+      "width": 230,
+      "height": 230
+    },
+    "ABDOMEN AND PELVIS/magnetic-resonance-cholangiopancreatography": {
+      "title": "Magnetic Resonance Cholangiopancreatography",
+      "source_url": "https://www.imaios.com/en/e-anatomy/abdomen-and-pelvis/magnetic-resonance-cholangiopancreatography",
+      "image_url": "https://cdn1.imaios.com/i/images/5/1/3/1/311315-4-eng-GB/220cb5a0c48b-cholangiopancreatography-mr.png?q=75&s=72b7f3a4822055d81645dcc72e79dcc7&w=230",
+      "file": "magnetic-resonance-cholangiopancreatography.png",
+      "sha256": "9874390d8df72a8b19b79b1d8c794e3944cd4cf1fdc1cebf9bab0bd588370808",
+      "bytes": 41752,
+      "width": 230,
+      "height": 230
+    },
+    "ABDOMEN AND PELVIS/digestive-system": {
+      "title": "Digestive system",
+      "source_url": "https://www.imaios.com/en/e-anatomy/abdomen-and-pelvis/digestive-system",
+      "image_url": "https://cdn1.imaios.com/i/images/4/5/3/1/311354-4-eng-GB/d1e10b6db983-digestive-system-illustrations.png?q=75&s=3f143b42be0ed2c16a162c0fd3e6748e&w=230",
+      "file": "digestive-system.png",
+      "sha256": "6251c2e700078c181e034c6ded23638f7235ce24ee86d4f4b498e0e7827057ff",
+      "bytes": 62687,
+      "width": 230,
+      "height": 230
+    },
+    "ABDOMEN AND PELVIS/female-abdomen-pelvis-ct": {
+      "title": "Female abdomen-pelvis CT",
+      "source_url": "https://www.imaios.com/en/e-anatomy/abdomen-and-pelvis/female-abdomen-pelvis-ct",
+      "image_url": "https://cdn1.imaios.com/i/images/1/6/6/1/11921661-1-eng-GB/231cbcfdfe55-abdomen-ct-human-female.png?q=75&s=ca7138d18ecf8454f4050e1a4007638c&w=230",
+      "file": "female-abdomen-pelvis-ct.png",
+      "sha256": "d6fce3f45ef903cbc8a408cc1708272dd616952b5c83b29a88b1fa5c0fc0cc67",
+      "bytes": 83037,
+      "width": 230,
+      "height": 230
+    },
+    "ABDOMEN AND PELVIS/ct-axial-male-abdomen-and-pelvis": {
+      "title": "CT axial male abdomen and pelvis",
+      "source_url": "https://www.imaios.com/en/e-anatomy/abdomen-and-pelvis/ct-axial-male-abdomen-and-pelvis",
+      "image_url": "https://cdn1.imaios.com/i/images/3/9/3/1/311393-4-eng-GB/1cff6e56270a-abdomen.png?q=75&s=3d7cf3818d92511c44812c86b0d7a3b7&w=230",
+      "file": "ct-axial-male-abdomen-and-pelvis.png",
+      "sha256": "5c454ccc7f66df4e692bfa519ef47e5bdd18ecb7adac4b51ce9cf5d12838c136",
+      "bytes": 40252,
+      "width": 230,
+      "height": 230
+    },
+    "ABDOMEN AND PELVIS/ct-peritoneal-cavity": {
+      "title": "CT peritoneal cavity",
+      "source_url": "https://www.imaios.com/en/e-anatomy/abdomen-and-pelvis/ct-peritoneal-cavity",
+      "image_url": "https://cdn1.imaios.com/i/images/2/3/4/1/311432-4-eng-GB/0b2578da9904-abdominopelvic-cavity-ct.png?q=75&s=1e2e35bb1eb75b5cfd8ce2503b00778f&w=230",
+      "file": "ct-peritoneal-cavity.png",
+      "sha256": "7ef49e267037c921fe1136bd79442d7e92f85095611704c198531a7590760d1b",
+      "bytes": 51259,
+      "width": 230,
+      "height": 230
+    },
+    "ABDOMEN AND PELVIS/mri-female-pelvis": {
+      "title": "MRI female pelvis",
+      "source_url": "https://www.imaios.com/en/e-anatomy/abdomen-and-pelvis/mri-female-pelvis",
+      "image_url": "https://cdn1.imaios.com/i/images/3/0/5/1/311503-3-eng-GB/5fec19346585-pelvis.png?q=75&s=993138a865ea234f390cd7a43db0e7d3&w=230",
+      "file": "mri-female-pelvis.png",
+      "sha256": "dec33a4a012ab13f416040b276c796230be56769b09f04a7ad5838d23054a603",
+      "bytes": 74561,
+      "width": 230,
+      "height": 230
+    },
+    "ABDOMEN AND PELVIS/female-pelvis": {
+      "title": "Female pelvis",
+      "source_url": "https://www.imaios.com/en/e-anatomy/abdomen-and-pelvis/female-pelvis",
+      "image_url": "https://cdn1.imaios.com/i/images/3/3/6/5/7335633-3-eng-GB/09a57ae1d494-pelvis-female-illustrations.png?q=75&s=d5e11077387d384163ca719196c84dcb&w=230",
+      "file": "female-pelvis.png",
+      "sha256": "c4ca11dc52bee0833d45a03e1e23a2eb124422a0b462e36c979693a182e677fe",
+      "bytes": 115879,
+      "width": 230,
+      "height": 230
+    },
+    "ABDOMEN AND PELVIS/laparoscopy-female-pelvis": {
+      "title": "Laparoscopy female pelvis",
+      "source_url": "https://www.imaios.com/en/e-anatomy/abdomen-and-pelvis/laparoscopy-female-pelvis",
+      "image_url": "https://cdn1.imaios.com/i/images/8/8/5/1/311588-3-eng-GB/17798dc8f203-female-pelvis-laparoscopy.png?q=75&s=db3531b7649c42eeb4353bbecc184d29&w=230",
+      "file": "laparoscopy-female-pelvis.png",
+      "sha256": "f2a4bb21b1a3da7f69de474c43044a1b6dbfad9027194814ca4d580ec6109741",
+      "bytes": 159196,
+      "width": 230,
+      "height": 230
+    },
+    "ABDOMEN AND PELVIS/mri-male-pelvis": {
+      "title": "MRI male pelvis",
+      "source_url": "https://www.imaios.com/en/e-anatomy/abdomen-and-pelvis/mri-male-pelvis",
+      "image_url": "https://cdn1.imaios.com/i/images/9/4/5/1/311549-3-eng-GB/3eb60c2020c0-Pelvis-Male-MR.png?q=75&s=672413b6b6a14dcedd5e10ed2ffe97ea&w=230",
+      "file": "mri-male-pelvis.png",
+      "sha256": "a76ee2634c22903325a20f27153d23c8ac2288508ffb42362aa58ead8322d1be",
+      "bytes": 80618,
+      "width": 230,
+      "height": 230
+    },
+    "ABDOMEN AND PELVIS/male-pelvis": {
+      "title": "Male pelvis",
+      "source_url": "https://www.imaios.com/en/e-anatomy/abdomen-and-pelvis/male-pelvis",
+      "image_url": "https://cdn1.imaios.com/i/images/2/1/6/0/460612-2-eng-GB/9051ef151b35-pelvis-male-illustrations.png?q=75&s=9be2373aef9bbf6e3759f8aec15ab274&w=230",
+      "file": "male-pelvis.png",
+      "sha256": "1d87710bc40787be0a8a6f1cb4061e710781687d9cc223d2510de0a8a7509fb9",
+      "bytes": 102043,
+      "width": 230,
+      "height": 230
+    },
+    "UPPER LIMB/upper-extremity": {
+      "title": "Upper extremity",
+      "source_url": "https://www.imaios.com/en/e-anatomy/upper-limb/upper-extremity",
+      "image_url": "https://cdn1.imaios.com/i/images/4/0/5/0/310504-5-eng-GB/391ad6f3b3d1-ms-anatomie.png?q=75&s=1e549d6602f841f65882e7ee4133d36a&w=230",
+      "file": "upper-extremity.png",
+      "sha256": "16314d8fe6a791630fac94c5d93fdbaf0b716bbd83725566701eca4ce03124c9",
+      "bytes": 46313,
+      "width": 230,
+      "height": 230
+    },
+    "UPPER LIMB/radiography-upper-extremity": {
+      "title": "Radiography upper extremity",
+      "source_url": "https://www.imaios.com/en/e-anatomy/upper-limb/radiography-upper-extremity",
+      "image_url": "https://cdn1.imaios.com/i/images/0/6/5/0/310560-4-eng-GB/afc5ddc0b3b9-ms-radios.png?q=75&s=3f30892607555d5a4a0382f0e512e5c3&w=230",
+      "file": "radiography-upper-extremity.png",
+      "sha256": "7ef88edc0b802e1c7cb436a83a70d54bc9dd38b6111f950cb460500ded5a7bd8",
+      "bytes": 37163,
+      "width": 230,
+      "height": 230
+    },
+    "UPPER LIMB/mri-upper-extremity": {
+      "title": "MRI upper extremity",
+      "source_url": "https://www.imaios.com/en/e-anatomy/upper-limb/mri-upper-extremity",
+      "image_url": "https://cdn1.imaios.com/i/images/2/8/5/0/310582-4-eng-GB/1453e464a31d-upper-limb.png?q=75&s=36ea8c29f4415d24228fc5d05d944685&w=230",
+      "file": "mri-upper-extremity.png",
+      "sha256": "ab4e00fb40d2005251aceca5ab0c51fa0b0a675752e7b6e99e44cede247db230",
+      "bytes": 59295,
+      "width": 230,
+      "height": 230
+    },
+    "UPPER LIMB/mri-brachial-plexus": {
+      "title": "MRI brachial plexus",
+      "source_url": "https://www.imaios.com/en/e-anatomy/upper-limb/mri-brachial-plexus",
+      "image_url": "https://cdn1.imaios.com/i/images/7/2/6/0/310627-4-eng-GB/29f317df1168-Brachial-Plexus-MR.png?q=75&s=4b6d655c64cf7f152524a373e3db2ad4&w=230",
+      "file": "mri-brachial-plexus.png",
+      "sha256": "e844e38aada52631e8dd686f93cc668f83b577a48b75e34c9b264d19a0dfd9ad",
+      "bytes": 68140,
+      "width": 230,
+      "height": 230
+    },
+    "UPPER LIMB/mri-shoulder": {
+      "title": "MRI shoulder",
+      "source_url": "https://www.imaios.com/en/e-anatomy/upper-limb/mri-shoulder",
+      "image_url": "https://cdn1.imaios.com/i/images/4/3/6/0/310634-3-eng-GB/08122cadc710-shoulder.png?q=75&s=af491212f19d0e92e5501bee535106ce&w=230",
+      "file": "mri-shoulder.png",
+      "sha256": "67857848627da59c402bb714a226c055c106b1bfe22685930912ac3d34b75a7b",
+      "bytes": 67663,
+      "width": 230,
+      "height": 230
+    },
+    "UPPER LIMB/mr-arthrography-shoulder": {
+      "title": "MR arthrography shoulder",
+      "source_url": "https://www.imaios.com/en/e-anatomy/upper-limb/mr-arthrography-shoulder",
+      "image_url": "https://cdn1.imaios.com/i/images/1/6/0/4/164061-4-eng-GB/eb78911b1b78-shoulder-mr-arthrography.png?q=75&s=a8d0c7b98e3f21fc8c24cc0ae8da5e09&w=230",
+      "file": "mr-arthrography-shoulder.png",
+      "sha256": "b88765daf043a125638257a69ca1e1d41df196a46c0a52effe8746f85cf49058",
+      "bytes": 60845,
+      "width": 230,
+      "height": 230
+    },
+    "UPPER LIMB/ct-arthrography-shoulder": {
+      "title": "CT arthrography shoulder",
+      "source_url": "https://www.imaios.com/en/e-anatomy/upper-limb/ct-arthrography-shoulder",
+      "image_url": "https://cdn1.imaios.com/i/images/1/4/6/0/310641-4-eng-GB/1cf10afae99d-shoulder-ct-arthrogram.png?q=75&s=cedb1f40b2c41cee8a9b37bff333d28c&w=230",
+      "file": "ct-arthrography-shoulder.png",
+      "sha256": "8a11e368d1c393822dad69d7e72570d3182b7fe78d6547a44a752a9fb02f7158",
+      "bytes": 51943,
+      "width": 230,
+      "height": 230
+    },
+    "UPPER LIMB/mri-elbow": {
+      "title": "MRI elbow",
+      "source_url": "https://www.imaios.com/en/e-anatomy/upper-limb/mri-elbow",
+      "image_url": "https://cdn1.imaios.com/i/images/8/4/6/0/310648-4-eng-GB/e81d628d2e86-elbow-mri-3d.png?q=75&s=8e56815a0959474aa58291ff5aa1f40f&w=230",
+      "file": "mri-elbow.png",
+      "sha256": "012dd0116e490705ce46a3b5ecd781e5a648e204b9b7124338b3a5a1aca39704",
+      "bytes": 70157,
+      "width": 230,
+      "height": 230
+    },
+    "UPPER LIMB/ct-arthrography-elbow": {
+      "title": "CT arthrography elbow",
+      "source_url": "https://www.imaios.com/en/e-anatomy/upper-limb/ct-arthrography-elbow",
+      "image_url": "https://cdn1.imaios.com/i/images/5/5/6/0/310655-4-eng-GB/f09334e69382-coude-arthroscanner.png?q=75&s=6a171e770ce362bab626152c98fdd138&w=230",
+      "file": "ct-arthrography-elbow.png",
+      "sha256": "089fa09f7c814f7edf8b9360f4d2c71f0416d101b4c1cb20837061d82d29cef7",
+      "bytes": 62802,
+      "width": 230,
+      "height": 230
+    },
+    "UPPER LIMB/mri-wrist": {
+      "title": "MRI wrist",
+      "source_url": "https://www.imaios.com/en/e-anatomy/upper-limb/mri-wrist",
+      "image_url": "https://cdn1.imaios.com/i/images/7/3/7/0/310737-4-eng-GB/b63f8143e0ba-wrist-mri-3d.png?q=75&s=776bf16d7b997eba06aefae53937b7f7&w=230",
+      "file": "mri-wrist.png",
+      "sha256": "cc86ddc89af0aa6df29d1958d78a949a9f99607d304433561d6fd45d17289e7c",
+      "bytes": 72077,
+      "width": 230,
+      "height": 230
+    },
+    "UPPER LIMB/mri-hand": {
+      "title": "MRI hand",
+      "source_url": "https://www.imaios.com/en/e-anatomy/upper-limb/mri-hand",
+      "image_url": "https://cdn1.imaios.com/i/images/4/4/7/0/310744-4-eng-GB/d64a42a685cd-hand-mr.png?q=75&s=37de91aa346772265645fdeb5d8688ab&w=230",
+      "file": "mri-hand.png",
+      "sha256": "5055286725cc6e91ac6297e6e0fd8de2a31833a68008781e86c97a2fb1628b23",
+      "bytes": 43914,
+      "width": 230,
+      "height": 230
+    },
+    "UPPER LIMB/mri-thumb": {
+      "title": "MRI thumb",
+      "source_url": "https://www.imaios.com/en/e-anatomy/upper-limb/mri-thumb",
+      "image_url": "https://cdn1.imaios.com/i/images/3/0/7/9/419703-3-eng-GB/0ede841793a5-thumb-hand-mri.png?q=75&s=c063ee91e3450887331ed928a78f2da1&w=230",
+      "file": "mri-thumb.png",
+      "sha256": "578e5337b3dd0ccde89513c14ac3a6eb5fcfc238eff4086ba2861b65d1e00665",
+      "bytes": 50675,
+      "width": 230,
+      "height": 230
+    },
+    "UPPER LIMB/mri-finger-of-hand": {
+      "title": "MRI finger of hand",
+      "source_url": "https://www.imaios.com/en/e-anatomy/upper-limb/mri-finger-of-hand",
+      "image_url": "https://cdn1.imaios.com/i/images/6/9/6/9/419696-3-eng-GB/e0cbf617684e-finger-mri.png?q=75&s=1658b65924421b4bef87e63ab4a8a7e9&w=230",
+      "file": "mri-finger-of-hand.png",
+      "sha256": "b2bd50426355ba8bd887ea11be2713a2b3e77045136ae576c2c256831476c471",
+      "bytes": 57474,
+      "width": 230,
+      "height": 230
+    },
+    "UPPER LIMB/arteriography-upper-extremity": {
+      "title": "Arteriography upper extremity",
+      "source_url": "https://www.imaios.com/en/e-anatomy/upper-limb/arteriography-upper-extremity",
+      "image_url": "https://cdn1.imaios.com/i/images/8/2/4/2/392428-3-eng-GB/97d80fd825f1-upper-limb-angiogram-dsa.png?q=75&s=b0aa5906462076403570e9f41565c24c&w=230",
+      "file": "arteriography-upper-extremity.png",
+      "sha256": "91b250401e72f777fab08dd03c8aaeedb1bb0e95b0f8a3c9bde2611b84c699bc",
+      "bytes": 62249,
+      "width": 230,
+      "height": 230
+    },
+    "LOWER LIMB/lower-extremity": {
+      "title": "Lower extremity",
+      "source_url": "https://www.imaios.com/en/e-anatomy/lower-limb/lower-extremity",
+      "image_url": "https://cdn1.imaios.com/i/images/8/0/7/1/131708-4-eng-GB/a0b877fe867a-mi-anatomie.png?q=75&s=13848f408f37a392da9233d2811418dc&w=230",
+      "file": "lower-extremity.png",
+      "sha256": "a7b1aa4f4ee17bb37bf701950c48d2d4a730e036cc9c70dee31933130b151bfb",
+      "bytes": 42314,
+      "width": 230,
+      "height": 230
+    },
+    "LOWER LIMB/radiography-lower-extremity": {
+      "title": "Radiography lower extremity",
+      "source_url": "https://www.imaios.com/en/e-anatomy/lower-limb/radiography-lower-extremity",
+      "image_url": "https://cdn1.imaios.com/i/images/1/1/7/1/131711-4-eng-GB/04ec3cbb1fae-membre-inferieur-radiographies.png?q=75&s=34083eee34a73622cf8903ed283c1500&w=230",
+      "file": "radiography-lower-extremity.png",
+      "sha256": "c061042d0c6d1b57d1a7bd605d7ad7fd2ec3b93b26384bbc454494a319c17713",
+      "bytes": 42721,
+      "width": 230,
+      "height": 230
+    },
+    "LOWER LIMB/mri-lower-extremity": {
+      "title": "MRI lower extremity",
+      "source_url": "https://www.imaios.com/en/e-anatomy/lower-limb/mri-lower-extremity",
+      "image_url": "https://cdn1.imaios.com/i/images/5/0/7/1/131705-4-eng-GB/c8a0cd0d94e5-lowerlimb.png?q=75&s=70c3cdb048d6e7d4752e20e59de09fd7&w=230",
+      "file": "mri-lower-extremity.png",
+      "sha256": "1666f84255cc7bd95175ae769324cea63e971bf4f1070db5dcc19fbf7aa53f26",
+      "bytes": 59990,
+      "width": 230,
+      "height": 230
+    },
+    "LOWER LIMB/arteriography-lower-extremity": {
+      "title": "Arteriography lower extremity",
+      "source_url": "https://www.imaios.com/en/e-anatomy/lower-limb/arteriography-lower-extremity",
+      "image_url": "https://cdn1.imaios.com/i/images/5/3/4/2/392435-3-eng-GB/b60736544b1c-lower-limb-angiogram-dsa.png?q=75&s=11d3219847addf056675732b4ddf967f&w=230",
+      "file": "arteriography-lower-extremity.png",
+      "sha256": "64e0161c7b377910ed2bcdb38b80f5eadf4b316e51499722074c372ebae9b194",
+      "bytes": 48349,
+      "width": 230,
+      "height": 230
+    },
+    "LOWER LIMB/hip-mri": {
+      "title": "Hip MRI",
+      "source_url": "https://www.imaios.com/en/e-anatomy/lower-limb/hip-mri",
+      "image_url": "https://cdn1.imaios.com/i/images/1/6/4/3/12723461-1-eng-GB/3932cb14ffbc-hip-mri-3t.png?q=75&s=6ad63ed7addec5967c69e84bb25dc025&w=230",
+      "file": "hip-mri.png",
+      "sha256": "f913bb7fa192da3cb8856b845113daa5937fe3a1d068915cfe6d34863d0bcd55",
+      "bytes": 74144,
+      "width": 230,
+      "height": 230
+    },
+    "LOWER LIMB/knee-mri": {
+      "title": "Knee MRI",
+      "source_url": "https://www.imaios.com/en/e-anatomy/lower-limb/knee-mri",
+      "image_url": "https://cdn1.imaios.com/i/images/6/0/7/0/12140706-1-eng-GB/2829370e59ca-knee-mri-3t.png?q=75&s=1231688889fc9aae2fd5be5076596ce7&w=230",
+      "file": "knee-mri.png",
+      "sha256": "7f7e158e45c5fdda1eba001f89c5d71190a76a1ecd8ef32bf71a479ea5214a69",
+      "bytes": 68100,
+      "width": 230,
+      "height": 230
+    },
+    "LOWER LIMB/lower-limb-cta": {
+      "title": "Lower limb CTA",
+      "source_url": "https://www.imaios.com/en/e-anatomy/lower-limb/lower-limb-cta",
+      "image_url": "https://cdn1.imaios.com/i/images/2/3/8/3/12723832-2-eng-GB/5f2c8a3e5e4f-lower-limb-cta.png?q=75&s=243825fed41448e7971262f9a49b23cf&w=230",
+      "file": "lower-limb-cta.png",
+      "sha256": "f1bd289b2d72cdb4e95398b46b0ba60a77ba8c51aaee163fb52ee63f5b5d3592",
+      "bytes": 41316,
+      "width": 230,
+      "height": 230
+    },
+    "LOWER LIMB/leg-arteries-and-bones": {
+      "title": "Leg arteries and bones",
+      "source_url": "https://www.imaios.com/en/e-anatomy/lower-limb/leg-arteries-and-bones",
+      "image_url": "https://cdn1.imaios.com/i/images/2/0/7/1/131702-5-eng-GB/847646218ccd-lower-limb-arteries.png?q=75&s=13d892b2870d425fdb2b53dec1344fd1&w=230",
+      "file": "leg-arteries-and-bones.png",
+      "sha256": "1a8954f93ef3760a44d6c98ec94a23781c0e03d90b749db5ea2d86b57c424140",
+      "bytes": 59670,
+      "width": 230,
+      "height": 230
+    },
+    "LOWER LIMB/ct-arthrography-knee": {
+      "title": "CT arthrography knee",
+      "source_url": "https://www.imaios.com/en/e-anatomy/lower-limb/ct-arthrography-knee",
+      "image_url": "https://cdn1.imaios.com/i/images/7/8/6/1/131687-4-eng-GB/dee0075f395f-genou-arthroscanner.png?q=75&s=ec9c6c095a6248af7d483b5a2f2a813c&w=230",
+      "file": "ct-arthrography-knee.png",
+      "sha256": "dbd592257986ae521a160f8e7541d0640e12abb47d4436205d71315444e63a5e",
+      "bytes": 62651,
+      "width": 230,
+      "height": 230
+    },
+    "LOWER LIMB/ankle-mri": {
+      "title": "Ankle MRI",
+      "source_url": "https://www.imaios.com/en/e-anatomy/lower-limb/ankle-mri",
+      "image_url": "https://cdn1.imaios.com/i/images/0/2/1/5/14435120-1-eng-GB/6a1b4b6308b7-ankle-mri-3t.png?q=75&s=d5f1a59fa4d78bab6a2c9d802155bf43&w=230",
+      "file": "ankle-mri.png",
+      "sha256": "e5c64fee838156b330ba885ca5da9e7e895ee11bcc4c54c74e1e39d2dcdb75f4",
+      "bytes": 92051,
+      "width": 230,
+      "height": 230
+    },
+    "LOWER LIMB/mri-ankle-and-hindfoot": {
+      "title": "MRI ankle and hindfoot",
+      "source_url": "https://www.imaios.com/en/e-anatomy/lower-limb/mri-ankle-and-hindfoot",
+      "image_url": "https://cdn1.imaios.com/i/images/8/7/6/1/131678-4-eng-GB/c3bbf6aeeec3-cheville.png?q=75&s=91f9334a4a1a70fa372476df7f92accb&w=230",
+      "file": "mri-ankle-and-hindfoot.png",
+      "sha256": "403c94f6fee53a933f03cf484f04394da59624cb2e40331010e0155af6e35496",
+      "bytes": 60793,
+      "width": 230,
+      "height": 230
+    },
+    "LOWER LIMB/forefoot-mri": {
+      "title": "Forefoot MRI",
+      "source_url": "https://www.imaios.com/en/e-anatomy/lower-limb/forefoot-mri",
+      "image_url": "https://cdn1.imaios.com/i/images/9/4/0/0/550049-2-eng-GB/forefoot-mri.png?q=75&s=b05c79c206a10768a10a198645b5be06&w=230",
+      "file": "forefoot-mri.png",
+      "sha256": "1fe0974a5acdc7268c693fbb535c96107cc85854a3151c76e2e7bdf358f8c9ba",
+      "bytes": 48516,
+      "width": 230,
+      "height": 230
+    },
+    "LOWER LIMB/ankle-and-foot-ct": {
+      "title": "Ankle and foot CT",
+      "source_url": "https://www.imaios.com/en/e-anatomy/lower-limb/ankle-and-foot-ct",
+      "image_url": "https://cdn1.imaios.com/i/images/2/1/1/5/14435112-1-eng-GB/ca1bfee21c6b-ankle-foot-ct.png?q=75&s=6277c70aed8d1ca8dcde08c65c5d1351&w=230",
+      "file": "ankle-and-foot-ct.png",
+      "sha256": "b004368f4965bc30eab68390a61b7f519a1936022d73c2d0516edacd6e3dd59c",
+      "bytes": 49962,
+      "width": 230,
+      "height": 230
+    }
+  }
+}

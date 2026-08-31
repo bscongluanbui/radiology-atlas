@@ -1,0 +1,32 @@
+{% extends "site_base.html" %}{% block title %}Anatomy · Thư viện giải phẫu hình ảnh{% endblock %}{% block body_class %}site-anatomy{% endblock %}
+{% block content %}
+<section class="anatomy-heading"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">HOME</a><span aria-hidden="true">/</span><span>ANATOMY</span></nav><div class="anatomy-heading-row"><div><h1>Khám phá Anatomy</h1><p>Chọn một vùng giải phẫu. Tìm một góc nhìn. Mở cả thế giới bên trong.</p></div><div class="library-summary"><span><strong>{{ total }}</strong>module được cấp quyền</span><span><strong>{{ groups|length }}</strong>vùng giải phẫu</span><span><strong>{{ ready }}</strong>module sẵn sàng</span></div></div></section>
+<main id="main-content" class="catalogue-surface" data-catalogue>
+<div class="catalogue-toolbar"><label class="catalogue-search"><span aria-hidden="true">⌕</span><input id="catalogueSearch" type="search" placeholder="Tìm module giải phẫu…" aria-label="Tìm module giải phẫu" autocomplete="off"></label>
+<details class="filter-menu" id="regionFilter"><summary>REGIONS <span class="filter-count" data-region-count hidden>0</span></summary><div class="filter-options" aria-label="Lọc theo vùng giải phẫu">
+{% for group in groups %}<label class="filter-option"><input type="checkbox" name="region" value="{{ group.key }}"><span>{{ group.label }}</span><small>{{ group.modules|length }}</small></label>{% endfor %}
+<button type="button" class="filter-clear" data-clear="region">Clear filters</button></div></details>
+<details class="filter-menu" id="modalityFilter"><summary>MODALITIES <span class="filter-count" data-modality-count hidden>0</span></summary><div class="filter-options" aria-label="Lọc theo loại hình ảnh học">
+{% for family,kinds in modalities %}<fieldset><legend>{{ family }}</legend>{% for kind in kinds %}<label class="filter-option"><input type="checkbox" name="modality" value="{{ kind }}"><span>{{ kind }}</span></label>{% endfor %}</fieldset>{% endfor %}
+<button type="button" class="filter-clear" data-clear="modality">Clear filters</button></div></details>
+<label class="ready-option"><input type="checkbox" id="readyOnly"> Chỉ module sẵn sàng</label>
+</div>
+<div class="catalogue-status"><span id="catalogueResult" role="status" aria-live="polite">{{ total }} module · {{ ready }} sẵn sàng</span><button type="button" class="all-clear" data-clear-all hidden>Xóa tất cả bộ lọc ×</button></div>
+<div class="catalogue-layout"><div class="catalogue-groups">
+{% for group in groups %}<section class="anatomy-group" id="region-{{ group.slug }}" data-group="{{ group.key }}"><header class="group-title"><h2>{{ group.label|upper }}<span>{{ group.vi }}</span></h2><span data-group-count>{{ group.modules|length }} module</span></header><p class="group-description">{{ group.description }}</p>
+<div class="module-grid">
+{% for module in group.modules %}
+{% if module.captured %}<a class="module-card" href="{{ url_for('viewer',key=module.key) }}" aria-label="Mở module {{ module.title }}"{% else %}<div class="module-card" aria-disabled="true" title="Module chưa có đủ dữ liệu để mở"{% endif %}
+ data-module-card data-region="{{ module.region }}" data-modality="{{ module.modality }}" data-title="{{ module.title }}" data-ready="{{ 'true' if module.captured else 'false' }}">
+{% if module.icon_url %}<img src="{{ module.icon_url }}" alt="" width="85" height="85" loading="lazy" decoding="async"><span class="module-fallback" aria-hidden="true" hidden>{{ module.modality }}</span>{% else %}<span class="module-fallback" aria-hidden="true">{{ module.modality }}</span>{% endif %}
+<div><h3>{{ module.title }}</h3><span class="module-modality">{{ module.modality }}</span><span class="module-state">{% if module.captured %}{{ module.series_count }} series{% else %}Đang cập nhật{% endif %}</span></div>{% if module.captured %}<span class="card-arrow" aria-hidden="true">↗</span></a>{% else %}</div>{% endif %}
+{% endfor %}
+</div></section>{% endfor %}
+<section class="catalogue-empty" id="catalogueEmpty" hidden><p class="section-eyebrow">NO MATCHES</p><h2>Chưa tìm thấy module phù hợp.</h2><p>Thử thay đổi vùng, modality hoặc từ khóa tìm kiếm.</p><button class="button button-outline" type="button" data-clear-all>Xóa tất cả bộ lọc</button></section>
+</div>
+<aside class="region-sidebar" aria-label="Chọn vùng cơ thể"><h2>Chọn vùng giải phẫu</h2><p>Một điểm chạm, một vùng khám phá.</p><div class="body-map"><img src="/portal/static/body-navigation.svg" alt="Sơ đồ toàn thân dùng để điều hướng vùng giải phẫu" width="170" height="350">
+{% for group in groups if group.x is defined %}<button type="button" class="body-zone" style="--x:{{ group.x }};--y:{{ group.y }}" data-region-toggle="{{ group.key }}" aria-label="Chọn vùng {{ group.vi }}" aria-pressed="false" title="{{ group.vi }}">{{ group.vi }}</button>{% endfor %}</div>
+<div class="region-shortcuts">{% for group in groups %}<button type="button" data-region-toggle="{{ group.key }}" aria-pressed="false"><span>{{ group.vi }}</span><small>{{ group.modules|length }}</small></button>{% endfor %}</div>
+<p class="map-credit">Sơ đồ điều hướng · <a href="https://commons.wikimedia.org/wiki/File:Human_silhouette_gender_neutral_front.svg" target="_blank" rel="noopener noreferrer">Sebastian Wallroth / CC0</a></p></aside>
+</div></main>
+{% endblock %}
