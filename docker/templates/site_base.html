@@ -1,22 +1,22 @@
 <!doctype html>
-<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#63508d">
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#63508d"><meta name="color-scheme" content="light dark">
 <title>{% block title %}Radiology Atlas · Khám phá giải phẫu hình ảnh{% endblock %}</title>
 <meta name="description" content="Không gian học tập giải phẫu hình ảnh. Khám phá module theo vùng cơ thể và loại hình ảnh học với tài khoản được cấp quyền.">
 <meta property="og:title" content="Radiology Atlas"><meta property="og:description" content="Khám phá giải phẫu hình ảnh, theo cách của bạn."><meta property="og:type" content="website">
 <link rel="icon" href="/portal/static/site-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/portal/static/site.css"><script src="/portal/static/site.js" defer></script>
+<script src="/portal/static/theme.js"></script><link rel="stylesheet" href="/portal/static/site.css"><script src="/portal/static/site.js" defer></script>
 </head><body class="{% block body_class %}site-home{% endblock %}" data-authenticated="{{ 'true' if current_user else 'false' }}">
 <a class="skip-link" href="#main-content">Đi tới nội dung</a>
 <header class="site-header"><a class="site-brand" href="/" aria-label="Radiology Atlas — Home"><img src="/portal/static/site-mark.svg" alt="" width="36" height="36"><span>RADIOLOGY <strong>ATLAS</strong></span></a>
-<nav class="site-nav" aria-label="Điều hướng chính">
+<nav class="site-nav" id="siteNavigation" aria-label="Điều hướng chính">
 <a href="/" {% if request.endpoint == 'home' %}aria-current="page"{% endif %}>Home</a>
 <a href="/anatomy" data-anatomy-link {% if request.endpoint == 'anatomy' %}aria-current="page"{% endif %}>Anatomy</a>
 <a class="nav-guide" href="/#guide">Hướng dẫn</a>
 {% if current_user %}<a class="nav-account" href="/account">{{ current_user.username }}</a>{% if current_user.role == 'root' %}<a class="nav-admin" href="/admin">Quản trị</a>{% endif %}
 <form action="/logout" method="post" class="nav-logout"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><button class="button button-glass small">Đăng xuất</button></form>
 {% else %}<a href="/login" class="button button-glass small" data-login-trigger data-next="/anatomy"><span aria-hidden="true">↗</span> Login</a>{% endif %}
-</nav></header>
+</nav><div class="header-actions"><button class="theme-toggle" type="button" data-theme-toggle aria-label="Bật giao diện tối" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true"></span><span data-theme-label>Giao diện tối</span></button><button class="mobile-nav-toggle" type="button" data-nav-toggle aria-controls="siteNavigation" aria-expanded="false"><span data-nav-icon aria-hidden="true">☰</span><span class="sr-only">Mở menu</span></button></div></header>
 {% block content %}{% endblock %}
 <footer class="site-footer"><div><a class="footer-brand" href="/">Radiology Atlas</a><p>Không gian khám phá giải phẫu hình ảnh.</p></div><div><a href="/anatomy" data-anatomy-link>Anatomy</a><a href="/#guide">Hướng dẫn truy cập</a><a href="https://html5up.net/stellar" target="_blank" rel="noopener noreferrer">Stellar · HTML5 UP</a></div></footer>
 {% if not current_user %}{% include "login_modal.html" %}{% endif %}

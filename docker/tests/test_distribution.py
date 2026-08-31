@@ -60,6 +60,29 @@ class DistributionTests(unittest.TestCase):
         for rule in ('docker/.env','docker/tests/','**/*.sqlite*','**/all_modules/'):
             self.assertIn(rule,ignore)
 
+    def test_mobile_navigation_and_dark_theme_contract(self):
+        site=(ROOT/'docker/templates/site_base.html').read_text(encoding='utf-8')
+        portal=(ROOT/'docker/templates/base.html').read_text(encoding='utf-8')
+        theme=(ROOT/'docker/static/theme.js').read_text(encoding='utf-8')
+        site_css=(ROOT/'docker/static/site.css').read_text(encoding='utf-8')
+        portal_css=(ROOT/'docker/static/portal.css').read_text(encoding='utf-8')
+        for template in (site,portal):
+            self.assertIn('/portal/static/theme.js',template)
+            self.assertIn('data-theme-toggle',template)
+            self.assertIn('data-nav-toggle',template)
+            self.assertIn('aria-expanded="false"',template)
+            self.assertIn('viewport-fit=cover',template)
+        self.assertIn('radiology-atlas-theme',theme)
+        self.assertIn('prefers-color-scheme: dark',theme)
+        self.assertIn('localStorage.setItem',theme)
+        self.assertIn('event.key !== "Escape"',theme)
+        for stylesheet in (site_css,portal_css):
+            self.assertIn('html[data-theme=dark]',stylesheet)
+            self.assertIn('@media(max-width:720px)',stylesheet)
+            self.assertIn('.mobile-nav-toggle',stylesheet)
+            self.assertIn('min-height:44px',stylesheet)
+        self.assertIn('docker/static/theme.js',{p.relative_to(ROOT).as_posix() for p in sources()})
+
     def test_local_build_separate(self):
         local=yaml.safe_load((ROOT/'docker/compose.build.yaml').read_text())['services']['viewer']
         self.assertIn('build',local)
