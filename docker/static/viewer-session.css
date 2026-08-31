@@ -1,1 +1,24 @@
 .atlas-session-nav{position:fixed;right:12px;bottom:5px;z-index:90;display:flex;gap:6px}.atlas-account-link,.atlas-library-link{border:1px solid #36515d;border-radius:6px;background:#111c25e8;color:#b8e9e2;padding:4px 9px;font:11px system-ui;text-decoration:none}.atlas-session-nav a:hover,.atlas-session-nav a:focus{background:#18463f;color:white;outline:1px solid #42cdb9}
+
+/* Website navigation sits beside Menu/Detail; the standalone viewer is unchanged. */
+.has-website-navigation .topbar{grid-template-columns:max-content minmax(180px,320px) minmax(0,1fr) auto;gap:12px}
+.viewer-page-navigation{display:flex;align-items:center;gap:7px;flex:0 0 auto;padding-right:8px;border-right:1px solid #36515d}
+.viewer-navigation-link{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 9px;text-decoration:none;white-space:nowrap}
+.viewer-navigation-link svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.viewer-navigation-link:focus-visible{outline:2px solid #42cdb9;outline-offset:2px}
+@media(max-width:1280px){
+  .has-website-navigation .topbar{grid-template-columns:max-content minmax(140px,1fr) auto}
+}
+@media(max-width:720px){
+  .has-website-navigation .topbar{grid-template-columns:minmax(0,1fr) auto;gap:6px}
+  .has-website-navigation .module-catalogue-control{display:none}
+  .has-website-navigation .left-topbar-controls{gap:4px}
+  .has-website-navigation .left-topbar-controls .tool-button{padding-inline:6px;font-size:11px}
+  .has-website-navigation .left-topbar-controls .detail-toggle-button{flex:0 0 auto}
+  .viewer-page-navigation{gap:4px;padding-right:4px}
+  .viewer-navigation-link{gap:4px}
+  .viewer-navigation-link svg{width:14px;height:14px}
+}
+@media(max-width:380px){
+  .has-website-navigation .left-topbar-controls .tool-icon{display:none}
+}

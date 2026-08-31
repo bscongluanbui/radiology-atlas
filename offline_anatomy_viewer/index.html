@@ -168,6 +168,7 @@
           <div class="slider-wrap">
             <input id="sliceSlider" type="range" min="1" max="1" value="1" aria-label="Current slice" disabled>
             <div class="slider-labels"><span>FIRST</span><span id="sliceIdLabel">SLICE ID —</span><span>LAST</span></div>
+            <span id="preloadStatus" class="preload-status" role="status" aria-live="off"></span>
           </div>
           <div id="filmstrip" class="filmstrip" aria-label="Nearby slices"></div>
         </section>
@@ -225,6 +226,7 @@
 
   <noscript>This offline anatomy viewer requires JavaScript.</noscript>
   <script src="./anatomy_language.js" defer></script>
+  <script src="./request_queue.js" defer></script>
   <script src="./resource_cache.js" defer></script>
   <script src="./app.js" defer></script>
 </body>

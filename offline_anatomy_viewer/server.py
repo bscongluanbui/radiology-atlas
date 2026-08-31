@@ -321,11 +321,12 @@ class AnatomyRepository:
             variants.append(normal.replace("extradural", "epidural"))
         return list(dict.fromkeys(variants))
 
-    def _match_slice_definition(self, key, slice_id, label, structures):
+    def _match_slice_definition(self, key, slice_id, label, structures, points_for_slice=None):
         if label.get("binding_verified") is True:
             definition = self._scoped_definition(structures,label.get("taxon_id"),label.get("ta_id"))
             ids = {str(x) for x in (label.get("point_ids") or [label.get("point_id")])}
-            points = [p for p in self._points(key).by_slice.get(str(slice_id),[])
+            points_for_slice = self._points(key).by_slice.get(str(slice_id),[]) if points_for_slice is None else points_for_slice
+            points = [p for p in points_for_slice
                       if str(p.get("id")) in ids
                       and str(p.get("ta_id"))==str(label.get("ta_id"))
                       and str(p.get("taxon_id"))==str(label.get("taxon_id"))
@@ -523,12 +524,15 @@ class AnatomyRepository:
         labels = []
         slice_meta = record.get("slice") or {}
         slice_id = slice_meta.get("active_id", slice_meta.get("id")) if isinstance(slice_meta, dict) else None
+        # One mtime-validated snapshot per request, not filesystem resolution
+        # per label. All taxon/TA/point/filter/overlay checks remain intact.
+        points_for_slice = self._points(key).by_slice.get(str(slice_id), [])
         previous_label: dict | None = None
         for index, label in enumerate(record.get("labels") or []):
             if not isinstance(label, dict):
                 continue
             enriched = dict(label)
-            definition, point = self._match_slice_definition(key, slice_id, label, structures)
+            definition, point = self._match_slice_definition(key, slice_id, label, structures, points_for_slice)
             continuation = not self._label_variants(label.get("text"))
             if continuation and previous_label and not record.get("exact_label_binding_schema_version"):
                 same_style = (
@@ -547,7 +551,7 @@ class AnatomyRepository:
             labels.append(enriched)
             previous_label = enriched
         hover_targets = []
-        points_by_id = {str(p.get("id")): p for p in self._points(key).by_slice.get(str(slice_id), [])}
+        points_by_id = {str(p.get("id")): p for p in points_for_slice}
         for target in record.get("hover_targets") or []:
             if not isinstance(target, dict):
                 continue

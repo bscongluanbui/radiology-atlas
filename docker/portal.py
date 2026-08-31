@@ -44,9 +44,15 @@ def create_app(config=None):
         MAX_CONTENT_LENGTH=65536, MAX_FORM_MEMORY_SIZE=65536, MAX_FORM_PARTS=2000,
         TRUSTED_HOSTS=[h for h in os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h],
         PROXY_HOPS=1, MAINTENANCE_ENABLED=True,
-        CACHE_MIB=integer_env("METADATA_CACHE_MIB", 128, 8, 512),
-        CACHE_TTL=integer_env("CACHE_TTL_SECONDS", 900, 60, 86400),
-        BROWSER_CACHE_MIB=integer_env("BROWSER_CACHE_MIB", 256, 16, 1024),
+        CACHE_MIB=integer_env("METADATA_CACHE_MIB", 512, 8, 512),
+        CACHE_TTL=integer_env("CACHE_TTL_SECONDS", 1800, 60, 86400),
+        BROWSER_CACHE_MIB=integer_env("BROWSER_CACHE_MIB", 512, 16, 1024),
+        DECODED_IMAGES=integer_env("DECODED_IMAGE_CACHE", 32, 8, 64),
+        DECODE_FORWARD=integer_env("DECODE_FORWARD", 20, 1, 48),
+        DECODE_BACKWARD=integer_env("DECODE_BACKWARD", 11, 0, 24),
+        DECODE_CONCURRENCY=integer_env("DECODE_CONCURRENCY", 2, 1, 4),
+        PRELOAD_CONCURRENCY=integer_env("PRELOAD_CONCURRENCY", 2, 1, 4),
+        IMAGE_CONCURRENCY=integer_env("IMAGE_CONCURRENCY", 4, 2, 8),
         SESSION_IDLE=integer_env("SESSION_IDLE_SECONDS", 1800, 300, 86400),
         SESSION_LIFETIME=integer_env("SESSION_LIFETIME_SECONDS", 28800, 900, 604800),
     )
@@ -306,7 +312,10 @@ def create_app(config=None):
 
     @app.get("/portal/runtime.js")
     def runtime():
-        settings = {"remote": True, "maxBytes": app.config["BROWSER_CACHE_MIB"] * 1024**2, "ttlMs": app.config["CACHE_TTL"] * 1000}
+        settings = {"remote": True, "maxBytes": app.config["BROWSER_CACHE_MIB"] * 1024**2, "ttlMs": app.config["CACHE_TTL"] * 1000,
+                    "decodedImages": app.config["DECODED_IMAGES"], "decodeForward": app.config["DECODE_FORWARD"],
+                    "decodeBackward": app.config["DECODE_BACKWARD"], "decodeConcurrency": app.config["DECODE_CONCURRENCY"],
+                    "preloadConcurrency": app.config["PRELOAD_CONCURRENCY"], "imageConcurrency": app.config["IMAGE_CONCURRENCY"]}
         if request.args.get("module"):
             settings["moduleKey"] = require_module(request.args["module"])
         return app.response_class("window.viewerRuntime=" + json.dumps(settings) + ";", mimetype="application/javascript")
@@ -322,16 +331,19 @@ def create_app(config=None):
             if not available:
                 abort(404, "Module này chưa có đủ dữ liệu để mở.")
         html = (VIEWER / "index.html").read_text(encoding="utf-8")
+        html = html.replace('class="app-shell menu-open"', 'class="app-shell menu-open has-website-navigation"')
+        panel_toolbar = '<div class="left-topbar-controls" role="toolbar" aria-label="Left-side viewer panels">'
+        html = html.replace(panel_toolbar, panel_toolbar + render_template("viewer_navigation.html"))
         html = html.replace("</head>", '<link rel="stylesheet" href="/portal/static/viewer-session.css"></head>')
         runtime_url = "/portal/runtime.js" + ("?" + urlencode({"module": key}) if key else "")
         html = html.replace('<script src="./resource_cache.js"', f'<script src="{runtime_url}" defer></script><script src="./resource_cache.js"')
         # SSR markup only; all anatomical UI/logic still comes from the local viewer.
-        html = html.replace("</body>", render_template("session_link.html") + "</body>")
+        html = html.replace("</body>", render_template("session_link.html") + '<script src="/portal/static/viewer-navigation.js" defer></script></body>')
         return html
 
     @app.get("/<path:asset>")
     def viewer_asset(asset):
-        if asset in {"app.js", "anatomy_language.js", "resource_cache.js", "styles.css"}:
+        if asset in {"app.js", "anatomy_language.js", "request_queue.js", "resource_cache.js", "styles.css"}:
             return send_file(VIEWER / asset, conditional=False, etag=False)
         if asset.startswith("assets/module-icons/") and asset.endswith(".png"):
             name = asset.removeprefix("assets/module-icons/")
@@ -364,7 +376,8 @@ def create_app(config=None):
         names = {"_structure_cache": "Structures", "_point_cache": "Slice targets", "_cross_reference_cache": "Cross references"}
         return render_template("admin.html", users=auth.users(), modules=modules, regions=group_catalogue(modules),
                                cache_stats={names[k]: c.stats() for k, c in caches.items()}, audit=auth.recent_audit(),
-                               browser_cache_mib=app.config["BROWSER_CACHE_MIB"], ttl=app.config["CACHE_TTL"])
+                               browser_cache_mib=app.config["BROWSER_CACHE_MIB"], ttl=app.config["CACHE_TTL"],
+                               decoded_images=app.config["DECODED_IMAGES"], preload_concurrency=app.config["PRELOAD_CONCURRENCY"])
 
     @app.post("/admin/users")
     def create_user():

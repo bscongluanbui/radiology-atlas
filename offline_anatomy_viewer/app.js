@@ -2,13 +2,20 @@
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const PREFERENCE_KEY = "radiology-atlas.preferences.v1";
+function runtimeSetting(name, fallback, min, max) {
+  const value = Number(window.viewerRuntime?.[name]);
+  return Number.isFinite(value) && value >= min ? Math.min(max, Math.floor(value)) : fallback;
+}
+const LOW_MEMORY_DEVICE = Number(window.navigator?.deviceMemory) > 0 && Number(window.navigator.deviceMemory) <= 4;
 const SLICE_CAPTURE_CACHE_FLOOR = 128;
-const SLICE_IMAGE_CACHE_LIMIT = 24;
-const SLICE_DECODE_FORWARD = 16;
-const SLICE_DECODE_BACKWARD = 7;
-const SLICE_DECODE_CONCURRENCY = 2;
-const SERIES_PRELOAD_CONCURRENCY = 4;
+const SLICE_IMAGE_CACHE_LIMIT = Math.min(LOW_MEMORY_DEVICE ? 16 : 64, runtimeSetting("decodedImages", 32, 8, 64));
+const SLICE_DECODE_FORWARD = Math.min(Math.floor((SLICE_IMAGE_CACHE_LIMIT - 1) * 2 / 3), runtimeSetting("decodeForward", 20, 1, 48));
+const SLICE_DECODE_BACKWARD = Math.min(SLICE_IMAGE_CACHE_LIMIT - SLICE_DECODE_FORWARD - 1, runtimeSetting("decodeBackward", 11, 0, 24));
+const SLICE_DECODE_CONCURRENCY = runtimeSetting("decodeConcurrency", 2, 1, 4);
+const SERIES_PRELOAD_CONCURRENCY = runtimeSetting("preloadConcurrency", 2, 1, 4);
 const SERIES_PRELOAD_RETRIES = 1;
+const sliceRequestQueue = new window.ViewerRequestQueue({ concurrency: 2, background: 1 });
+const slicePriorityHints = new Map();
 const DRAG_THRESHOLD = 4;
 const DRAG_SLICE_PIXELS = 8;
 const DRAG_ZOOM_RATE = 0.006;
@@ -104,7 +111,7 @@ function cacheElements() {
     "targetsButton", "brightnessSlider", "contrastSlider", "resetImageButton", "sliceMeta", "fullscreenButton",
     "anatomyViewport", "sceneAnchor", "scene", "anatomyImage", "annotationLayer", "anatomyTooltip",
     "emptyState", "loadingState", "errorState", "errorMessage", "captureStatus", "previousSliceButton",
-    "cineButton", "nextSliceButton", "sliceNumber", "sliceTotal", "sliceSlider", "sliceIdLabel", "filmstrip",
+    "cineButton", "nextSliceButton", "sliceNumber", "sliceTotal", "sliceSlider", "sliceIdLabel", "filmstrip", "preloadStatus",
     "structureSearch", "sliceStructuresTab", "searchStructuresTab", "structureListTitle", "structureCount",
     "structureList", "structureEmpty", "definitionPanel", "filterCount", "filterList", "shortcutDialog",
   ].forEach((id) => { el[id] = document.getElementById(id); });
@@ -130,10 +137,10 @@ function cacheElements() {
   });
 }
 
-async function api(path, query = {}, { cache = "no-store" } = {}) {
+async function api(path, query = {}, { cache = "no-store", signal, priority = "auto" } = {}) {
   const url = new URL(path, location.origin);
   Object.entries(query).forEach(([key, value]) => url.searchParams.set(key, String(value)));
-  const response = await fetch(url, { cache });
+  const response = await fetch(url, { cache, signal, priority });
   if (response.status === 401 && window.viewerRuntime?.remote) {
     window.viewerResourceCache?.clear();
     location.assign("/login");
@@ -187,6 +194,7 @@ function activeSeriesKey() {
 }
 
 function clearSliceCaches({ advanceDataRevision = true } = {}) {
+  sliceRequestQueue.clear(); slicePriorityHints.clear();
   sliceCaptureCache.clear(); sliceImageCache.clear(); sliceResourceCache.clear();
   window.viewerResourceCache?.clear();
   decodePrefetchQueue = [];
@@ -194,6 +202,7 @@ function clearSliceCaches({ advanceDataRevision = true } = {}) {
   seriesPreloadSession = null;
   state.seriesRevision += 1;
   if (advanceDataRevision) state.dataRevision = Date.now();
+  updatePreloadStatus();
 }
 
 function versionedDataUrl(url) {
@@ -222,11 +231,14 @@ function descriptorIsCurrent(descriptor) {
   return Boolean(current && descriptor && current.key === descriptor.key);
 }
 
-function fetchSliceCapture(descriptor, { prefetch = false } = {}) {
-  return cachedPromise(sliceCaptureCache, descriptor.key, currentSeriesCacheLimit(), () => api("/api/slice", {
-    key: descriptor.moduleKey, series: descriptor.seriesDirectory,
-    variant: descriptor.variantDirectory, slice: descriptor.number, rev: descriptor.revision, prefetch: prefetch ? 1 : 0,
-  }, { cache: "default" }), "capture");
+function fetchSliceCapture(descriptor, { prefetch = false, priority = prefetch ? 2 : 0 } = {}) {
+  slicePriorityHints.set(descriptor.key, Math.min(priority, slicePriorityHints.get(descriptor.key) ?? priority));
+  sliceRequestQueue.promote(descriptor.key, priority);
+  return cachedPromise(sliceCaptureCache, descriptor.key, currentSeriesCacheLimit(), () =>
+    sliceRequestQueue.schedule(descriptor.key, (signal) => api("/api/slice", {
+      key: descriptor.moduleKey, series: descriptor.seriesDirectory,
+      variant: descriptor.variantDirectory, slice: descriptor.number, rev: descriptor.revision, prefetch: prefetch ? 1 : 0,
+    }, { cache: "default", signal, priority: priority === 0 ? "high" : "low" }), slicePriorityHints.get(descriptor.key) ?? priority), "capture");
 }
 
 function markSliceResourceReady(url) {
@@ -236,9 +248,11 @@ function markSliceResourceReady(url) {
 }
 
 function warmSliceImageBytes(url) {
+  // Completion markers may outlive an LRU/TTL eviction of actual bytes.
+  if (window.viewerResourceCache && !window.viewerResourceCache.has(url)) sliceResourceCache.delete(url);
   return cachedPromise(sliceResourceCache, url, currentSeriesCacheLimit(), async () => {
     if (window.viewerResourceCache) {
-      await window.viewerResourceCache.load(url);
+      await window.viewerResourceCache.load(url, { priority: 2 });
       return true;
     }
     const response = await fetch(url, { cache: "force-cache", priority: "low" });
@@ -252,12 +266,13 @@ function warmSliceImageBytes(url) {
 }
 
 function decodeSliceImage(url, { lowPriority = false } = {}) {
+  if (!lowPriority) window.viewerResourceCache?.promote(url, 0);
   return cachedPromise(sliceImageCache, url, SLICE_IMAGE_CACHE_LIMIT, async () => {
     const image = new Image();
     image.decoding = "async";
     if (lowPriority) image.fetchPriority = "low";
     image.src = window.viewerResourceCache
-      ? await window.viewerResourceCache.dataUrl(await window.viewerResourceCache.load(url))
+      ? await window.viewerResourceCache.source(url, { priority: lowPriority ? 1 : 0 })
       : url;
     if (image.decode) await image.decode();
     else await new Promise((resolve, reject) => {
@@ -272,6 +287,9 @@ function decodeSliceImage(url, { lowPriority = false } = {}) {
 window.viewerSliceCacheDiagnostics = () => ({
   captureLimit: currentSeriesCacheLimit(), imageLimit: SLICE_IMAGE_CACHE_LIMIT,
   resourceLimit: currentSeriesCacheLimit(),
+  decodeForward: SLICE_DECODE_FORWARD, decodeBackward: SLICE_DECODE_BACKWARD,
+  decodeConcurrency: SLICE_DECODE_CONCURRENCY, preloadConcurrency: SERIES_PRELOAD_CONCURRENCY,
+  metadataRequests: sliceRequestQueue.diagnostics(),
   captures: sliceCaptureCache.size, images: sliceImageCache.size,
   resources: sliceResourceCache.size,
   encoded: window.viewerResourceCache?.diagnostics() || null,
@@ -953,6 +971,19 @@ function geometryLabelGroups(capture) {
   return groups;
 }
 
+function assignCachedImage(image, url, { svg = false, priority = 2 } = {}) {
+  const apply = (value) => { if (svg) image.setAttribute("href", value); else image.src = value; };
+  if (!window.viewerResourceCache) { apply(url); return; }
+  image.dataset.resourceUrl = url;
+  window.viewerResourceCache.source(url, { priority }).then((value) => {
+    if (image.dataset.resourceUrl === url && image.isConnected !== false) apply(value);
+  }).catch((error) => {
+    if (error.name !== "AbortError" && image.isConnected !== false && image.dataset.resourceUrl === url) {
+      if (typeof Event !== "undefined") image.dispatchEvent?.(new Event("error"));
+    }
+  });
+}
+
 function renderPixelOverlays() {
   const coverage = state.capture?.pixel_overlays;
   const rows = coverage?.valid_layers || [];
@@ -967,7 +998,7 @@ function renderPixelOverlays() {
     const transform = layer.transform;
     if (!Array.isArray(transform) || transform.length !== 6 || !transform.every(Number.isFinite)) return;
     const image = document.createElementNS(SVG_NS, "image");
-    image.setAttribute("href", versionedDataUrl(layer.image_url));
+    assignCachedImage(image, versionedDataUrl(layer.image_url), { svg: true, priority: 1 });
     image.setAttribute("width", String(layer.width)); image.setAttribute("height", String(layer.height));
     image.setAttribute("transform", `matrix(${transform.join(" ")})`);
     const muted = state.highlightFilterIds.size && !layer.filter_ids.some((id) => state.highlightFilterIds.has(String(id)));
@@ -1576,14 +1607,15 @@ function imageUrlFor(series, variant, number) {
 
 function renderFilmstrip() {
   el.filmstrip.replaceChildren();
-  if (!state.variant) return;
+  if (!state.variant || !state.filmstripVisible) return;
   const start = Math.max(0, state.slicePosition - 3);
   const end = Math.min(state.variant.slices.length, state.slicePosition + 4);
   for (let index = start; index < end; index += 1) {
     const number = state.variant.slices[index]; const button = document.createElement("button"); button.type = "button";
     button.className = `filmstrip-button${index === state.slicePosition ? " active" : ""}`;
     button.setAttribute("aria-label", `Open slice ${number}`);
-    const image = document.createElement("img"); image.alt = ""; image.loading = "lazy"; image.src = sliceImageUrl(number);
+    const image = document.createElement("img"); image.alt = ""; image.loading = "lazy";
+    assignCachedImage(image, sliceImageUrl(number));
     const label = document.createElement("small"); label.textContent = pad(number);
     button.append(image, label); button.addEventListener("click", () => setSlicePosition(index)); el.filmstrip.append(button);
   }
@@ -1638,6 +1670,7 @@ function pumpSeriesPreload() {
       .finally(() => {
         if (session !== seriesPreloadSession) return;
         session.active -= 1;
+        updatePreloadStatus();
         pumpSeriesPreload();
       });
   }
@@ -1654,7 +1687,15 @@ function ensureFullSeriesPreload(direction = 1) {
       total: queue.length, completed: 0, failed: 0, active: 0,
     };
   } else prioritizeSeriesPreload(direction);
+  updatePreloadStatus();
   pumpSeriesPreload();
+}
+
+function updatePreloadStatus() {
+  if (!el.preloadStatus) return;
+  const session = seriesPreloadSession;
+  el.preloadStatus.textContent = session ? `Preload ${session.completed}/${session.total}${session.failed ? ` · ${session.failed} retry needed` : ""}` : "";
+  el.preloadStatus.title = "Current series preload progress; LRU/TTL may evict older resources after download.";
 }
 
 function pumpDecodePrefetch() {
@@ -1662,7 +1703,7 @@ function pumpDecodePrefetch() {
     const descriptor = decodePrefetchQueue.shift();
     if (!descriptorBelongsToActiveSeries(descriptor)) continue;
     decodePrefetchActive += 1;
-    fetchSliceCapture(descriptor, { prefetch: true })
+    fetchSliceCapture(descriptor, { prefetch: true, priority: 1 })
       .then((capture) => descriptorBelongsToActiveSeries(descriptor)
         ? decodeSliceImage(versionedDataUrl(capture.image_url), { lowPriority: true }) : null)
       .catch(() => {})
@@ -1925,7 +1966,7 @@ function renderMprPanel() {
     header.append(title, meta);
     const frame = document.createElement("span"); frame.className = "mpr-frame";
     const image = document.createElement("img"); image.alt = `${series.label} reference image`;
-    image.loading = "lazy"; image.src = imageUrlFor(series, variant, previewNumber);
+    image.loading = "lazy"; assignCachedImage(image, imageUrlFor(series, variant, previewNumber));
     frame.append(image);
     appendMprCrossReference(frame, image, crossReference, series);
     card.append(header, frame);
@@ -1987,6 +2028,7 @@ function setVisibility(field, value) {
   if (field === "detailsVisible") state.definitionPeek = false;
   state[field] = Boolean(value);
   syncVisibilityControls();
+  if (field === "filmstripVisible") renderFilmstrip();
   savePreferences();
   window.setTimeout(() => { if (state.capture) fitView(); }, 30);
 }
@@ -2056,6 +2098,8 @@ function stopCine() {
 function toggleCine() { if (state.cineTimer) stopCine(); else startCine(); }
 
 function bindEvents() {
+  window.addEventListener("pagehide", () => { stopCine(); clearSliceCaches({ advanceDataRevision: false }); });
+  window.addEventListener("pageshow", (event) => { if (event.persisted && state.variant) showCurrentSlice(); });
   el.anatomyLanguageSelect.addEventListener("change", () => {
     state.anatomyLanguage = el.anatomyLanguageSelect.value;
     savePreferences(); loadAnatomyLanguage();

@@ -109,9 +109,9 @@ docker compose run --rm viewer python docker/manage.py create-root --username ba
 | Thành phần | Mặc định | Dọn / giới hạn |
 |---|---:|---|
 | Ảnh/JSON copy trên đĩa server | 0 | Đọc từ data, không ghi cache xuống data |
-| Metadata RAM server | 128 MiB | 3 LRU, tối đa 8 mục mỗi loại; TTL 900 giây; dọn mỗi 60 giây |
-| Ảnh nén trong RAM mỗi tab | 256 MiB | Preload toàn bộ series đang mở; LRU byte-budget; TTL 900 giây; dọn mỗi 60 giây |
-| Ảnh đã giải mã mỗi tab | 24 ảnh | LRU riêng; RAM phụ thuộc kích thước ảnh, ngoài ngân sách ảnh nén |
+| Metadata RAM server | 512 MiB | 3 LRU, tối đa 8 mục mỗi loại; TTL 1800 giây; dọn mỗi 60 giây |
+| Blob + data URL trong RAM mỗi tab | 512 MiB | Preload toàn bộ series đang mở; LRU byte-budget; TTL 1800 giây; dọn mỗi 60 giây |
+| Ảnh đã giải mã mỗi tab | 32 ảnh | LRU riêng; RAM phụ thuộc kích thước ảnh, ngoài ngân sách ảnh nén |
 | Slice JSON và trạng thái preload | Series hiện tại | Giới hạn số mục theo độ dài series, xóa khi đổi series/module |
 | Cache HTTP dữ liệu server | Không lưu lâu | `private, no-store`; preload dùng RAM tab thay cho cache đĩa |
 | `/tmp` viewer | 64 MiB tmpfs | Tự hết khi container tái tạo |
@@ -120,13 +120,15 @@ docker compose run --rm viewer python docker/manage.py create-root --username ba
 | SQLite chính | Tối đa 64 MiB | Session/rate hết hạn tự xóa, WAL checkpoint, incremental vacuum |
 | Build cache chuyên dụng | Mục tiêu 2 GB, giữ 256 MB | BuildKit GC + script cleanup hàng ngày |
 
-`METADATA_CACHE_MIB`, `BROWSER_CACHE_MIB`, `CACHE_TTL_SECONDS` trong `.env` có thể đổi rồi
+Các biến cache/preload trong `.env` có thể đổi rồi
 `docker compose up -d --force-recreate viewer`. TTL RAM là thời gian không dùng mục cache.
 Tab bị trình duyệt đưa nền có thể bị trì hoãn timer; cache vẫn bị giới hạn byte khi thêm ảnh.
 Series lớn hơn ngân sách vẫn được preload theo lượt nhưng LRU sẽ bỏ ảnh cũ; muốn giữ hết ảnh nén
 cùng lúc cần tăng `BROWSER_CACHE_MIB` theo RAM máy người dùng. Tổng RAM tab lớn hơn riêng số này
 vì còn ảnh giải mã, JSON, DOM, preload đang tải và bộ nhớ trình duyệt. Container mặc định giới hạn
-768 MiB; nếu tăng cache server lớn, tăng `mem_limit` tương ứng trong Compose.
+3 GiB qua `VIEWER_MEMORY_LIMIT`. Đây là profile VPS 2 core / 12 GB RAM; ngân sách không cấp phát trước.
+Xem [PERFORMANCE.md](PERFORMANCE.md) để biết cấu hình 20/11 slice, 2 preload worker,
+4 request ảnh, giới hạn máy ít RAM và cách cập nhật `.env` cũ.
 
 BuildKit GC là cơ chế thu gom sau build, không phải quota cứng trong lúc build. Xem
 [BuildKit GC settings](https://docs.docker.com/build/buildkit/toml-configuration/).

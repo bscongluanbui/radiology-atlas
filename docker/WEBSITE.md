@@ -55,3 +55,10 @@ Native Docker ARM64/AMD64 vẫn cần smoke test trên server như `docker/READM
   Trang website dùng HTML/CSS/JavaScript riêng, không mang nội dung Lorem Ipsum hay scripts của bản demo.
 - Thumbnail module: tài sản IMAIOS đã có trong `offline_anatomy_viewer/assets/module-icons/manifest.json`.
 - Body navigation SVG: [Human silhouette gender neutral front](https://commons.wikimedia.org/wiki/File:Human_silhouette_gender_neutral_front.svg), Sebastian Wallroth, CC0 1.0; file nguồn giữ nguyên.
+
+## Điều hướng trong viewer
+
+Viewer web có **Home** và **Back** ngay cạnh Menu/Detail. Home mở trang chủ `/`.
+Back dùng lịch sử trình duyệt khi đến từ một trang cùng website; mở `/anatomy` khi
+vào bằng liên kết trực tiếp, tab mới, trang đăng nhập hoặc trang bên ngoài.
+Ctrl/Cmd-click vẫn mở liên kết bình thường. Viewer standalone và các công cụ giải phẫu giữ nguyên.

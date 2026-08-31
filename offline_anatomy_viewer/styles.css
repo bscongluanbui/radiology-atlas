@@ -1129,3 +1129,4 @@ select:focus-visible,
 .anatomy-language-control label { font-size: 11px; color: var(--text); }
 .anatomy-language-control select { width: 100%; min-width: 0; padding: 8px; border-radius: 6px; border: 1px solid var(--line); background: #0a1216; color: var(--text); font: inherit; }
 .anatomy-language-control small { color: var(--muted); font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
+.preload-status { display: block; color: var(--text-muted, #91a3ac); font-size: 10px; line-height: 1.2; min-height: 12px; }

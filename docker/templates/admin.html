@@ -27,7 +27,8 @@
 <section class="card"><h2>Cache và dung lượng</h2><p>Cache ảnh trên đĩa server: <strong>0</strong>. Ảnh được đọc trực tiếp từ data.</p>
 <table><thead><tr><th>Cache RAM metadata</th><th>Số mục</th><th>Đang dùng / giới hạn</th></tr></thead><tbody>
 {% for name,stat in cache_stats.items() %}<tr><td>{{ name }}</td><td>{{ stat.entries }}/8</td><td>{{ (stat.bytes/1048576)|round(1) }} / {{ (stat.limit_bytes/1048576)|round(1) }} MiB</td></tr>{% endfor %}</tbody></table>
-<p>Cache ảnh nén của mỗi tab: tối đa {{ browser_cache_mib }} MiB; ảnh giải mã: tối đa 24 ảnh, tính riêng. TTL khi không sử dụng: {{ ttl }} giây. Server và tab đang mở dọn mỗi 60 giây; đổi series sẽ xóa cache ảnh tab.</p>
+<p>Cache mỗi tab: tối đa {{ browser_cache_mib }} MiB cho Blob và data URL đã ghi nhớ; ảnh giải mã: tối đa {{ decoded_images }} ảnh, tính riêng. Máy báo RAM ≤4 GB tự hạ giới hạn. TTL khi không sử dụng: {{ ttl }} giây. Server và tab đang mở dọn mỗi 60 giây; đổi series sẽ xóa cache ảnh tab.</p>
+<p>Preload toàn series: {{ preload_concurrency }} tác vụ nền. Ảnh chính, filmstrip, MPR và overlays dùng chung cache. JSON có 1 suất nền và 1 suất ưu tiên cho slice đang xem. Cache ảnh và ảnh giải mã dùng RAM máy người xem; cache metadata trong bảng trên dùng RAM server.</p>
 <p class="muted">Nhật ký Docker: tối đa 3 × 10 MB mỗi dịch vụ. Audit: 30 ngày hoặc 10.000 sự kiện. SQLite: tối đa 64 MiB dữ liệu chính; WAL được checkpoint định kỳ.</p>
 <form action="/admin/cache/clear" method="post"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><button>Dọn cache server ngay</button></form></section>
 <section class="card"><h2>50 hoạt động gần nhất</h2><div class="table-scroll"><table><thead><tr><th>Thời gian</th><th>Người thực hiện</th><th>Hành động</th><th>Đối tượng</th></tr></thead><tbody>

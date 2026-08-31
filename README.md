@@ -140,6 +140,7 @@ vị trí này cũng được `.gitignore` loại khỏi Git. Website có đăng
 - [Tài khoản Root/Admin/Standard](docker/ACCOUNTS.md)
 - [Docker: cài đặt, HTTPS, cache, backup, rollback](docker/README.md)
 - [Home / Anatomy / Viewer](docker/WEBSITE.md)
+- [Tốc độ tải ảnh, cache/preload và số đo đối chiếu](docker/PERFORMANCE.md)
 - [Chi tiết viewer local](offline_anatomy_viewer/README.md)
 - [Nguồn assets](THIRD_PARTY_NOTICES.md)
 - Tests ở `docker/tests/`; tests HTTP cần data thật và một thư mục state kiểm thử mới, không dùng state sản xuất.
