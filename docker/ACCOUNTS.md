@@ -1,3 +1,5 @@
+> Triển khai / update hiện tại: [INSTALL.md](INSTALL.md) (GHCR public + Tunnel, không build trên VPS).
+
 # Root / Admin / Standard
 
 ## Vào trang quản trị
@@ -22,7 +24,7 @@ API slice/structure/search/translations, ảnh, overlays và cả thumbnail; s�
 Sau khi cập nhật nguồn, build/chạy container:
 
 ```bash
-cd /opt/radiology-atlas/docker
+cd /home/ubuntu/radiology-atlas/docker
 docker compose run --rm viewer python docker/manage.py create-root --username root
 ```
 

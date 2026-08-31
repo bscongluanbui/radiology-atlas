@@ -71,7 +71,8 @@ def create_app(config=None):
         setattr(repository, name, cache)
     app.extensions.update(auth=auth, repository=repository, metadata_caches=caches)
     if app.config["PROXY_HOPS"]:
-        # Compose exposes only Caddy. Do not publish port 8080 or add untrusted proxies.
+        # Only Caddy or the trusted cloudflared connector reaches this internal network.
+        # Port 8080 is never published; preserve Host and trust exactly one proxy hop.
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=0, x_port=0)
 
     stop = threading.Event()

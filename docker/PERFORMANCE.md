@@ -1,3 +1,5 @@
+> Triển khai / update hiện tại: [INSTALL.md](INSTALL.md) (GHCR public + Tunnel, không build trên VPS).
+
 # Cache và preload — profile VPS ARM64/AMD64, 2 core, 12 GB RAM
 
 Cập nhật 31/08/2026. Nguồn local và Docker dùng chung viewer. Home/Back, tương tác,
@@ -103,14 +105,14 @@ VIEWER_MEMORY_LIMIT=3g
 Tại thư mục gốc repository:
 
 ```bash
-bash docker/update.sh
 cd docker
-docker compose up -d --force-recreate viewer
+docker compose pull && docker compose up -d --force-recreate --pull never --wait --wait-timeout 180
 docker compose ps
 docker stats --no-stream
 ```
 
-Script update dùng quy trình backup/rollback sẵn có. Sau đó reload tab viewer.
+Tùy chọn: `bash update.sh` giữ image rollback và tự phục hồi nếu healthcheck thất bại.
+Chạy `bash backup-state.sh` riêng trước bản update đổi schema. Sau đó reload tab viewer.
 Preview Windows dùng default của Python, không tự đọc `docker/.env`.
 Trên Root `/admin`, xem ngân sách/usage metadata. Trong console tab viewer:
 

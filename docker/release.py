@@ -26,6 +26,9 @@ def sources():
             continue
         if path.suffix in {".py", ".html", ".css", ".js", ".cjs", ".sh", ".md", ".svg", ".toml", ".yaml", ".service", ".timer"} or path.name in {"Dockerfile", "Dockerfile.dockerignore", "Caddyfile", ".env.example", "requirements.txt"}:
             files.append(path)
+    workflows = ROOT/".github/workflows"
+    if workflows.is_dir():
+        files += [p for p in workflows.iterdir() if p.is_file() and p.suffix in {".yml", ".yaml"}]
     return sorted(set(files + metadata))
 
 

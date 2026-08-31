@@ -1,149 +1,63 @@
 # Radiology Atlas
 
-Website Home → Anatomy → Viewer, quản trị Root/Admin/Standard và Docker cho Ubuntu **amd64 / arm64**.
-Một bộ nguồn dùng chung cho viewer local và container; các công cụ giải phẫu bên trong giữ nguyên.
+Home → Anatomy → Viewer, Root/Admin/Standard. Ubuntu **ARM64 và AMD64**.
+Repo: https://github.com/bscongluanbui/radiology-atlas
 
-**Repo này chỉ chứa phần mềm. Data giải phẫu sẽ được đưa lên server riêng sau.**
+## Cài trên VPS hiện tại
 
-## Có gì trong repo?
+Hướng dẫn từng bước: **[docker/INSTALL.md](docker/INSTALL.md)**.
 
-```text
-README.md
-.gitignore / .gitattributes
-THIRD_PARTY_NOTICES.md
-docker/                         # Website, tài khoản, Docker, cài đặt/update/cache
-offline_anatomy_viewer/          # Viewer hiện tại, thumbnails và chỗ trống bản dịch
-anatomy_identity.py              # Thư viện định danh giải phẫu
-overlay_capture.py              # Dependency kiểm tra overlay mà viewer đang import
-overlay_capture.js
-overlay_runtime.js
-```
+- Source đã clone tại `/home/ubuntu/radiology-atlas/`.
+- Domain `bcanatomy.site`; dùng lại Cloudflare Tunnel `arm`, container `thirsty_agnesi`.
+- Image: `ghcr.io/bscongluanbui/radiology-atlas:latest` (đặt package Public một lần sau lần publish đầu).
+- Production Compose chỉ pull image; VPS không cần build hay Buildx.
+- Data ngoài image, giữ nguyên cây `all_modules`; volume tài khoản giữ nguyên khi tạo lại container.
 
-Bốn file Python/JS ở gốc là dependency của viewer, không phải bộ công cụ collect đầy đủ.
-Không có `imaios_data`, ảnh slice, raw captures, database user, `.env`, mật khẩu, cache, log,
-browser profile hay các thư mục delivery/test cũ. 84 thumbnail giao diện vẫn được giữ để hiển thị module.
-Thư mục bản dịch trong viewer giữ cấu trúc hiện tại để bổ sung tiếng Việt sau.
+## Cập nhật phần mềm sau này
 
-## 1. Đưa nguồn lên GitHub
-
-Tạo một repository **rỗng** trên GitHub, chưa thêm README, license hoặc gitignore vì bộ này đã có README/gitignore.
-Thay URL ví dụ bên dưới bằng URL repo thật. Trong PowerShell trên máy hiện tại:
-
-```powershell
-cd E:\coding\radiology\web\radiology-atlas-github
-git init -b main
-git add .
-git status --short
-git commit -m "Initial Radiology Atlas website and viewer"
-git remote add origin https://github.com/YOUR_USER/radiology-atlas.git
-git push -u origin main
-```
-
-Đăng nhập GitHub bằng cơ chế xác thực Git của bạn khi được yêu cầu. Không đặt token/mật khẩu trong URL.
-Nếu dùng giao diện upload, đưa **nội dung bên trong thư mục này** vào gốc repo, không thêm một lớp thư mục ngoài.
-Không upload toàn bộ workspace cũ `E:\coding\radiology\web`.
-
-## 2. Clone về Ubuntu
-
-Cài Git và Docker Engine + Compose + Buildx theo [Docker Ubuntu](https://docs.docker.com/engine/install/ubuntu/).
-Sau đó, bằng tài khoản quản lý Docker:
+Máy phát triển: kiểm thử nguồn, commit/push vào `main`. GitHub Actions tự kiểm thử,
+build và chạy thử **cả linux/amd64 và linux/arm64**, rồi publish `latest` + `sha-<commit>`.
+Đợi workflow **Publish viewer image** thành công, sau đó trên VPS:
 
 ```bash
-sudo install -d -m 0755 -o "$USER" -g "$(id -gn)" /opt/radiology-atlas
-git clone https://github.com/YOUR_USER/radiology-atlas.git /opt/radiology-atlas
-cd /opt/radiology-atlas/docker
-cp -n .env.example .env
-chmod 600 .env
-nano .env
+cd /home/ubuntu/radiology-atlas/docker
+docker compose pull
+docker compose up -d --force-recreate --pull never --wait --wait-timeout 180
 ```
 
-Điền tên miền đã trỏ VPS và đường dẫn data dự kiến:
+Hai lệnh cập nhật image và container, không thay data hoặc volume tài khoản.
+`--pull never` ở lệnh thứ hai dùng đúng image vừa pull; không tải lần nữa.
+Nếu pull báo lỗi, dừng trước bước tạo lại. Có thể nối hai lệnh bằng `&&`.
+Viewer có thể gián đoạn ngắn khi container được thay.
 
-```dotenv
-DDNS_HOST=atlas.example.com
-DATA_ROOT=/srv/radiology/imaios_data/all_modules
-```
+`docker compose pull` **không lấy file Compose/.env/scripts từ Git**. Chỉ khi bản phát hành
+thay cấu hình hạ tầng, chạy thêm `git pull --ff-only` và bổ sung biến `.env` theo release note.
+`.env` được Git bỏ qua nên các giá trị cũ không tự đổi. Mỗi thay đổi viewer dùng chung nguồn
+`offline_anatomy_viewer/` với bản local, không duy trì bản viewer thứ hai trong Docker.
 
-`DDNS_HOST` nhận tên miền thường, không bắt buộc dùng DDNS; bỏ `https://` và dấu `/`.
-`.env` bị Git bỏ qua, nên `git pull` không thay cấu hình riêng của server.
+Tùy chọn cập nhật có tự phục hồi image trước nếu healthcheck thất bại:
+`bash update.sh`. Sao lưu tài khoản trước bản thay schema: `bash backup-state.sh`.
 
-## 3. Data sẽ bổ sung sau
+## Phần mềm / dữ liệu
 
-Bây giờ có thể upload repo, clone và chuẩn bị `.env`. **Chỉ chạy deploy khi data đã có**, vì gateway
-đang kiểm tra catalogue/data lúc khởi động. Không tạo catalogue giả hoặc xáo trộn data để qua bước này.
+Repo và image gồm viewer, website, API, quản lý tài khoản và thumbnails module.
+Không đóng gói `.env`, token tunnel, database user, data anatomy, cache hoặc bản backup.
+CI dùng bộ dữ liệu mô phỏng riêng, không lấy bộ capture lâm sàng.
+Ánh xạ cấu trúc giải phẫu và chức năng viewer được giữ nguyên khi thay cơ chế triển khai.
 
-Khi đã chọn cách upload data, giữ nguyên cây thư mục ở ngoài repo:
-
-```text
-/srv/radiology/imaios_data/all_modules/
-  module_catalogue.json
-  modules/
-    BRAIN/mri-brain/...
-    HEAD_AND_NECK/...
-    THORAX/...
-```
-
-Nếu đặt ở vị trí khác, chỉ sửa `DATA_ROOT`. Container UID/GID `10001:10001` cần quyền đọc/traverse.
-Docker bind-mount data **read-only**, không đưa data vào image. Không commit data vào Git.
-
-## 4. Cài đặt lần đầu
-
-Sau khi data và `.env` đã sẵn sàng:
+## Phát triển local
 
 ```bash
-cd /opt/radiology-atlas/docker
-bash deploy.sh
-docker compose run --rm viewer python docker/manage.py create-root --username root
+python -m pip install -r docker/requirements.txt PyYAML==6.0.3
+python -m unittest discover -s docker/tests -p test_distribution.py -v
+node docker/tests/test_unified_preload.cjs
+# Build local chỉ khi cần kiểm thử Docker trên máy phát triển:
+docker compose -f docker/compose.yaml -f docker/compose.build.yaml --env-file docker/.env up -d --build viewer
 ```
 
-Nhập mật khẩu hai lần, ít nhất 12 ký tự. Mở tên miền → Login → `/admin`.
-Root quản lý tài khoản/quyền; Admin xem tất cả; Standard xem vùng/module được Root cấp.
-Không có tài khoản hoặc mật khẩu sản xuất mặc định.
+Viewer desktop vẫn dùng launcher cũ trong `offline_anatomy_viewer/`.
+Đóng gói source sạch (có cả workflow): `python docker/release.py`.
 
-## 5. Cập nhật sau này bằng Git
-
-Trên máy phát triển, sửa nguồn **trong repo này**, kiểm thử, `git add`, `git commit`, `git push`.
-Dockerfile dùng chính các file viewer đó, không có một bản viewer riêng phải sửa lần thứ hai.
-
-Trên VPS đã cài:
-
-```bash
-cd /opt/radiology-atlas
-git status --short
-bash docker/backup-state.sh
-git pull --ff-only
-bash docker/update.sh
-```
-
-`git pull --ff-only` dừng khi lịch sử phân nhánh, thay vì tự tạo merge. Nếu có sửa code trực tiếp trên VPS,
-xử lý các thay đổi đó trước khi cập nhật. Dừng quy trình nếu bất kỳ lệnh nào báo lỗi.
-`update.sh` build lại image, thay container viewer, giữ data/volume tài khoản và image rollback.
-Chỉ `git pull` mà chưa chạy `update.sh` thì container cũ vẫn chạy code cũ.
-`.env` và data không bị thay bởi thao tác cập nhật nguồn. Không dùng `docker compose down -v` khi update.
-
-Nếu bản cập nhật đổi cấu hình Caddy/Compose, làm thêm bước tương ứng trong [Docker README](docker/README.md).
-Nếu chỉ thêm data, không cần rebuild image; mở lại catalogue/Refresh trong viewer.
-
-## Viewer local
-
-Viewer local vẫn chạy từ cùng nguồn:
-
-```powershell
-python offline_anatomy_viewer/server.py --data-root "E:/DUONG_DAN_DATA/all_modules"
-```
-
-Launcher `.bat` có sẵn dùng vị trí mặc định `imaios_data/all_modules` bên cạnh thư mục viewer;
-vị trí này cũng được `.gitignore` loại khỏi Git. Website có đăng nhập chạy qua Docker gateway như trên.
-
-## Tài liệu / kiểm thử
-
-- [Tài khoản Root/Admin/Standard](docker/ACCOUNTS.md)
-- [Docker: cài đặt, HTTPS, cache, backup, rollback](docker/README.md)
-- [Home / Anatomy / Viewer](docker/WEBSITE.md)
-- [Tốc độ tải ảnh, cache/preload và số đo đối chiếu](docker/PERFORMANCE.md)
-- [Chi tiết viewer local](offline_anatomy_viewer/README.md)
-- [Nguồn assets](THIRD_PARTY_NOTICES.md)
-- Tests ở `docker/tests/`; tests HTTP cần data thật và một thư mục state kiểm thử mới, không dùng state sản xuất.
-
-Nguồn hướng dẫn Git: [GitHub — thêm mã nguồn có sẵn](https://docs.github.com/en/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github),
-[git pull](https://git-scm.com/docs/git-pull), [gitattributes](https://git-scm.com/docs/gitattributes).
+Tài liệu: [Docker](docker/README.md) · [Tài khoản](docker/ACCOUNTS.md) ·
+[Cache/preload](docker/PERFORMANCE.md) · [Website](docker/WEBSITE.md) ·
+[Thành phần bên thứ ba](THIRD_PARTY_NOTICES.md).

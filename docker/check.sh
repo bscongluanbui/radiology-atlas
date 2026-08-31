@@ -2,16 +2,6 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 docker compose config --quiet
-bash ./build-local.sh
-docker compose up -d viewer
-# Deliberately leave the service running; this command may be used on a live server.
-cid="$(docker compose ps -q viewer)"
-for _ in $(seq 1 24); do
-  status="$(docker inspect --format '{{.State.Health.Status}}' "$cid")"
-  test "$status" = healthy && break
-  test "$status" = unhealthy && { docker compose logs viewer; exit 1; }
-  sleep 5
-done
-test "$(docker inspect --format '{{.State.Health.Status}}' "$cid")" = healthy
-docker compose exec -T viewer python offline_anatomy_viewer/server.py --data-root /data --self-test
-echo "CONTAINER_SMOKE=PASS; ARCH=$(docker inspect --format '{{.Architecture}}' "$(docker inspect --format '{{.Image}}' "$cid")")"
+docker compose exec -T viewer python docker/preflight.py
+docker compose exec -T viewer python -c "import platform,urllib.request; assert urllib.request.urlopen('http://127.0.0.1:8080/healthz',timeout=5).status==200; print('CONTAINER_SMOKE=PASS; ARCH='+platform.machine())"
+# Read-only checks only: do not build, restart or change an existing service.

@@ -9,4 +9,4 @@ fi
 docker buildx inspect "$builder" --bootstrap
 docker buildx build --builder "$builder" --pull --load \
   --build-arg "BUILD_REVISION=${BUILD_REVISION:-local}" \
-  --tag "${VIEWER_IMAGE:-radiology-atlas-viewer:local}" --file Dockerfile ..
+  --tag "${LOCAL_VIEWER_IMAGE:-radiology-atlas-viewer:local}" --file Dockerfile ..

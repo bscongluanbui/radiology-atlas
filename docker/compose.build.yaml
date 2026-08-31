@@ -1,0 +1,9 @@
+# Developer-only override. Production compose.yaml never builds on the VPS.
+services:
+  viewer:
+    image: ${LOCAL_VIEWER_IMAGE:-radiology-atlas-viewer:local}
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        BUILD_REVISION: ${BUILD_REVISION:-local}

@@ -1,3 +1,5 @@
+> Triển khai / update hiện tại: [INSTALL.md](INSTALL.md) (GHCR public + Tunnel, không build trên VPS).
+
 # Website Home → Anatomy → Viewer
 
 Website được phục vụ trong cùng Docker gateway, cùng domain, session và database tài khoản.
@@ -32,8 +34,8 @@ giữ nguyên. Local launcher vẫn đọc module trước đó từ preferences
 
 ## Cập nhật trên VPS hiện có
 
-Đóng gói nguồn mới bằng `python docker/release.py`, backup state trước, đưa toàn bộ nguồn mới lên VPS
-(không ghi đè `.env`, không thay data), rồi chạy `bash /opt/radiology-atlas/docker/update.sh`.
+Push nguồn mới lên nhánh `main`, đợi workflow **Publish viewer image** thành công, rồi
+pull/tạo lại container theo [INSTALL.md](INSTALL.md). Cấu hình hạ tầng ngoài image mới cần `git pull`.
 Dockerfile dùng chung nguồn local nên website và viewer được cập nhật cùng một image.
 Tên miền thường vẫn dùng biến `DDNS_HOST`; không cần dịch vụ cập nhật DDNS nếu domain đã trỏ VPS.
 
@@ -46,8 +48,8 @@ Links viewer cũ ở `/` sẽ tới Home; dùng `/viewer` hoặc mở module t�
 - `python docker/tests/test_website.py --data-root /PATH/all_modules --state-dir /PATH/ANOTHER_EMPTY_TEST_STATE`
 - `node docker/tests/test_site_filters.cjs .`
 
-Đã kiểm tra source và giao diện local; chưa có hostname/VPS credentials để triển khai domain thực tế.
-Native Docker ARM64/AMD64 vẫn cần smoke test trên server như `docker/README.md`.
+CI kiểm tra source bằng dữ liệu mô phỏng; image AMD64 và ARM64 đều chạy smoke HTTP bằng Gunicorn
+trước khi publish. Kiểm tra data và route thực tế trên VPS bằng `bash docker/check.sh` và HTTPS domain.
 
 ## Nguồn giao diện và hình ảnh
 
