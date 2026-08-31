@@ -1,1 +1,108 @@
+name: Publish viewer image
 
+"on":
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: viewer-image-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '22'
+      - run: python -m pip install -r docker/requirements.txt PyYAML==6.0.3
+      - name: Unit, authorization and distribution checks (synthetic data only)
+        run: |
+          python -m unittest discover -s docker/tests -p test_distribution.py -v
+          for test in resource_cache request_queue unified_preload site_filters viewer_navigation; do
+            node "docker/tests/test_${test}.cjs"
+          done
+          for file in docker/*.sh; do bash -n "$file"; done
+          cp docker/.env.example docker/.env
+          docker compose --project-directory docker config --quiet
+          test "$(docker compose --project-directory docker config --services)" = viewer
+          docker compose --project-directory docker -f docker/compose.yaml -f docker/compose.build.yaml config --quiet
+
+  image:
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ghcr.io/bscongluanbui/radiology-atlas
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+        with:
+          platforms: arm64
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - name: Build and run both architectures before promoting latest
+        run: |
+          python3 docker/tests/ci_fixture.py "$RUNNER_TEMP/atlas-fixture"
+          for arch in amd64 arm64; do
+            docker buildx build --platform "linux/$arch" --load \
+              --build-arg "BUILD_REVISION=$GITHUB_SHA" \
+              -t "radiology-atlas:ci-$arch" -f docker/Dockerfile .
+            docker run --rm --platform "linux/$arch" --read-only \
+              --cap-drop ALL --security-opt no-new-privileges:true \
+              --tmpfs /tmp:rw,size=64m,mode=1777 \
+              --tmpfs /state:rw,size=32m,uid=10001,gid=10001,mode=0700 \
+              -v "$RUNNER_TEMP/atlas-fixture:/data:ro" \
+              -v "$PWD/docker/tests:/checks:ro" \
+              -e DATA_ROOT=/data -e STATE_DIR=/state \
+              -e ALLOWED_HOSTS=bcanatomy.site,localhost,127.0.0.1 \
+              "radiology-atlas:ci-$arch" python /checks/smoke_image.py "$arch"
+          done
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        id: publish
+        with:
+          context: .
+          file: docker/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: BUILD_REVISION=${{ github.sha }}
+          tags: |
+            ghcr.io/bscongluanbui/radiology-atlas:latest
+            ghcr.io/bscongluanbui/radiology-atlas:sha-${{ github.sha }}
+      - name: Verify manifest and record immutable revision
+        env:
+          DIGEST: ${{ steps.publish.outputs.digest }}
+        run: |
+          docker buildx imagetools inspect --raw "$IMAGE@$DIGEST" > manifest.json
+          python3 -c 'import json; m=json.load(open("manifest.json")); p={(x["platform"]["os"],x["platform"]["architecture"]) for x in m["manifests"]}; assert {("linux","amd64"),("linux","arm64")} <= p; print("MANIFEST=PASS; linux/amd64; linux/arm64")'
+          {
+            echo "### Viewer published"
+            echo "- Image: \`$IMAGE:latest\`"
+            echo "- Immutable tag: \`$IMAGE:sha-$GITHUB_SHA\`"
+            echo "- Digest: \`$DIGEST\`"
+            echo "- Both architectures passed an actual Gunicorn HTTP smoke test."
+            echo "- First publication: open the package settings and select Public, then verify anonymous pull."
+          } >> "$GITHUB_STEP_SUMMARY"
