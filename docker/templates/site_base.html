@@ -13,11 +13,12 @@
 <a href="/" {% if request.endpoint == 'home' %}aria-current="page"{% endif %}>Home</a>
 <a href="/anatomy" data-anatomy-link {% if request.endpoint == 'anatomy' %}aria-current="page"{% endif %}>Anatomy</a>
 <a class="nav-guide" href="/#guide">Hướng dẫn</a>
-{% if current_user %}<a class="nav-account" href="/account">{{ current_user.username }}</a>{% if current_user.role == 'root' %}<a class="nav-admin" href="/admin">Quản trị</a>{% endif %}
+<a class="nav-intro" href="/#intro">Giới thiệu</a>
+{% if current_user %}<a class="nav-account" href="/account">{% if current_user.avatar %}<img src="/account/avatar" alt="">{% endif %}{{ current_user.username }}</a>{% if current_user.role == 'root' %}<a class="nav-admin" href="/admin">Quản trị</a>{% endif %}
 <form action="/logout" method="post" class="nav-logout"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><button class="button button-glass small">Đăng xuất</button></form>
 {% else %}<a href="/login" class="button button-glass small" data-login-trigger data-next="/anatomy"><span aria-hidden="true">↗</span> Login</a>{% endif %}
 </nav><div class="header-actions"><button class="theme-toggle" type="button" data-theme-toggle aria-label="Bật giao diện tối" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true"></span><span data-theme-label>Giao diện tối</span></button><button class="mobile-nav-toggle" type="button" data-nav-toggle aria-controls="siteNavigation" aria-expanded="false"><span data-nav-icon aria-hidden="true">☰</span><span class="sr-only">Mở menu</span></button></div></header>
 {% block content %}{% endblock %}
-<footer class="site-footer"><div><a class="footer-brand" href="/">Radiology Atlas</a><p>Không gian khám phá giải phẫu hình ảnh.</p></div><div><a href="/anatomy" data-anatomy-link>Anatomy</a><a href="/#guide">Hướng dẫn truy cập</a><a href="https://html5up.net/stellar" target="_blank" rel="noopener noreferrer">Stellar · HTML5 UP</a></div></footer>
+<footer class="site-footer"><div><a class="footer-brand" href="/">Radiology Atlas</a><p>Website được tạo ra với mục đích giáo dục · Free and Always will be.<br>Mọi thắc mắc xin liên hệ email: <a href="mailto:congluanbui@gmail.com">congluanbui@gmail.com</a></p></div><div><a href="/anatomy" data-anatomy-link>Anatomy</a><a href="/#guide">Hướng dẫn</a><a href="/#intro">Giới thiệu</a></div></footer>
 {% if not current_user %}{% include "login_modal.html" %}{% endif %}
 </body></html>

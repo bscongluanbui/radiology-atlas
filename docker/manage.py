@@ -33,7 +33,7 @@ def main():
     store = AuthStore(args.state_dir)
     if args.command in ("create-root", "create-admin"):
         role = "root" if args.command == "create-root" else "admin"
-        store.create_user(args.username, secret("Mật khẩu mới (ít nhất 12 ký tự): "), role, actor="console")
+        store.create_user(args.username, secret("Mật khẩu mới: "), role, actor="console")
         print(f"ACCOUNT_CREATED={args.username.lower()}; ROLE={role}; PASSWORD_STORED=argon2id")
     elif args.command == "reset-password":
         users = {u["username"]: u for u in store.users()}
@@ -41,7 +41,7 @@ def main():
         if not user:
             raise ValueError("Tài khoản không tồn tại.")
         store.update_user(user["id"], user["role"], bool(user["active"]), bool(user["all_modules"]), user["modules"],
-                          secret("Mật khẩu mới (ít nhất 12 ký tự): "), actor="console", regions=user["regions"])
+                          secret("Mật khẩu mới: "), actor="console", regions=user["regions"])
         print(f"PASSWORD_RESET={user['username']}; SESSIONS=revoked")
     else:
         for user in store.users():

@@ -1,6 +1,8 @@
 """Run against read-only source data and an explicitly separate, empty test-state directory."""
 from argparse import ArgumentParser
 import hashlib
+import base64
+import io
 import json
 from pathlib import Path
 import re
@@ -163,9 +165,22 @@ class PortalTests(unittest.TestCase):
         second = self.app.test_client()
         self.login("passwordtest")
         self.login("passwordtest", second)
-        self.assertEqual(self.post("/account", {"old_password": PASS, "password": PASS+"new"}).status_code, 302)
+        account = self.get("/account")
+        self.assertIn('action="/account/profile"', account.text)
+        self.assertIn('action="/account/avatar"', account.text)
+        self.assertIn('action="/account/password"', account.text)
+        self.assertNotIn('minlength=', account.text)
+        self.assertEqual(self.post("/account/profile", {"email": "Doctor@Example.com", "birth_year": "1988"}).status_code, 302)
+        profile = self.auth.get_user(uid)
+        self.assertEqual(profile["email"], "doctor@example.com")
+        self.assertEqual(profile["birth_year"], 1988)
+        png = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=")
+        self.assertEqual(self.post("/account/avatar", {"avatar": (io.BytesIO(png), "avatar.png")}).status_code, 302)
+        self.assertEqual(self.get("/account/avatar").data, png)
+        self.assertEqual(self.post("/account/password", {"old_password": PASS, "password": "x"}).status_code, 302)
         self.assertEqual(self.get("/api/catalogue", second).status_code, 401)
         self.assertIsNone(self.auth.login("passwordtest", PASS))
+        self.assertIsNotNone(self.auth.login("passwordtest", "x"))
         self.login()
         self.assertIn('"cache"', self.post("/logout").headers["Clear-Site-Data"])
         self.assertEqual(self.get("/api/catalogue").status_code, 401)

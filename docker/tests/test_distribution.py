@@ -1,5 +1,6 @@
 """Source-only release checks: synthetic fixtures, real Flask auth and simulated Docker CLI."""
 import hashlib
+import base64
 import json
 import os
 from pathlib import Path
@@ -54,6 +55,8 @@ class DistributionTests(unittest.TestCase):
         names={p.relative_to(ROOT).as_posix() for p in sources()}
         self.assertIn('.github/workflows/publish-viewer.yml',names)
         self.assertIn('docker/compose.build.yaml',names)
+        for image in ('doctor-infographics.jpg','medical-dashboard.jpg','pelvis-muscles.webp','radiology-infographics.jpg','skeleton-hud.jpg'):
+            self.assertIn(f'docker/static/images/{image}',names)
         self.assertNotIn('docker/.env',names)
         self.assertFalse(any(n.endswith(('.sqlite3','.key','.pem')) or n.startswith('imaios_data/') for n in names))
         ignore=(ROOT/'docker/Dockerfile.dockerignore').read_text()
@@ -90,6 +93,20 @@ class DistributionTests(unittest.TestCase):
         for name in ('deploy.sh','update.sh','check.sh'):
             self.assertNotIn('build-local.sh',(ROOT/'docker'/name).read_text())
 
+    def test_profile_ui_and_csp_compatible_scripts(self):
+        account=(ROOT/'docker/templates/account.html').read_text(encoding='utf-8')
+        admin=(ROOT/'docker/templates/admin.html').read_text(encoding='utf-8')
+        login=(ROOT/'docker/templates/login.html').read_text(encoding='utf-8')
+        self.assertIn('action="/account/profile"',account)
+        self.assertIn('action="/account/avatar"',account)
+        self.assertIn('action="/account/password"',account)
+        self.assertNotIn('minlength=',account+admin)
+        self.assertNotRegex(admin+login,r'<script(?![^>]+src=)')
+        self.assertNotRegex(admin,r'\sonclick=')
+        self.assertNotIn('fonts.googleapis.com',login)
+        self.assertTrue((ROOT/'docker/static/admin.js').is_file())
+        self.assertTrue((ROOT/'docker/static/login.js').is_file())
+
 
 class FixtureTests(unittest.TestCase):
     def setUp(self):
@@ -112,6 +129,13 @@ class FixtureTests(unittest.TestCase):
         app=self.app();store=app.extensions['auth'];password='CI-test-only!54'
         for name,role in [('owner','root'),('reader','admin'),('limited','standard')]:
             store.create_user(name,password,role,regions=['BRAIN'] if role=='standard' else [])
+        owner=next(user for user in store.users() if user['username']=='owner')
+        store.update_profile(owner['id'],'Doctor@Example.com','1988')
+        png=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=')
+        store.set_avatar(owner['id'],png,'.png')
+        profile=store.get_user(owner['id'])
+        self.assertEqual((profile['email'],profile['birth_year']),('doctor@example.com',1988))
+        self.assertEqual(store.avatar_path(owner['id']).read_bytes(),png)
         image='/data/{}/rendered/1_Axial/default_Default/slice_0001.png'
         headers={'X-Forwarded-Proto':'https','X-Forwarded-For':'203.0.113.9'}
         anonymous=app.test_client()

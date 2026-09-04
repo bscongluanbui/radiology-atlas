@@ -1,9 +1,153 @@
-{% extends "base.html" %}{% block title %}Đăng nhập · Radiology Atlas{% endblock %}
-{% block content %}<section class="card login"><p class="eyebrow">PRIVATE ANATOMY VIEWER</p><h1>Đăng nhập</h1>
-<p class="muted">Tài khoản do quản trị viên cấp.</p>
-{% if error %}<p role="alert" class="notice error">{{ error }}</p>{% endif %}
-<form method="post"><input type="hidden" name="csrf" value="{{ csrf_token() }}">
-<input type="hidden" name="next" value="{{ next_url|default('/anatomy') }}">
-<label>Tên đăng nhập<input name="username" autocomplete="username" required maxlength="48" autofocus></label>
-<label>Mật khẩu<input name="password" type="password" autocomplete="current-password" required maxlength="256"></label>
-<button class="primary">Đăng nhập</button></form></section>{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}Đăng nhập Hệ thống · Radiology Atlas{% endblock %}
+
+{% block layout %}
+<div class="luxury-login-viewport">
+  <!-- Background Animated Mesh & Glow Orbs -->
+  <div class="luxury-bg-mesh" aria-hidden="true">
+    <div class="glow-orb orb-primary"></div>
+    <div class="glow-orb orb-violet"></div>
+    <div class="glow-orb orb-emerald"></div>
+    <div class="bg-grid-overlay"></div>
+  </div>
+
+  <!-- Floating Navigation Header -->
+  <nav class="luxury-nav-header">
+    <a href="/" class="luxury-nav-brand">
+      <div class="luxury-brand-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+          <path d="M6 8h.01M9 11h6M10 8h4"></path>
+        </svg>
+      </div>
+      <span class="luxury-brand-name">RADIOLOGY <strong>ATLAS</strong></span>
+    </a>
+
+    <div class="luxury-header-actions">
+      <a href="/" class="luxury-back-home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        <span>Trang chủ</span>
+      </a>
+
+      <button class="luxury-theme-toggle" type="button" data-theme-toggle aria-label="Đổi giao diện sáng/tối">
+        <span class="theme-toggle-icon" aria-hidden="true"></span>
+        <span class="theme-toggle-text" data-theme-label>Giao diện</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Centered Glassmorphic Luxury Card -->
+  <div class="luxury-card-container">
+    <div class="luxury-glass-card">
+      <!-- Top Emblem -->
+      <div class="luxury-emblem-wrapper">
+        <div class="luxury-emblem-badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+          <div class="emblem-pulse-ring"></div>
+        </div>
+      </div>
+
+      <!-- Card Title & Eyebrow -->
+      <div class="luxury-card-header">
+        <span class="luxury-eyebrow-pill">✦ PRIVATE ANATOMY & ADMIN PORTAL</span>
+        <h1 class="luxury-title">Đăng nhập Hệ thống</h1>
+        <p class="luxury-subtitle">Cổng xác thực an toàn dành cho Bác sĩ, Kỹ thuật viên & Quản trị viên.</p>
+      </div>
+
+      <!-- Error Alert Message -->
+      {% if error %}
+        <div class="luxury-alert-error" role="alert">
+          <div class="alert-icon-wrap" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          </div>
+          <span>{{ error }}</span>
+        </div>
+      {% endif %}
+
+      <!-- Flash Messages -->
+      {% for category,message in get_flashed_messages(with_categories=true) %}
+        <div role="status" class="luxury-alert-notice {{ category }}">
+          <span>{{ message }}</span>
+        </div>
+      {% endfor %}
+
+      <!-- Login Form -->
+      <form action="/login" method="post" class="luxury-login-form">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ next_url|default('/anatomy') }}">
+
+        <!-- Username Input Group -->
+        <div class="luxury-input-group">
+          <label class="luxury-label" for="login-username">Tên đăng nhập</label>
+          <div class="input-with-icon">
+            <span class="field-leading-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </span>
+            <input
+              id="login-username"
+              class="luxury-input"
+              name="username"
+              type="text"
+              autocomplete="username"
+              required
+              maxlength="48"
+              autofocus
+              placeholder="Nhập tên tài khoản..."
+            >
+          </div>
+        </div>
+
+        <!-- Password Input Group -->
+        <div class="luxury-input-group">
+          <div class="label-row-flex">
+            <label class="luxury-label" for="login-password">Mật khẩu</label>
+            <span class="luxury-hint-text">Mã hóa Argon2id</span>
+          </div>
+          <div class="input-with-icon">
+            <span class="field-leading-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </span>
+            <input
+              id="login-password"
+              class="luxury-input"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+              maxlength="256"
+              placeholder="Nhập mật khẩu của bạn..."
+            >
+            <button type="button" class="password-toggle-btn" id="togglePasswordBtn" aria-label="Hiện mật khẩu" aria-pressed="false">
+              <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="luxury-submit-btn">
+          <span>Truy cập Không gian Atlas</span>
+          <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        </button>
+      </form>
+
+      <!-- Card Security Footnote -->
+      <div class="luxury-card-footer">
+        <div class="security-badge-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          <span>Đăng nhập được bảo vệ · Phiên làm việc riêng tư</span>
+        </div>
+        <p class="footnote-contact">
+          Tài khoản do Quản trị viên cấp quyền. Nếu cần cấp quyền hoặc quên mật khẩu, xin liên hệ trực tiếp với Root Admin.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/portal/static/login.js" defer></script>
+{% endblock layout %}

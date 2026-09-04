@@ -47,6 +47,9 @@ proxy_rotation_state.json
 /offline_anatomy_viewer/screenshots/
 
 # Development artifacts, not application source.
+.dev_*
+/dev_server.py
+/images/
 __pycache__/
 *.py[cod]
 .pytest_cache/

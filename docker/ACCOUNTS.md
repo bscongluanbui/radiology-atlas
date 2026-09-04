@@ -28,7 +28,9 @@ cd /home/ubuntu/radiology-atlas/docker
 docker compose run --rm viewer python docker/manage.py create-root --username root
 ```
 
-Lệnh hỏi mật khẩu hai lần, tối thiểu 12 ký tự; không đưa mật khẩu vào command line hoặc `.env`.
+Lệnh hỏi mật khẩu hai lần; mật khẩu do Root tự chọn, không ép độ dài tối thiểu hoặc thành phần ký tự
+(giới hạn kỹ thuật 256 ký tự).
+Không đưa mật khẩu vào command line hoặc `.env`.
 Sau đó đăng nhập website bằng tên `root` và mật khẩu bạn vừa nhập.
 Hệ thống không có mật khẩu Root mặc định, không có đăng ký công khai.
 
@@ -61,15 +63,23 @@ Bỏ tick một vùng nhưng còn module riêng trong vùng đó thì module ri�
 Lưu quyền/khóa/đổi mật khẩu thu hồi phiên ngay; người dùng phải đăng nhập lại.
 Hệ thống giữ ít nhất một Root đang hoạt động; Admin và Standard nhận HTTP 403 ở `/admin` và mọi API quản trị.
 
+## Trang tài khoản cá nhân
+
+Mỗi người dùng mở **Tài khoản** để cập nhật email, năm sinh, Avatar hoặc chủ động đổi mật khẩu.
+Email và năm sinh là tùy chọn. Avatar dùng PNG/JPEG, tối đa 512 KiB và 2048 × 2048 px.
+Cập nhật hồ sơ không yêu cầu đổi mật khẩu. Đổi mật khẩu là thao tác riêng và thu hồi mọi phiên đăng nhập.
+
 ## Tài khoản cũ và nâng cấp
 
 - Quản trị viên `admin` của v49 → **Root**, giữ nguyên username và mật khẩu.
 - Người xem có `all_modules` ở v49 → **Admin**, vẫn chỉ xem, không được quyền quản trị.
 - Người xem giới hạn module → **Standard**, giữ đúng module đã cấp, chưa tự cấp cả vùng.
 - Phiên cũ được thu hồi một lần khi nâng cấp; đăng nhập lại bằng mật khẩu cũ.
-- Nâng cấp v2 thêm cột `access_role` và `regions` trong một transaction. Password hash, ID và module grants giữ nguyên.
+- Nâng cấp v2 thêm cột `access_role` và `regions`; v3 thêm `email`, `birth_year`, `avatar` trong transaction.
+  Password hash, ID và module grants giữ nguyên.
 - Database v1 có user được tự backup một lần vào `/state/accounts.before-rbac-v2.sqlite3`; file này chứa dữ liệu tài khoản,
   nằm trong volume riêng, không phục vụ qua HTTP và không nằm trong gói source. Chỉ một backup này được giữ, tránh tăng vô hạn.
+- Khi nâng cấp profile v3, database v2 được backup một lần vào `/state/accounts.before-profile-v3.sqlite3`.
 
 Trước update production, vẫn nên chạy `bash backup-state.sh` để có cả database và session key.
 Chỉ một phiên bản server dùng volume tại một thời điểm; không chạy đồng thời gateway cũ và mới.

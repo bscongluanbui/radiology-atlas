@@ -24,7 +24,7 @@ def sources():
             continue
         if path.name == ".env" or path.suffix in {".pyc", ".sqlite3", ".zip", ".key"}:
             continue
-        if path.suffix in {".py", ".html", ".css", ".js", ".cjs", ".sh", ".md", ".svg", ".toml", ".yaml", ".service", ".timer"} or path.name in {"Dockerfile", "Dockerfile.dockerignore", "Caddyfile", ".env.example", "requirements.txt"}:
+        if path.suffix.lower() in {".py", ".html", ".css", ".js", ".cjs", ".sh", ".md", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".toml", ".yaml", ".service", ".timer"} or path.name in {"Dockerfile", "Dockerfile.dockerignore", "Caddyfile", ".env.example", "requirements.txt"}:
             files.append(path)
     workflows = ROOT/".github/workflows"
     if workflows.is_dir():

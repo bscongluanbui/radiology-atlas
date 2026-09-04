@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import secrets
+import struct
 import sys
 import threading
 from urllib.parse import parse_qs, urlencode, urlsplit
@@ -26,6 +27,44 @@ sys.path.insert(0, str(VIEWER))
 from server import AnatomyRepository, load_json, safe_key  # shared, unchanged anatomy code
 from anatomy_language import languages, load_pack
 
+AVATAR_MAX_BYTES = 512 * 1024
+AVATAR_MAX_EDGE = 2048
+
+
+def avatar_format(payload):
+    """Return a safe extension after checking file signature and dimensions."""
+    if payload.startswith(b"\x89PNG\r\n\x1a\n") and len(payload) >= 24 and payload[12:16] == b"IHDR":
+        width, height = struct.unpack(">II", payload[16:24])
+        suffix = ".png"
+    elif payload.startswith(b"\xff\xd8"):
+        width = height = 0
+        offset = 2
+        start_of_frame = {0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF}
+        while offset + 4 <= len(payload):
+            if payload[offset] != 0xFF:
+                offset += 1
+                continue
+            marker = payload[offset + 1]
+            offset += 2
+            if marker in {0xD8, 0xD9} or 0xD0 <= marker <= 0xD7:
+                continue
+            if offset + 2 > len(payload):
+                break
+            length = int.from_bytes(payload[offset:offset + 2], "big")
+            if length < 2 or offset + length > len(payload):
+                break
+            if marker in start_of_frame and length >= 7:
+                height = int.from_bytes(payload[offset + 3:offset + 5], "big")
+                width = int.from_bytes(payload[offset + 5:offset + 7], "big")
+                break
+            offset += length
+        suffix = ".jpg"
+    else:
+        raise ValueError("Ảnh đại diện cần là PNG hoặc JPEG.")
+    if not width or not height or width > AVATAR_MAX_EDGE or height > AVATAR_MAX_EDGE:
+        raise ValueError(f"Ảnh đại diện cần có kích thước tối đa {AVATAR_MAX_EDGE} × {AVATAR_MAX_EDGE} px.")
+    return suffix
+
 
 def integer_env(name, default, low, high):
     value = int(os.environ.get(name, default))
@@ -41,7 +80,7 @@ def create_app(config=None):
         DATA_ROOT=os.environ.get("DATA_ROOT", "/data"),
         SESSION_COOKIE_NAME="atlas_session", SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SECURE=True, SESSION_COOKIE_SAMESITE="Lax",
-        MAX_CONTENT_LENGTH=65536, MAX_FORM_MEMORY_SIZE=65536, MAX_FORM_PARTS=2000,
+        MAX_CONTENT_LENGTH=1024 * 1024, MAX_FORM_MEMORY_SIZE=1024 * 1024, MAX_FORM_PARTS=2000,
         TRUSTED_HOSTS=[h for h in os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h],
         PROXY_HOPS=1, MAINTENANCE_ENABLED=True,
         CACHE_MIB=integer_env("METADATA_CACHE_MIB", 512, 8, 512),
@@ -102,7 +141,8 @@ def create_app(config=None):
 
     @app.context_processor
     def context():
-        return {"csrf_token": csrf, "current_user": getattr(g, "user", None), "role_labels": ROLE_LABELS}
+        return {"csrf_token": csrf, "current_user": getattr(g, "user", None),
+                "role_labels": ROLE_LABELS, "current_year": datetime.now(timezone.utc).year}
 
     @app.template_filter("timestamp")
     def timestamp(value):
@@ -217,19 +257,60 @@ def create_app(config=None):
         response.headers["Clear-Site-Data"] = '"cache"'
         return response
 
-    @app.route("/account", methods=["GET", "POST"])
+    @app.get("/account")
     def account():
-        if request.method == "POST":
-            try:
-                if not auth.login_allowed("password-change:" + str(g.user["id"]), g.user["username"]):
-                    abort(429)
-                auth.change_password(g.user["id"], request.form.get("old_password", ""), request.form.get("password", ""))
-            except ValueError as error:
-                flash(str(error), "error")
-            else:
-                session.clear()
-                return redirect(url_for("login"))
         return render_template("account.html")
+
+    @app.post("/account/profile")
+    def update_account_profile():
+        try:
+            auth.update_profile(g.user["id"], request.form.get("email", ""), request.form.get("birth_year", ""))
+        except ValueError as error:
+            flash(str(error), "error")
+        else:
+            flash("Đã cập nhật thông tin tài khoản.")
+        return redirect(url_for("account"))
+
+    @app.post("/account/password")
+    def update_account_password():
+        try:
+            if not auth.login_allowed("password-change:" + str(g.user["id"]), g.user["username"]):
+                abort(429)
+            auth.change_password(g.user["id"], request.form.get("old_password", ""), request.form.get("password", ""))
+        except ValueError as error:
+            flash(str(error), "error")
+            return redirect(url_for("account"))
+        session.clear()
+        return redirect(url_for("login"))
+
+    @app.post("/account/avatar")
+    def update_account_avatar():
+        upload = request.files.get("avatar")
+        try:
+            if not upload or not upload.filename:
+                raise ValueError("Hãy chọn ảnh đại diện.")
+            payload = upload.read(AVATAR_MAX_BYTES + 1)
+            if not payload or len(payload) > AVATAR_MAX_BYTES:
+                raise ValueError("Ảnh đại diện cần nhỏ hơn hoặc bằng 512 KiB.")
+            auth.set_avatar(g.user["id"], payload, avatar_format(payload))
+        except ValueError as error:
+            flash(str(error), "error")
+        else:
+            flash("Đã cập nhật ảnh đại diện.")
+        return redirect(url_for("account"))
+
+    @app.post("/account/avatar/remove")
+    def remove_account_avatar():
+        auth.remove_avatar(g.user["id"])
+        flash("Đã xóa ảnh đại diện.")
+        return redirect(url_for("account"))
+
+    @app.get("/account/avatar")
+    def account_avatar():
+        path = auth.avatar_path(g.user["id"])
+        if not path:
+            abort(404)
+        return send_file(path, conditional=False, etag=False)
 
     def module_keys():
         # Reading the small catalogue keeps newly collected modules discoverable.
@@ -374,9 +455,14 @@ def create_app(config=None):
     def admin():
         with repo_lock:
             modules = repository.catalogue()["modules"]
+        users = auth.users()
+        audit = auth.recent_audit()
+        ready_modules = sum(bool(module.get("captured")) for module in modules)
+        role_counts = {role: sum(user["role"] == role for user in users) for role in ROLE_LABELS}
         names = {"_structure_cache": "Structures", "_point_cache": "Slice targets", "_cross_reference_cache": "Cross references"}
-        return render_template("admin.html", users=auth.users(), modules=modules, regions=group_catalogue(modules),
-                               cache_stats={names[k]: c.stats() for k, c in caches.items()}, audit=auth.recent_audit(),
+        return render_template("admin.html", users=users, modules=modules, regions=group_catalogue(modules),
+                               ready_modules=ready_modules, role_counts=role_counts,
+                               cache_stats={names[k]: c.stats() for k, c in caches.items()}, audit=audit,
                                browser_cache_mib=app.config["BROWSER_CACHE_MIB"], ttl=app.config["CACHE_TTL"],
                                decoded_images=app.config["DECODED_IMAGES"], preload_concurrency=app.config["PRELOAD_CONCURRENCY"])
 

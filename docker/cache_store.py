@@ -68,4 +68,5 @@ class BoundedCache:
     def stats(self):
         with self.lock:
             self.sweep()
-            return {"entries": len(self.entries), "bytes": self.bytes, "limit_bytes": self.max_bytes, "ttl_seconds": self.ttl}
+            return {"entries": len(self.entries), "max_entries": self.max_entries,
+                    "bytes": self.bytes, "limit_bytes": self.max_bytes, "ttl_seconds": self.ttl}

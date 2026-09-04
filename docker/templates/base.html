@@ -3,10 +3,12 @@
 <meta name="theme-color" content="#63508d"><meta name="color-scheme" content="light dark">
 <title>{% block title %}Radiology Atlas · Quản lý{% endblock %}</title>
 <script src="/portal/static/theme.js"></script><link rel="stylesheet" href="/portal/static/portal.css"></head><body>
+{% block layout %}
 <header class="portal-header"><a class="brand" href="/">RADIOLOGY <strong>ATLAS</strong></a><nav class="portal-nav" id="portalNavigation" aria-label="Điều hướng quản lý">
-{% if current_user %}<a href="/">Home</a><a href="/anatomy">Anatomy</a><a href="/account">Tài khoản</a>
+{% if current_user %}<a href="/">Home</a><a href="/anatomy">Anatomy</a><a class="portal-account-link" href="/account">{% if current_user.avatar %}<img src="/account/avatar" alt="">{% endif %}Tài khoản</a>
 {% if current_user.role == 'root' %}<a href="/admin">Quản trị</a>{% endif %}
 <form action="/logout" method="post"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><button>Đăng xuất</button></form>{% endif %}
 </nav><div class="header-actions"><button class="theme-toggle" type="button" data-theme-toggle aria-label="Bật giao diện tối" aria-pressed="false"><span class="theme-toggle-icon" aria-hidden="true"></span><span data-theme-label>Giao diện tối</span></button>{% if current_user %}<button class="mobile-nav-toggle" type="button" data-nav-toggle aria-controls="portalNavigation" aria-expanded="false"><span data-nav-icon aria-hidden="true">☰</span><span class="sr-only">Mở menu</span></button>{% endif %}</div></header><main>
 {% for category,message in get_flashed_messages(with_categories=true) %}<p role="status" class="notice {{ category }}">{{ message }}</p>{% endfor %}
-{% block content %}{% endblock %}</main></body></html>
+{% block content %}{% endblock %}</main>
+{% endblock layout %}</body></html>

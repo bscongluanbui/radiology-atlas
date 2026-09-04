@@ -20,11 +20,13 @@ HASHER = PasswordHasher(time_cost=3, memory_cost=65536, parallelism=2)
 HASH_SLOTS = threading.BoundedSemaphore(2)
 DUMMY_HASH = HASHER.hash(secrets.token_urlsafe(24))
 USERNAME = re.compile(r"^[a-z0-9][a-z0-9_.-]{2,47}$")
+EMAIL = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+LATEST_SCHEMA = 3
 
 
 def password_hash(password):
-    if not isinstance(password, str) or not 12 <= len(password) <= 256:
-        raise ValueError("Mật khẩu cần từ 12 đến 256 ký tự.")
+    if not isinstance(password, str) or not 1 <= len(password) <= 256:
+        raise ValueError("Mật khẩu cần từ 1 đến 256 ký tự.")
     with HASH_SLOTS:
         return HASHER.hash(password)
 
@@ -63,11 +65,11 @@ class AuthStore:
                     id INTEGER PRIMARY KEY, at REAL NOT NULL, actor TEXT NOT NULL,
                     action TEXT NOT NULL, target TEXT NOT NULL);
             ''')
-            self._upgrade_roles(db)
+            self._upgrade_schema(db)
         os.chmod(self.path, 0o600)
 
-    def _upgrade_roles(self, db):
-        """Add v2 roles atomically; keep legacy fields fail-closed on a v49 rollback.
+    def _upgrade_schema(self, db):
+        """Upgrade roles and optional profile fields without changing credentials.
 
         Legacy role=admin is reserved for Root. New Admin is physically viewer +
         all_modules=1, so old code never grants it account-management privileges.
@@ -75,7 +77,8 @@ class AuthStore:
         """
         db.execute("BEGIN IMMEDIATE")
         version = db.execute("PRAGMA user_version").fetchone()[0]
-        if version > 2:
+        starting_version = version
+        if version > LATEST_SCHEMA:
             raise RuntimeError("Account schema is newer than this application.")
         columns = {r[1] for r in db.execute("PRAGMA table_info(users)")}
         if version < 2:
@@ -103,6 +106,32 @@ class AuthStore:
             db.execute("DELETE FROM sessions")
             db.execute("PRAGMA user_version=2")
             self._audit(db, "migration", "upgrade-roles-v2", "root/admin/standard")
+            version = 2
+        if version < 3:
+            backup = self.directory / "accounts.before-profile-v3.sqlite3"
+            # A database upgraded directly from v1 already has an exact v1
+            # snapshot above.  Create this second snapshot only when v2 was the
+            # committed schema at startup; otherwise another connection would
+            # still see v1 while this transaction is applying the v2 changes.
+            if starting_version == 2 and db.execute("SELECT COUNT(*) FROM users").fetchone()[0] and not backup.exists():
+                fd = os.open(backup, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+                os.close(fd)
+                try:
+                    with closing(sqlite3.connect(self.path)) as source, closing(sqlite3.connect(backup)) as destination:
+                        source.backup(destination)
+                except Exception:
+                    backup.unlink(missing_ok=True)
+                    raise
+                os.chmod(backup, 0o600)
+            columns = {r[1] for r in db.execute("PRAGMA table_info(users)")}
+            if "email" not in columns:
+                db.execute("ALTER TABLE users ADD COLUMN email TEXT NOT NULL DEFAULT ''")
+            if "birth_year" not in columns:
+                db.execute("ALTER TABLE users ADD COLUMN birth_year INTEGER")
+            if "avatar" not in columns:
+                db.execute("ALTER TABLE users ADD COLUMN avatar TEXT NOT NULL DEFAULT ''")
+            db.execute("PRAGMA user_version=3")
+            self._audit(db, "migration", "upgrade-profile-v3", "email/birth-year/avatar")
 
     @contextmanager
     def connect(self):
@@ -208,7 +237,88 @@ class AuthStore:
             db.execute("DELETE FROM sessions WHERE user_id=?", (uid,))
             self._audit(db, actor, "update-user/revoke-sessions", user["username"])
 
+    def update_profile(self, uid, email="", birth_year=""):
+        email = str(email or "").strip().lower()
+        if len(email) > 254 or (email and not EMAIL.fullmatch(email)):
+            raise ValueError("Địa chỉ email không hợp lệ.")
+        if birth_year in (None, ""):
+            year = None
+        else:
+            try:
+                year = int(birth_year)
+            except (TypeError, ValueError) as error:
+                raise ValueError("Năm sinh cần là một số hợp lệ.") from error
+            current_year = time.gmtime(self.clock()).tm_year
+            if not 1900 <= year <= current_year:
+                raise ValueError(f"Năm sinh cần nằm trong khoảng 1900–{current_year}.")
+        with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            user = db.execute("SELECT username FROM users WHERE id=?", (uid,)).fetchone()
+            if not user:
+                raise ValueError("Tài khoản không tồn tại.")
+            db.execute("UPDATE users SET email=?,birth_year=? WHERE id=?", (email, year, uid))
+            self._audit(db, user["username"], "update-profile", user["username"])
+
+    def set_avatar(self, uid, payload, suffix):
+        if suffix not in {".png", ".jpg"}:
+            raise ValueError("Ảnh đại diện cần là PNG hoặc JPEG.")
+        directory = self.directory / "avatars"
+        directory.mkdir(mode=0o700, exist_ok=True)
+        filename = f"user-{int(uid)}-{secrets.token_hex(8)}{suffix}"
+        path = directory / filename
+        temporary = directory / (filename + ".tmp")
+        with open(temporary, "xb") as stream:
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.chmod(temporary, 0o600)
+        os.replace(temporary, path)
+        old = ""
+        try:
+            with self.connect() as db:
+                db.execute("BEGIN IMMEDIATE")
+                user = db.execute("SELECT username,avatar FROM users WHERE id=?", (uid,)).fetchone()
+                if not user:
+                    raise ValueError("Tài khoản không tồn tại.")
+                old = user["avatar"]
+                db.execute("UPDATE users SET avatar=? WHERE id=?", (filename, uid))
+                self._audit(db, user["username"], "update-avatar", user["username"])
+        except Exception:
+            path.unlink(missing_ok=True)
+            raise
+        if old and old != filename:
+            self._unlink_avatar(old)
+        return filename
+
+    def avatar_path(self, uid):
+        with self.connect() as db:
+            row = db.execute("SELECT avatar FROM users WHERE id=?", (uid,)).fetchone()
+        if not row or not row["avatar"]:
+            return None
+        filename = row["avatar"]
+        if Path(filename).name != filename or not filename.startswith(f"user-{int(uid)}-"):
+            return None
+        path = self.directory / "avatars" / filename
+        return path if path.is_file() else None
+
+    def remove_avatar(self, uid):
+        with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            user = db.execute("SELECT username,avatar FROM users WHERE id=?", (uid,)).fetchone()
+            if not user:
+                raise ValueError("Tài khoản không tồn tại.")
+            old = user["avatar"]
+            db.execute("UPDATE users SET avatar='' WHERE id=?", (uid,))
+            self._audit(db, user["username"], "remove-avatar", user["username"])
+        if old:
+            self._unlink_avatar(old)
+
+    def _unlink_avatar(self, filename):
+        if filename and Path(filename).name == filename:
+            (self.directory / "avatars" / filename).unlink(missing_ok=True)
+
     def delete_user(self, uid, actor):
+        avatar = ""
         with self.connect() as db:
             db.execute("BEGIN IMMEDIATE")
             user = db.execute("SELECT * FROM users WHERE id=?", (uid,)).fetchone()
@@ -219,8 +329,11 @@ class AuthStore:
             if user["access_role"] == "root" and user["active"]:
                 if db.execute("SELECT COUNT(*) FROM users WHERE access_role='root' AND active=1").fetchone()[0] <= 1:
                     raise ValueError("Cần giữ ít nhất một Root đang hoạt động.")
+            avatar = user["avatar"]
             db.execute("DELETE FROM users WHERE id=?", (uid,))
             self._audit(db, actor, "delete-user", user["username"])
+        if avatar:
+            self._unlink_avatar(avatar)
 
     def login_allowed(self, ip, username):
         now = self.clock()

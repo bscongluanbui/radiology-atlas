@@ -168,9 +168,11 @@ class MigrationTests(unittest.TestCase):
         self.assertEqual(users['oldlimited']['role'],'standard');self.assertEqual(users['oldlimited']['regions'],[])
         self.assertEqual(users['oldlimited']['modules'],['BRAIN/mri-brain'])
         with store.connect() as db:
-            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],2)
+            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],3)
             self.assertTrue(all(r[0]==encoded for r in db.execute('SELECT password FROM users')))
             self.assertFalse(db.execute('PRAGMA foreign_key_check').fetchall())
+            columns={r[1] for r in db.execute('PRAGMA table_info(users)')}
+            self.assertTrue({'email','birth_year','avatar'} <= columns)
         backup=state/'accounts.before-rbac-v2.sqlite3';digest=hashlib.sha256(backup.read_bytes()).hexdigest()
         with closing(sqlite3.connect(backup)) as db:
             self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],1)
@@ -179,8 +181,27 @@ class MigrationTests(unittest.TestCase):
         token=store.login('oldowner',PASSWORD);store2=AuthStore(state)
         self.assertEqual(store2.session_user(token)['role'],'root')
         self.assertEqual(hashlib.sha256(backup.read_bytes()).hexdigest(),digest)
+        self.assertFalse((state/'accounts.before-profile-v3.sqlite3').exists())
 
-    def test_13_old_source_compatibility_is_fail_closed(self):
+    def test_13_v2_profile_migration_backup_and_credentials(self):
+        state=STATE/'profile-migration';state.mkdir(parents=True)
+        encoded=password_hash(PASSWORD)
+        with closing(sqlite3.connect(state/'accounts.sqlite3')) as db:
+            db.executescript("""CREATE TABLE users(id INTEGER PRIMARY KEY,username TEXT UNIQUE NOT NULL,password TEXT NOT NULL,role TEXT NOT NULL CHECK(role IN ('admin','viewer')),active INTEGER NOT NULL DEFAULT 1,all_modules INTEGER NOT NULL DEFAULT 0,modules TEXT NOT NULL DEFAULT '[]',created REAL NOT NULL,access_role TEXT NOT NULL DEFAULT 'standard',regions TEXT NOT NULL DEFAULT '[]'); PRAGMA user_version=2;""")
+            db.execute("INSERT INTO users VALUES (1,'profileowner',?,'admin',1,1,'[]',1,'root','[]')",(encoded,))
+            db.commit()
+        store=AuthStore(state)
+        backup=state/'accounts.before-profile-v3.sqlite3'
+        self.assertTrue(backup.is_file())
+        with closing(sqlite3.connect(backup)) as db:
+            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0],2)
+            self.assertNotIn('email',{r[1] for r in db.execute('PRAGMA table_info(users)')})
+            self.assertEqual(db.execute('SELECT password FROM users').fetchone()[0],encoded)
+        user=store.get_user(1)
+        self.assertEqual((user['email'],user['birth_year'],user['avatar']),('',None,''))
+        self.assertIsNotNone(store.login('profileowner',PASSWORD))
+
+    def test_14_old_source_compatibility_is_fail_closed(self):
         store=AuthStore(STATE/'compat')
         store.create_user('newroot',PASSWORD,'root');store.create_user('newadmin',PASSWORD,'admin')
         store.create_user('newstandard',PASSWORD,regions=['BRAIN'])

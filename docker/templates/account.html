@@ -1,8 +1,90 @@
-{% extends "base.html" %}{% block content %}<section class="card login"><p class="eyebrow">TÀI KHOẢN</p>
-<h1>{{ current_user.username }}</h1><p>Vai trò: {{ role_labels[current_user.role] }}</p>
-{% if current_user.role == 'root' %}<p><a href="/admin">Mở bảng quản trị Root →</a></p>{% elif current_user.role == 'admin' %}<p>Được xem toàn bộ vùng giải phẫu.</p>{% else %}<p>Vùng được cấp: {{ current_user.regions|join(', ') or 'Chưa có' }}.</p>{% if current_user.modules %}<p>Module được cấp riêng: {{ current_user.modules|length }}.</p>{% endif %}{% endif %}
-<p class="muted">Đổi mật khẩu sẽ đăng xuất tất cả thiết bị, kể cả thiết bị hiện tại.</p>
-<form method="post"><input type="hidden" name="csrf" value="{{ csrf_token() }}">
-<label>Mật khẩu hiện tại<input type="password" name="old_password" autocomplete="current-password" required maxlength="256"></label>
-<label>Mật khẩu mới<input type="password" name="password" autocomplete="new-password" minlength="12" maxlength="256" required></label>
-<button class="primary">Đổi mật khẩu</button></form></section>{% endblock %}
+{% extends "base.html" %}
+{% block title %}Tài khoản · Radiology Atlas{% endblock %}
+{% block content %}
+<section class="account-shell" aria-labelledby="account-title">
+  <header class="account-hero">
+    <div class="account-avatar account-avatar-large">
+      {% if current_user.avatar %}
+        <img src="/account/avatar" alt="Ảnh đại diện của {{ current_user.username }}">
+      {% else %}
+        <span aria-hidden="true">{{ current_user.username[0]|upper }}</span>
+      {% endif %}
+    </div>
+    <div>
+      <p class="eyebrow">TÀI KHOẢN CÁ NHÂN</p>
+      <h1 id="account-title">{{ current_user.username }}</h1>
+      <p class="account-role">{{ role_labels[current_user.role] }}</p>
+    </div>
+    {% if current_user.role == 'root' %}
+      <a class="account-admin-link" href="/admin">Mở bảng quản trị Root →</a>
+    {% endif %}
+  </header>
+
+  <div class="account-access-summary">
+    {% if current_user.role == 'root' %}
+      <strong>Quyền truy cập:</strong> Quản trị hệ thống và xem toàn bộ giải phẫu.
+    {% elif current_user.role == 'admin' %}
+      <strong>Quyền truy cập:</strong> Xem toàn bộ vùng giải phẫu.
+    {% else %}
+      <strong>Quyền truy cập:</strong> {{ current_user.regions|join(', ') or 'Chưa được cấp vùng' }}{% if current_user.modules %} · {{ current_user.modules|length }} module riêng{% endif %}.
+    {% endif %}
+  </div>
+
+  <div class="account-grid">
+    <article class="account-card" id="profile-details">
+      <div class="account-card-heading">
+        <span class="account-card-icon" aria-hidden="true">01</span>
+        <div><h2>Thông tin cá nhân</h2><p>Email và năm sinh đều không bắt buộc.</p></div>
+      </div>
+      <form action="/account/profile" method="post" class="account-form">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <label for="account-email">Email
+          <input id="account-email" type="email" name="email" value="{{ current_user.email }}" autocomplete="email" maxlength="254" placeholder="ten@example.com">
+        </label>
+        <label for="account-birth-year">Năm sinh
+          <input id="account-birth-year" type="number" name="birth_year" value="{{ current_user.birth_year or '' }}" inputmode="numeric" min="1900" max="{{ current_year }}" placeholder="Ví dụ: 1988">
+        </label>
+        <button class="primary" type="submit">Lưu thông tin</button>
+      </form>
+    </article>
+
+    <article class="account-card" id="profile-avatar">
+      <div class="account-card-heading">
+        <span class="account-card-icon" aria-hidden="true">02</span>
+        <div><h2>Ảnh đại diện</h2><p>PNG hoặc JPEG, tối đa 512 KiB và 2048 × 2048 px.</p></div>
+      </div>
+      <form action="/account/avatar" method="post" enctype="multipart/form-data" class="account-form">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <label class="avatar-upload" for="account-avatar-file">Chọn ảnh
+          <input id="account-avatar-file" type="file" name="avatar" accept="image/png,image/jpeg" required>
+        </label>
+        <button class="primary" type="submit">Cập nhật Avatar</button>
+      </form>
+      {% if current_user.avatar %}
+        <form action="/account/avatar/remove" method="post" class="account-remove-avatar">
+          <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+          <button type="submit">Xóa Avatar hiện tại</button>
+        </form>
+      {% endif %}
+    </article>
+
+    <article class="account-card account-card-password" id="profile-password">
+      <div class="account-card-heading">
+        <span class="account-card-icon" aria-hidden="true">03</span>
+        <div><h2>Thay đổi mật khẩu</h2><p>Chỉ thay đổi khi bạn muốn; không ép độ dài tối thiểu hoặc thành phần ký tự.</p></div>
+      </div>
+      <form action="/account/password" method="post" class="account-form account-password-form">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <label for="account-old-password">Mật khẩu hiện tại
+          <input id="account-old-password" type="password" name="old_password" autocomplete="current-password" required maxlength="256">
+        </label>
+        <label for="account-new-password">Mật khẩu mới
+          <input id="account-new-password" type="password" name="password" autocomplete="new-password" required maxlength="256">
+        </label>
+        <button class="primary" type="submit">Đổi mật khẩu</button>
+      </form>
+      <p class="account-session-note">Đổi mật khẩu sẽ đăng xuất tất cả thiết bị, kể cả thiết bị hiện tại.</p>
+    </article>
+  </div>
+</section>
+{% endblock %}

@@ -92,7 +92,7 @@ Nếu container website đã healthy nhưng bước gắn connector lỗi, sửa
 bash attach-tunnel.sh
 ```
 
-Tạo Root đầu tiên, nhập mật khẩu hai lần (ít nhất 12 ký tự):
+Tạo Root đầu tiên và nhập mật khẩu do bạn tự chọn hai lần:
 
 ```bash
 docker compose exec viewer python docker/manage.py create-root --username root

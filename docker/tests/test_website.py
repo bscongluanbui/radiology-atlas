@@ -105,10 +105,13 @@ class WebsiteTests(unittest.TestCase):
         self.assertEqual(page.text.count('data-module-card '),self.catalogue['module_count'])
         for kind in {m['modality'] for m in self.catalogue['modules']}:
             self.assertIn(f'name="modality" value="{kind}"',page.text)
-        pending=next(m for m in self.catalogue['modules'] if not m['captured'])
-        self.assertEqual(self.get('/viewer?'+urlencode({'key':pending['key']})).status_code,404)
-        self.assertIn('aria-disabled="true"',page.text)
-        self.assertNotIn('href="/viewer?key='+pending['key'],page.text)
+        pending=[m for m in self.catalogue['modules'] if not m['captured']]
+        if pending:
+            self.assertEqual(self.get('/viewer?'+urlencode({'key':pending[0]['key']})).status_code,404)
+            self.assertIn('aria-disabled="true"',page.text)
+            self.assertNotIn('href="/viewer?key='+pending[0]['key'],page.text)
+        else:
+            self.assertNotIn('aria-disabled="true"',page.text)
 
     def test_09_revoke_session_closes_gate(self):
         uid=self.auth.create_user('revoketest',PASSWORD,modules=['BRAIN/mri-brain'])

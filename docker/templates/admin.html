@@ -1,36 +1,597 @@
 {% extends "base.html" %}
+
 {% macro policy(user=none) %}
-<label>Vai trò<select name="role">{% for role in ['standard','admin','root'] %}<option value="{{ role }}" {% if (user and user.role == role) or (not user and role == 'standard') %}selected{% endif %}>{{ role_labels[role] }}</option>{% endfor %}</select></label>
-<fieldset class="region-permissions"><legend>Vùng giải phẫu được phép xem · Standard</legend><p class="muted">Tick các vùng bạn muốn cấp quyền. Bao gồm tất cả module hiện tại và bổ sung sau trong vùng đó. Root và Admin tự động xem toàn bộ, không cần tick.</p><div class="region-grants">
-{% for region in regions %}<label class="region-grant"><input type="checkbox" name="regions" value="{{ region.key }}" {% if user and region.key in user.regions %}checked{% endif %}><span><strong>{{ region.vi }}</strong><small>{{ region.label }} · {{ region.modules|length }} module</small></span></label>{% endfor %}
-</div></fieldset>
-<details><summary>Quyền module riêng / tương thích tài khoản cũ{% if user %} · {{ user.modules|length }}{% endif %}</summary><p class="muted">Giữ nguyên các module đã cấp ở bản cũ, không tự mở rộng thành toàn bộ vùng. Quyền Standard = vùng đã tick + module được cấp riêng. Bỏ tick cả hai để thu hồi quyền xem.</p><div class="module-grid">
-{% for module in modules %}<label class="check"><input type="checkbox" name="modules" value="{{ module.key }}" {% if user and module.key in user.modules %}checked{% endif %}> {{ module.title }} <small>{{ module.region }}</small></label>{% endfor %}
-</div></details>
+<div class="policy-container">
+  <div class="form-group">
+    <label class="form-label" for="roleSelect-{{ user.id if user else 'new' }}">Vai trò tài khoản</label>
+    <select class="form-control" name="role" id="roleSelect-{{ user.id if user else 'new' }}">
+      {% for role in ['standard','admin','root'] %}
+        <option value="{{ role }}" {% if (user and user.role == role) or (not user and role == 'standard') %}selected{% endif %}>
+          {{ role_labels[role] }} ({{ 'Toàn quyền quản trị & xem' if role == 'root' else ('Xem toàn bộ giải phẫu' if role == 'admin' else 'Phân quyền theo vùng/module') }})
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="policy-section">
+    <div class="policy-header">
+      <strong>Vùng giải phẫu được phép xem (Dành cho Standard)</strong>
+      <p class="form-hint">Chọn các vùng cấp phép. Tài khoản Standard sẽ xem được tất cả module hiện có và thêm mới trong vùng đã chọn. Root và Admin luôn có toàn quyền xem.</p>
+    </div>
+    <div class="region-chips-grid">
+      {% for region in regions %}
+        <label class="region-chip-card">
+          <input type="checkbox" name="regions" value="{{ region.key }}" {% if user and region.key in user.regions %}checked{% endif %}>
+          <div class="region-chip-body">
+            <span class="region-chip-title">{{ region.vi }}</span>
+            <span class="region-chip-meta">{{ region.label }} · {{ region.modules|length }} module</span>
+          </div>
+        </label>
+      {% endfor %}
+    </div>
+  </div>
+
+  <details class="policy-details">
+    <summary class="policy-details-summary">
+      <span>Quyền module riêng biệt / tương thích tài khoản cũ</span>
+      <span class="badge badge-subtle">{% if user %}{{ user.modules|length }} module đã cấp{% else %}Tùy chọn chi tiết{% endif %}</span>
+    </summary>
+    <div class="policy-details-content">
+      <p class="form-hint">Dùng khi chỉ muốn cấp lẻ từng module cụ thể mà không mở toàn bộ vùng. Quyền truy cập = Vùng đã chọn + Module được cấp riêng.</p>
+      <div class="module-chips-grid">
+        {% for module in modules %}
+          <label class="module-chip">
+            <input type="checkbox" name="modules" value="{{ module.key }}" {% if user and module.key in user.modules %}checked{% endif %}>
+            <span class="module-chip-text">{{ module.title }}</span>
+            <span class="module-chip-tag">{{ module.region }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    </div>
+  </details>
+</div>
 {% endmacro %}
-{% block content %}<p class="eyebrow">ROOT CONTROL</p><h1>Quản trị Radiology Atlas</h1>
-<p class="muted">Bạn đang đăng nhập bằng {{ current_user.username }} · Root. Chỉ Root quản lý tài khoản, phân quyền và cache.</p>
-<div class="role-overview"><div><strong>Root</strong><p>Quản lý hệ thống và mọi tài khoản. Xem toàn bộ giải phẫu.</p></div><div><strong>Admin</strong><p>Xem toàn bộ giải phẫu. Không quản lý tài khoản, quyền hoặc cache hệ thống.</p></div><div><strong>Standard</strong><p>Chỉ xem các vùng / module được Root cấp. Mặc định chưa có quyền xem.</p></div></div>
-<section class="card"><h2>Tạo tài khoản</h2><form action="/admin/users" method="post"><input type="hidden" name="csrf" value="{{ csrf_token() }}">
-<div class="row"><label>Tên đăng nhập<input name="username" required pattern="[a-z0-9][a-z0-9_.\-]{2,47}" maxlength="48" autocomplete="off"></label>
-<label>Mật khẩu ban đầu<input type="password" name="password" required minlength="12" maxlength="256" autocomplete="new-password"></label></div>
-{{ policy() }}<button class="primary">Tạo tài khoản</button></form></section>
-<section class="card"><h2>Tài khoản hiện có · {{ users|length }}/500</h2><p class="muted">Lưu quyền, đổi mật khẩu hoặc khóa tài khoản sẽ thu hồi tất cả phiên của tài khoản đó.</p>
-{% for user in users %}<details class="user"><summary>{{ user.username }} · {{ role_labels[user.role] }} · {{ 'Đang hoạt động' if user.active else 'Đã khóa' }}{% if user.role == 'standard' %} · {{ user.regions|length }} vùng · {{ user.modules|length }} module riêng{% endif %}</summary>
-<form action="/admin/users/{{ user.id }}/update" method="post"><input type="hidden" name="csrf" value="{{ csrf_token() }}">
-<label class="check"><input type="checkbox" name="active" {% if user.active %}checked{% endif %}> Cho phép đăng nhập</label>
-{{ policy(user) }}<label>Mật khẩu thay thế (để trống nếu giữ nguyên)<input type="password" name="password" minlength="12" maxlength="256" autocomplete="new-password"></label>
-<button class="primary">Lưu {{ user.username }}</button></form>
-<div class="row actions"><form action="/admin/users/{{ user.id }}/revoke" method="post"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><button>Đăng xuất mọi thiết bị</button></form>
-<details><summary class="danger">Xóa tài khoản</summary><p>Thao tác này xóa tài khoản {{ user.username }} và các phiên đăng nhập.</p><form action="/admin/users/{{ user.id }}/delete" method="post"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><button class="danger">Xác nhận xóa {{ user.username }}</button></form></details></div>
-</details>{% endfor %}</section>
-<section class="card"><h2>Cache và dung lượng</h2><p>Cache ảnh trên đĩa server: <strong>0</strong>. Ảnh được đọc trực tiếp từ data.</p>
-<table><thead><tr><th>Cache RAM metadata</th><th>Số mục</th><th>Đang dùng / giới hạn</th></tr></thead><tbody>
-{% for name,stat in cache_stats.items() %}<tr><td>{{ name }}</td><td>{{ stat.entries }}/8</td><td>{{ (stat.bytes/1048576)|round(1) }} / {{ (stat.limit_bytes/1048576)|round(1) }} MiB</td></tr>{% endfor %}</tbody></table>
-<p>Cache mỗi tab: tối đa {{ browser_cache_mib }} MiB cho Blob và data URL đã ghi nhớ; ảnh giải mã: tối đa {{ decoded_images }} ảnh, tính riêng. Máy báo RAM ≤4 GB tự hạ giới hạn. TTL khi không sử dụng: {{ ttl }} giây. Server và tab đang mở dọn mỗi 60 giây; đổi series sẽ xóa cache ảnh tab.</p>
-<p>Preload toàn series: {{ preload_concurrency }} tác vụ nền. Ảnh chính, filmstrip, MPR và overlays dùng chung cache. JSON có 1 suất nền và 1 suất ưu tiên cho slice đang xem. Cache ảnh và ảnh giải mã dùng RAM máy người xem; cache metadata trong bảng trên dùng RAM server.</p>
-<p class="muted">Nhật ký Docker: tối đa 3 × 10 MB mỗi dịch vụ. Audit: 30 ngày hoặc 10.000 sự kiện. SQLite: tối đa 64 MiB dữ liệu chính; WAL được checkpoint định kỳ.</p>
-<form action="/admin/cache/clear" method="post"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><button>Dọn cache server ngay</button></form></section>
-<section class="card"><h2>50 hoạt động gần nhất</h2><div class="table-scroll"><table><thead><tr><th>Thời gian</th><th>Người thực hiện</th><th>Hành động</th><th>Đối tượng</th></tr></thead><tbody>
-{% for row in audit %}<tr><td>{{ row.at|timestamp }}</td><td>{{ row.actor }}</td><td>{{ row.action }}</td><td>{{ row.target }}</td></tr>{% endfor %}</tbody></table></div></section>
-{% endblock %}
+
+{% block layout %}
+<div class="admin-dashboard-layout">
+  <!-- Left sidebar -->
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+          <path d="M6 8h.01M9 11h6M10 8h4"></path>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-title">Radiology <strong>Atlas</strong></span>
+        <span class="brand-tagline">Admin Control Panel</span>
+      </div>
+    </div>
+
+    <!-- User Profile Pill -->
+    <a class="sidebar-user-card" href="/account" aria-label="Mở tài khoản cá nhân">
+      <div class="user-avatar" aria-hidden="true">
+        {% if current_user.avatar %}<img src="/account/avatar" alt="">{% else %}{{ current_user.username[0]|upper }}{% endif %}
+      </div>
+      <div class="user-details">
+        <div class="user-name">{{ current_user.username|capitalize }}</div>
+        <div class="user-role">{{ role_labels[current_user.role] }} · System Root</div>
+      </div>
+      <div class="user-status-dot" title="Tài khoản đang trực tuyến"></div>
+    </a>
+
+    <!-- Navigation Menu -->
+    <nav class="sidebar-nav" aria-label="Menu quản trị">
+      <div class="nav-section-label">MAIN MENU</div>
+      <a href="#dashboard-overview" class="nav-item active">
+        <span class="nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect></svg>
+        </span>
+        <span class="nav-label">Dashboard</span>
+      </a>
+
+      <a href="#users-management-section" class="nav-item">
+        <span class="nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        </span>
+        <span class="nav-label">Quản lý tài khoản</span>
+        <span class="nav-badge">{{ users|length }}</span>
+      </a>
+
+      <a href="#create-user-section" class="nav-item">
+        <span class="nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+        </span>
+        <span class="nav-label">Tạo tài khoản mới</span>
+      </a>
+
+      <a href="#cache-management-section" class="nav-item">
+        <span class="nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+        </span>
+        <span class="nav-label">Bộ nhớ & Cache RAM</span>
+      </a>
+
+      <a href="#audit-log-section" class="nav-item">
+        <span class="nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+        </span>
+        <span class="nav-label">Nhật ký Audit</span>
+        <span class="nav-badge">{{ audit|length }}</span>
+      </a>
+
+      <div class="nav-section-label">ĐIỀU HƯỚNG ATLAS</div>
+      <a href="/anatomy" class="nav-item external-link" target="_blank" rel="noopener">
+        <span class="nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        </span>
+        <span class="nav-label">Xem Anatomy 3D</span>
+        <span class="nav-tag">Viewer</span>
+      </a>
+
+      <a href="/" class="nav-item">
+        <span class="nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        </span>
+        <span class="nav-label">Trang chủ Atlas</span>
+      </a>
+
+      <a href="/account" class="nav-item">
+        <span class="nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        </span>
+        <span class="nav-label">Tài khoản cá nhân</span>
+      </a>
+    </nav>
+
+    <!-- Bottom Promo / Engine Health Card (Matching "Upgrade to Pro" card) -->
+    <div class="sidebar-engine-card">
+      <div class="engine-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+        </svg>
+      </div>
+      <h3 class="engine-card-title">Atlas Engine</h3>
+      <p class="engine-card-text">Ảnh lát cắt & MPR tốc độ cao. RAM Cache: <strong>{{ (cache_stats.values()|sum(attribute='bytes')/1048576)|round(1) }} MiB</strong></p>
+      <form action="/admin/cache/clear" method="post" class="engine-card-form">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <button type="submit" class="engine-card-btn">Dọn Cache RAM</button>
+      </form>
+    </div>
+  </aside>
+
+  <!-- Main Content Wrapper -->
+  <div class="admin-main-wrapper">
+    <!-- Top Bar -->
+    <div class="admin-topbar" id="dashboard-overview">
+      <div class="topbar-left">
+        <button class="mobile-sidebar-toggle" id="sidebarToggleBtn" type="button" aria-label="Mở menu" aria-controls="adminSidebar" aria-expanded="false" data-sidebar-toggle>
+          <span>☰</span>
+        </button>
+        <div class="topbar-greeting">
+          <h1 class="greeting-title">Hello, {{ current_user.username|capitalize }}</h1>
+          <p class="greeting-subtitle">Báo cáo tổng quan trạng thái hệ thống Radiology Atlas hôm nay.</p>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <a href="#create-user-section" class="topbar-btn topbar-btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>Tạo tài khoản</span>
+        </a>
+
+        <form action="/admin/cache/clear" method="post" class="inline-form">
+          <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+          <button type="submit" class="topbar-btn topbar-btn-secondary" title="Dọn dẹp RAM metadata cache">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+            <span>Dọn Cache</span>
+          </button>
+        </form>
+
+        <button class="topbar-theme-toggle" type="button" data-theme-toggle aria-label="Đổi giao diện">
+          <span class="theme-toggle-icon" aria-hidden="true"></span>
+        </button>
+
+        <form action="/logout" method="post" class="inline-form">
+          <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+          <button type="submit" class="topbar-btn topbar-btn-logout">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            <span>Đăng xuất</span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Flashed Notices -->
+    {% for category,message in get_flashed_messages(with_categories=true) %}
+      <div role="status" class="admin-notice {{ category }}">
+        <span class="notice-icon">{{ '✓' if category != 'error' else '⚠' }}</span>
+        <span>{{ message }}</span>
+      </div>
+    {% endfor %}
+
+    <!-- Top Metric Cards Row (4 cards matching the reference image) -->
+    <section class="admin-metrics-grid" aria-label="Chỉ số hệ thống">
+      <!-- Metric Card 1: Total Users -->
+      <div class="metric-card">
+        <div class="metric-card-top">
+          <div class="metric-icon-box purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          </div>
+          <a href="#users-management-section" class="metric-arrow-btn" aria-label="Xem chi tiết người dùng">→</a>
+        </div>
+        <div class="metric-label">Tổng tài khoản</div>
+        <div class="metric-number-row">
+          <span class="metric-value">{{ users|length }}</span>
+          <span class="metric-limit">/ 500</span>
+        </div>
+        <div class="metric-trend-row">
+          <span class="trend-pill positive">{{ users|selectattr('active')|list|length }} đang hoạt động</span>
+        </div>
+      </div>
+
+      <!-- Metric Card 2: Anatomy Modules -->
+      <div class="metric-card">
+        <div class="metric-card-top">
+          <div class="metric-icon-box indigo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          </div>
+          <a href="/anatomy" class="metric-arrow-btn" target="_blank" aria-label="Xem danh mục module">→</a>
+        </div>
+        <div class="metric-label">Modules Giải Phẫu</div>
+        <div class="metric-number-row">
+          <span class="metric-value">{{ modules|length }}</span>
+          <span class="metric-limit">bộ giải phẫu</span>
+        </div>
+        <div class="metric-trend-row">
+          <span class="trend-pill violet">{{ ready_modules }} sẵn sàng · {{ modules|length - ready_modules }} đang bổ sung</span>
+        </div>
+      </div>
+
+      <!-- Metric Card 3: Anatomical Regions -->
+      <div class="metric-card">
+        <div class="metric-card-top">
+          <div class="metric-icon-box amber">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+          </div>
+          <a href="#users-management-section" class="metric-arrow-btn" aria-label="Xem phân vùng">→</a>
+        </div>
+        <div class="metric-label">Vùng Giải Phẫu</div>
+        <div class="metric-number-row">
+          <span class="metric-value">{{ regions|length }}</span>
+          <span class="metric-limit">vùng lâm sàng</span>
+        </div>
+        <div class="metric-trend-row">
+          <span class="trend-pill amber">Theo catalogue hiện tại</span>
+        </div>
+      </div>
+
+      <!-- Metric Card 4: RAM Metadata Cache -->
+      <div class="metric-card">
+        <div class="metric-card-top">
+          <div class="metric-icon-box teal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"></rect><rect x="2" y="14" width="20" height="8" rx="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+          </div>
+          <a href="#cache-management-section" class="metric-arrow-btn" aria-label="Xem chi tiết bộ nhớ">→</a>
+        </div>
+        <div class="metric-label">RAM Cache Metadata</div>
+        <div class="metric-number-row">
+          <span class="metric-value">{{ (cache_stats.values()|sum(attribute='bytes')/1048576)|round(1) }}</span>
+          <span class="metric-limit">MiB</span>
+        </div>
+        <div class="metric-trend-row">
+          <span class="trend-pill teal">Metadata đang lưu trong RAM</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-analytics-grid" aria-label="Tình trạng hệ thống">
+      <div class="analytics-chart-card">
+        <div class="card-header-flex">
+          <div>
+            <h2 class="card-section-title">Tình trạng dữ liệu giải phẫu</h2>
+            <p class="card-subtitle">Số liệu đọc trực tiếp từ catalogue hiện tại.</p>
+          </div>
+          <span class="card-badge-pill">{{ ready_modules }}/{{ modules|length }} module sẵn sàng</span>
+        </div>
+        <div class="data-status-grid">
+          <div class="data-status-item"><span>Đã có dữ liệu</span><strong>{{ ready_modules }}</strong></div>
+          <div class="data-status-item"><span>Đang bổ sung</span><strong>{{ modules|length - ready_modules }}</strong></div>
+          <div class="data-status-item"><span>Vùng giải phẫu</span><strong>{{ regions|length }}</strong></div>
+        </div>
+        <progress class="catalogue-progress" value="{{ ready_modules }}" max="{{ modules|length or 1 }}">{{ ready_modules }}/{{ modules|length }}</progress>
+      </div>
+
+      <div class="analytics-donut-card">
+        <div class="card-header-flex">
+          <div>
+            <h2 class="card-section-title">Cơ cấu vai trò tài khoản</h2>
+            <p class="card-subtitle">Phân bổ quyền truy cập thực tế.</p>
+          </div>
+          <span class="card-badge-pill primary">{{ users|length }} tài khoản</span>
+        </div>
+        <div class="role-distribution">
+          <div class="role-distribution-item root"><span>Root</span><strong>{{ role_counts.root }}</strong></div>
+          <div class="role-distribution-item admin"><span>Admin</span><strong>{{ role_counts.admin }}</strong></div>
+          <div class="role-distribution-item standard"><span>Standard</span><strong>{{ role_counts.standard }}</strong></div>
+        </div>
+        <div class="role-desc-compact">
+          <div><strong>Root:</strong> Quản trị tài khoản, cache và toàn bộ giải phẫu.</div>
+          <div><strong>Admin:</strong> Xem toàn bộ giải phẫu.</div>
+          <div><strong>Standard:</strong> Giới hạn theo vùng và module được cấp.</div>
+        </div>
+      </div>
+    </section>
+    <!-- Bottom Row: Users Management (Potential Candidates) & Recent Audit (Latest Vacancies) -->
+    <section class="admin-management-grid" id="users-management-section">
+      <!-- Left: User Management Table (Matching "Potential Candidates" table) -->
+      <div class="admin-table-card">
+        <div class="table-header-flex">
+          <div>
+            <h2 class="card-section-title">Danh sách tài khoản hệ thống</h2>
+            <p class="card-subtitle">Quản lý phân quyền, trạng thái và mật khẩu ({{ users|length }}/500 tài khoản)</p>
+          </div>
+          <div class="table-header-actions">
+            <a href="#create-user-section" class="btn-create-small">
+              <span>+ Thêm tài khoản</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="table-responsive-container">
+          <table class="saas-user-table">
+            <thead>
+              <tr>
+                <th class="table-checkbox-column"><input type="checkbox" class="table-check" aria-label="Chọn tất cả"></th>
+                <th>Tài khoản</th>
+                <th>Vai trò</th>
+                <th>Phân quyền giải phẫu</th>
+                <th>Trạng thái</th>
+                <th class="table-actions-column">Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for user in users %}
+                <tr class="user-row">
+                  <td><input type="checkbox" class="table-check" aria-label="Chọn {{ user.username }}"></td>
+                  <td>
+                    <div class="user-cell">
+                      <div class="user-avatar-sm {{ user.role }}">
+                        {{ user.username[0]|upper }}
+                      </div>
+                      <div class="user-cell-meta">
+                        <strong class="user-cell-name">{{ user.username }}</strong>
+                        <span class="user-cell-sub">ID: #{{ user.id }}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="role-tag {{ user.role }}">
+                      {{ role_labels[user.role] }}
+                    </span>
+                  </td>
+                  <td>
+                    {% if user.role in ['root', 'admin'] %}
+                      <span class="permission-pill full">Toàn bộ giải phẫu</span>
+                    {% else %}
+                      <span class="permission-pill partial">
+                        {{ user.regions|length }} vùng
+                        {% if user.modules %} · {{ user.modules|length }} module{% endif %}
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if user.active %}
+                      <span class="status-pill active">
+                        <span class="status-dot-inner"></span> Hoạt động
+                      </span>
+                    {% else %}
+                      <span class="status-pill locked">
+                        <span class="status-dot-inner"></span> Đã khóa
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td class="table-actions-column">
+                    <button type="button" class="btn-action-edit" data-drawer-target="drawer-user-{{ user.id }}" aria-controls="drawer-user-{{ user.id }}" aria-expanded="false">
+                      Sửa quyền / Mật khẩu
+                    </button>
+                  </td>
+                </tr>
+
+                <!-- User Edit Collapsible Drawer -->
+                <tr class="drawer-row" id="drawer-user-{{ user.id }}">
+                  <td colspan="6" class="drawer-td">
+                    <div class="user-drawer-card">
+                      <div class="drawer-header">
+                        <h3>Cập nhật tài khoản: <span class="highlight-user">{{ user.username }}</span></h3>
+                        <p class="form-hint">Mọi thay đổi về quyền, mật khẩu hoặc trạng thái sẽ tự động thu hồi tất cả phiên đăng nhập cũ của người dùng này.</p>
+                      </div>
+
+                      <form action="/admin/users/{{ user.id }}/update" method="post" class="drawer-update-form">
+                        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+
+                        <div class="drawer-row-controls">
+                          <label class="check-toggle-label">
+                            <input type="checkbox" name="active" {% if user.active %}checked{% endif %}>
+                            <span>Kích hoạt tài khoản (Cho phép đăng nhập)</span>
+                          </label>
+                        </div>
+
+                        {{ policy(user) }}
+
+                        <div class="form-group form-group-spaced">
+                          <label class="form-label" for="pass-{{ user.id }}">Mật khẩu mới (Để trống nếu giữ nguyên)</label>
+                          <input class="form-control" type="password" id="pass-{{ user.id }}" name="password" maxlength="256" autocomplete="new-password" placeholder="Đặt tùy chọn; để trống nếu giữ nguyên">
+                        </div>
+
+                        <div class="drawer-submit-row">
+                          <button type="submit" class="btn-save-user">Lưu thay đổi</button>
+                          <button type="button" class="btn-cancel-drawer" data-drawer-target="drawer-user-{{ user.id }}" aria-controls="drawer-user-{{ user.id }}">Đóng</button>
+                        </div>
+                      </form>
+
+                      <!-- Danger / Session Actions -->
+                      <div class="drawer-secondary-actions">
+                        <form action="/admin/users/{{ user.id }}/revoke" method="post" class="inline-form">
+                          <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+                          <button type="submit" class="btn-revoke">Đăng xuất khỏi mọi thiết bị</button>
+                        </form>
+
+                        <details class="delete-user-details">
+                          <summary class="delete-user-summary">Xóa tài khoản vĩnh viễn</summary>
+                          <div class="delete-user-box">
+                            <p>Hành động này không thể hoàn tác. Toàn bộ phiên và quyền truy cập của {{ user.username }} sẽ bị xóa.</p>
+                            <form action="/admin/users/{{ user.id }}/delete" method="post">
+                              <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+                              <button type="submit" class="btn-delete-confirm">Xác nhận xóa {{ user.username }}</button>
+                            </form>
+                          </div>
+                        </details>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Right: Audit Logs Feed (Matching "Latest Vacancies" from image) -->
+      <div class="admin-audit-card" id="audit-log-section">
+        <div class="card-header-flex">
+          <div>
+            <h2 class="card-section-title">Nhật ký hoạt động</h2>
+            <p class="card-subtitle">Ghi nhận 50 sự kiện gần nhất (Audit Trail)</p>
+          </div>
+          <span class="card-badge-pill">Bảo mật</span>
+        </div>
+
+        <div class="audit-feed-list">
+          {% for row in audit[:10] %}
+            <div class="audit-feed-item">
+              <div class="audit-feed-icon {{ 'green' if 'create' in row.action else ('blue' if 'update' in row.action else ('amber' if 'revoke' in row.action else 'gray')) }}">
+                {% if 'create' in row.action %}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                {% elif 'update' in row.action %}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                {% elif 'revoke' in row.action %}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+                {% else %}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                {% endif %}
+              </div>
+              <div class="audit-feed-body">
+                <div class="audit-feed-header">
+                  <strong class="audit-action-title">{{ row.action }}</strong>
+                  <span class="audit-time">{{ row.at|timestamp }}</span>
+                </div>
+                <div class="audit-feed-meta">
+                  <span class="audit-actor">Bởi: <strong>{{ row.actor }}</strong></span>
+                  {% if row.target %}
+                    <span class="audit-target">· Mục tiêu: <code>{{ row.target }}</code></span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <!-- Create User Card / Modal Section -->
+    <section class="admin-create-card" id="create-user-section">
+      <div class="card-header-flex">
+        <div>
+          <h2 class="card-section-title">Tạo tài khoản mới</h2>
+          <p class="card-subtitle">Thêm bác sĩ, kỹ thuật viên hoặc quản trị viên vào hệ thống</p>
+        </div>
+        <span class="card-badge-pill primary">+ Người dùng mới</span>
+      </div>
+
+      <form action="/admin/users" method="post" class="create-user-form">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label" for="new-username">Tên đăng nhập *</label>
+            <input class="form-control" id="new-username" name="username" required pattern="[a-z0-9][a-z0-9_.\-]{2,47}" maxlength="48" autocomplete="off" placeholder="vd: dr_hung, bs_nam...">
+            <span class="form-hint">Chữ thường, số, dấu chấm hoặc gạch dưới (3 - 48 ký tự).</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="new-password">Mật khẩu ban đầu *</label>
+            <input class="form-control" type="password" id="new-password" name="password" required maxlength="256" autocomplete="new-password" placeholder="Root tự chọn mật khẩu">
+            <span class="form-hint">Không ép độ dài tối thiểu hoặc thành phần ký tự.</span>
+          </div>
+        </div>
+
+        {{ policy() }}
+
+        <div class="create-form-actions">
+          <button type="submit" class="btn-create-submit">Tạo tài khoản</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- System Memory & Cache Infrastructure Section -->
+    <section class="admin-cache-card" id="cache-management-section">
+      <div class="card-header-flex">
+        <div>
+          <h2 class="card-section-title">Hạ tầng Cache & Bộ nhớ Server</h2>
+          <p class="card-subtitle">Tối ưu tốc độ tải ảnh lát cắt, MPR và JSON cấu trúc</p>
+        </div>
+        <form action="/admin/cache/clear" method="post" class="inline-form">
+          <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-cache-clear">Dọn sạch Cache Server</button>
+        </form>
+      </div>
+
+      <div class="cache-stats-table-wrapper">
+        <table class="saas-user-table">
+          <thead>
+            <tr>
+              <th>Phân vùng Cache RAM</th>
+              <th>Số lượng mục</th>
+              <th>Bộ nhớ đang dùng</th>
+              <th>Giới hạn tối đa</th>
+              <th>Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for name, stat in cache_stats.items() %}
+              <tr>
+                <td><strong>{{ name }}</strong></td>
+                <td>{{ stat.entries }} / {{ stat.max_entries }}</td>
+                <td><span class="cache-usage-pill">{{ (stat.bytes/1048576)|round(1) }} MiB</span></td>
+                <td>{{ (stat.limit_bytes/1048576)|round(1) }} MiB</td>
+                <td><span class="status-pill active"><span class="status-dot-inner"></span> Bình thường</span></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="cache-info-grid">
+        <div class="cache-info-box">
+          <strong>Cache đĩa máy chủ: 0 MB</strong>
+          <p>Ảnh đọc trực tiếp từ kho lưu trữ dữ liệu lâm sàng tốc độ cao, không lưu đĩa đệm dư thừa.</p>
+        </div>
+        <div class="cache-info-box">
+          <strong>Preload đồng thời: {{ preload_concurrency }} tác vụ</strong>
+          <p>Tự động tải trước slice lân cận trong cùng series để giảm thời gian chờ khi cuộn.</p>
+        </div>
+        <div class="cache-info-box">
+          <strong>Browser Cache: {{ browser_cache_mib }} MiB / tab</strong>
+          <p>Tối đa {{ decoded_images }} ảnh giải mã sẵn trong RAM máy client. TTL tự giải phóng: {{ ttl }} giây.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="/portal/static/admin.js" defer></script>
+{% endblock layout %}

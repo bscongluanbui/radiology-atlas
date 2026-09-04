@@ -1,21 +1,165 @@
 {% extends "site_base.html" %}
 {% block content %}
-<section class="home-hero" aria-labelledby="homeTitle"><div class="hero-seal"><img src="/portal/static/site-mark.svg" alt="" width="50" height="50"></div>
-<p class="hero-eyebrow">ANATOMY · IMAGING · DISCOVERY</p><h1 id="homeTitle">Một góc nhìn mới.<br><span>Một thế giới giải phẫu.</span></h1>
-<p class="hero-description">Kết nối kiến thức giải phẫu với từng hình ảnh.<br>Khám phá, đối chiếu và học tập trong không gian của bạn.</p>
-<a class="button button-white" href="/anatomy" data-anatomy-link>Khám phá Anatomy <span aria-hidden="true">→</span></a>
-<a class="hero-secondary" href="#intro">Tìm hiểu thêm <span aria-hidden="true">↓</span></a>
+<section class="home-hero" aria-labelledby="homeTitle">
+  <div class="hero-seal"><img src="/portal/static/site-mark.svg" alt="" width="50" height="50"></div>
+  <p class="hero-eyebrow">ANATOMY · IMAGING · DISCOVERY</p>
+  <h1 id="homeTitle">FULL BODY ANATOMY IMAGES</h1>
+  <p class="hero-description">Kết nối kiến thức giải phẫu với từng hình ảnh.<br>Khám phá, đối chiếu và học tập trong không gian của bạn.</p>
+  <div class="hero-actions">
+    <a class="button button-lets-go" href="/anatomy" data-anatomy-link>LET'S GO <span aria-hidden="true">→</span></a>
+  </div>
+  <div class="hero-preview-wrapper" aria-hidden="true">
+    <div class="hero-preview-card">
+      <div class="preview-badge"><span class="pulse-dot"></span> FULL BODY SCAN · HIGH RESOLUTION</div>
+      <img src="/portal/static/images/skeleton-hud.jpg" alt="Full Body Anatomy Preview" class="hero-preview-img" width="348" height="574" loading="eager">
+      <div class="preview-overlay">
+        <span class="preview-tag">X-RAY HUD</span>
+        <span class="preview-tag">SKELETAL SYSTEM</span>
+        <span class="preview-tag">3D MAPPING</span>
+      </div>
+    </div>
+  </div>
 </section>
-<main id="main-content" class="home-surface"><nav class="section-nav" aria-label="Nội dung Home"><a href="#intro">Giới thiệu</a><a href="/anatomy" data-anatomy-link>Anatomy</a><a href="#experience">Trải nghiệm</a><a href="#guide">Bắt đầu</a></nav>
-<section id="intro" class="home-intro"><div><p class="section-eyebrow">THE ANATOMY LIBRARY</p><h2>Giải phẫu hình ảnh,<br>trong một không gian.</h2><div class="gradient-rule"></div><p>Tìm đúng vùng cần khám phá, chọn loại hình ảnh học và đi thẳng đến module. Mỗi cấu trúc được kết nối với hình ảnh và thông tin giải phẫu trong viewer.</p><a href="/anatomy" class="button button-outline" data-anatomy-link>Mở thư viện Anatomy <span aria-hidden="true">↗</span></a></div>
-<div class="intro-visual" aria-hidden="true"><div class="visual-orbit orbit-one"></div><div class="visual-orbit orbit-two"></div><div class="visual-core"><img src="/portal/static/site-mark.svg" alt="" width="84" height="84"><span>ANATOMY</span></div><span class="orbit-label label-mri">MRI</span><span class="orbit-label label-ct">CT</span><span class="orbit-label label-atlas">ILLUSTRATIONS</span></div>
-</section>
-<section id="experience" class="home-features"><header><p class="section-eyebrow">EXPLORE YOUR WAY</p><h2>Từ tổng quan đến từng cấu trúc.</h2><div class="gradient-rule centered"></div></header><div class="feature-grid">
-<article><div class="feature-icon pink" aria-hidden="true">◎</div><h3>Theo vùng giải phẫu</h3><p>Nhóm module theo vùng cơ thể để bạn định hướng và tìm kiếm nhanh hơn.</p></article>
-<article><div class="feature-icon violet" aria-hidden="true">▤</div><h3>Theo loại hình ảnh học</h3><p>Lọc MRI, CT, X-quang, chụp mạch và các loại hình có trong thư viện.</p></article>
-<article><div class="feature-icon blue" aria-hidden="true">↗</div><h3>Đi thẳng vào viewer</h3><p>Mở đúng module, khám phá từng slice và tương tác trực tiếp với labels giải phẫu.</p></article>
-</div></section>
-<section id="guide" class="home-guide"><div><p class="section-eyebrow">GET STARTED</p><h2>Không gian riêng.<br>Kiến thức được kết nối.</h2><p>Thư viện Anatomy dành cho tài khoản được quản trị viên cấp quyền. Đăng nhập một lần, truy cập những module dành cho bạn.</p></div><ol class="guide-steps"><li><span>01</span><div><h3>Đăng nhập</h3><p>Sử dụng tài khoản được cấp.</p></div></li><li><span>02</span><div><h3>Chọn vùng và modality</h3><p>Lọc danh mục theo nội dung cần xem.</p></div></li><li><span>03</span><div><h3>Khám phá module</h3><p>Chọn một module để mở viewer.</p></div></li></ol></section>
-<section class="home-cta"><h2>Bắt đầu hành trình khám phá.</h2><a class="button button-primary" href="/anatomy" data-anatomy-link>Vào Anatomy <span aria-hidden="true">→</span></a></section>
+
+<main id="main-content" class="home-surface">
+  <nav class="section-nav" aria-label="Nội dung Home">
+    <a href="#gallery">Hình ảnh</a>
+    <a href="#experience">Trải nghiệm</a>
+    <a href="#guide">Bắt đầu</a>
+    <a href="#intro">Giới thiệu</a>
+    <a href="/anatomy" data-anatomy-link>Anatomy</a>
+  </nav>
+
+  <!-- Section: Hình ảnh giải phẫu (Không chú thích chữ, không chữ bộ sưu tập) -->
+  <section id="gallery" class="home-gallery">
+    <div class="gallery-grid">
+      <article class="gallery-card featured-tall">
+        <div class="gallery-img-wrap">
+          <img src="/portal/static/images/skeleton-hud.jpg" alt="Full Body Skeleton X-Ray" loading="lazy">
+          <span class="gallery-badge highlight">FULL BODY X-RAY</span>
+        </div>
+      </article>
+
+      <article class="gallery-card featured-wide">
+        <div class="gallery-img-wrap">
+          <img src="/portal/static/images/medical-dashboard.jpg" alt="Medical Imaging Workstation" loading="lazy">
+          <span class="gallery-badge blue">MULTI-PLANAR STATION</span>
+        </div>
+      </article>
+
+      <article class="gallery-card">
+        <div class="gallery-img-wrap">
+          <img src="/portal/static/images/pelvis-muscles.webp" alt="Musculoskeletal Anatomy" loading="lazy">
+          <span class="gallery-badge violet">MUSCULOSKELETAL</span>
+        </div>
+      </article>
+
+      <article class="gallery-card">
+        <div class="gallery-img-wrap">
+          <img src="/portal/static/images/radiology-infographics.jpg" alt="Radiology Infographics Matrix" loading="lazy">
+          <span class="gallery-badge pink">DIAGNOSTIC MATRIX</span>
+        </div>
+      </article>
+
+      <article class="gallery-card featured-wide">
+        <div class="gallery-img-wrap">
+          <img src="/portal/static/images/doctor-infographics.jpg" alt="Clinical Systems Anatomy" loading="lazy">
+          <span class="gallery-badge teal">CLINICAL SYSTEMS</span>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- Section: Trải nghiệm -->
+  <section id="experience" class="home-features">
+    <header class="section-header">
+      <p class="section-eyebrow">EXPLORE YOUR WAY</p>
+      <h2>Từ tổng quan đến từng cấu trúc.</h2>
+      <div class="gradient-rule centered"></div>
+    </header>
+    <div class="feature-grid">
+      <article class="feature-card">
+        <div class="feature-icon pink" aria-hidden="true">◎</div>
+        <h3>Theo vùng giải phẫu</h3>
+        <p>Nhóm module theo vùng cơ thể: Đầu mặt cổ, Ngực, Bụng chậu, Cột sống và Tứ chi để bạn định hướng và tìm kiếm nhanh hơn.</p>
+      </article>
+      <article class="feature-card">
+        <div class="feature-icon violet" aria-hidden="true">▤</div>
+        <h3>Theo loại hình ảnh học</h3>
+        <p>Lọc linh hoạt theo MRI, CT, X-quang, chụp mạch và các loại hình giải phẫu có trong thư viện.</p>
+      </article>
+      <article class="feature-card">
+        <div class="feature-icon blue" aria-hidden="true">↗</div>
+        <h3>Đi thẳng vào viewer</h3>
+        <p>Mở đúng module, cuộn mượt mà từng lát cắt, zoom pan đối chiếu và tương tác trực tiếp với hệ nhãn giải phẫu chi tiết.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- Section: Hướng dẫn -->
+  <section id="guide" class="home-guide">
+    <div class="guide-intro">
+      <p class="section-eyebrow">GET STARTED</p>
+      <h2>Không gian riêng.<br>Kiến thức được kết nối.</h2>
+      <p>Thư viện Anatomy dành cho tài khoản được quản trị viên cấp quyền. Đăng nhập một lần, truy cập những module dành cho bạn.</p>
+      <div class="guide-visual-mini" aria-hidden="true">
+        <img src="/portal/static/images/medical-dashboard.jpg" alt="" class="guide-preview-thumb" loading="lazy">
+        <div class="guide-thumb-caption">Giao diện viewer tích hợp nhãn giải phẫu chuẩn y khoa</div>
+      </div>
+    </div>
+    <ol class="guide-steps">
+      <li>
+        <span>01</span>
+        <div>
+          <h3>Đăng nhập</h3>
+          <p>Sử dụng tài khoản được cấp quyền để mở toàn bộ tính năng tra cứu.</p>
+        </div>
+      </li>
+      <li>
+        <span>02</span>
+        <div>
+          <h3>Chọn vùng và modality</h3>
+          <p>Lọc danh mục theo vùng cơ thể (Đầu cổ, Ngực, Bụng...) hoặc loại kỹ thuật hình ảnh (CT, MRI...).</p>
+        </div>
+      </li>
+      <li>
+        <span>03</span>
+        <div>
+          <h3>Khám phá module</h3>
+          <p>Chọn một module để mở viewer tương tác với từng lát cắt, đối chiếu nhãn và phóng to cấu trúc.</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- Section: Giới thiệu đưa xuống dưới cùng (Requirement 2) -->
+  <section id="intro" class="home-intro home-intro-bottom">
+    <div class="intro-content">
+      <p class="section-eyebrow">ABOUT & MISSION</p>
+      <h2>Website được tạo ra với mục đích giáo dục.</h2>
+      <div class="gradient-rule"></div>
+      <p class="intro-highlight-badge">Free and Always will be.</p>
+      <p class="intro-contact-lead">Mọi thắc mắc xin liên hệ email <a href="mailto:congluanbui@gmail.com" class="contact-link">congluanbui@gmail.com</a></p>
+      <p class="intro-body">Dự án được xây dựng nhằm mang lại nền tảng học tập giải phẫu và chẩn đoán hình ảnh chất lượng cao, hoàn toàn miễn phí cho sinh viên y khoa, bác sĩ, giảng viên và những người đam mê khoa học sức khỏe. Dễ dàng truy cập, tra cứu trực quan và kết nối sâu sắc giữa hình ảnh X-quang, CT, MRI với cấu trúc giải phẫu học thực tế.</p>
+      <div class="intro-action-group">
+        <a href="mailto:congluanbui@gmail.com" class="button button-primary">Gửi email liên hệ <span aria-hidden="true">✉</span></a>
+        <a href="/anatomy" class="button button-outline" data-anatomy-link>Khám phá thư viện Anatomy <span aria-hidden="true">↗</span></a>
+      </div>
+    </div>
+    <div class="intro-showcase-card" aria-hidden="true">
+      <img src="/portal/static/images/doctor-infographics.jpg" alt="Giáo dục giải phẫu học" class="intro-showcase-img" loading="lazy">
+      <div class="intro-card-glass">
+        <div class="intro-glass-badge">NON-PROFIT · EDUCATIONAL ATLAS</div>
+        <p class="intro-glass-title">Lan tỏa tri thức y khoa đến cộng đồng</p>
+        <span class="intro-glass-contact">congluanbui@gmail.com</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section: CTA cuối trang -->
+  <section class="home-cta">
+    <h2>Bắt đầu hành trình khám phá.</h2>
+    <a class="button button-primary" href="/anatomy" data-anatomy-link>Vào Anatomy <span aria-hidden="true">→</span></a>
+  </section>
 </main>
 {% endblock %}
