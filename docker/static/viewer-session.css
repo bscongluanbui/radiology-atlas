@@ -10,6 +10,8 @@
   .has-website-navigation .topbar{grid-template-columns:max-content minmax(140px,1fr) auto}
 }
 @media(max-width:720px){
+  /* Home/Back already live in the toolbar; avoid obscuring the slice controls. */
+  .atlas-session-nav{display:none}
   .has-website-navigation .topbar{grid-template-columns:minmax(0,1fr) auto;gap:6px}
   .has-website-navigation .module-catalogue-control{display:none}
   .has-website-navigation .left-topbar-controls{gap:4px}

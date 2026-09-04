@@ -425,7 +425,7 @@ def create_app(config=None):
 
     @app.get("/<path:asset>")
     def viewer_asset(asset):
-        if asset in {"app.js", "anatomy_language.js", "request_queue.js", "resource_cache.js", "styles.css"}:
+        if asset in {"app.js", "anatomy_language.js", "request_queue.js", "resource_cache.js", "mobile_gestures.js", "styles.css"}:
             return send_file(VIEWER / asset, conditional=False, etag=False)
         if asset.startswith("assets/module-icons/") and asset.endswith(".png"):
             name = asset.removeprefix("assets/module-icons/")

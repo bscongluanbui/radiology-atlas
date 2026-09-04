@@ -40,6 +40,11 @@ class NavigationTests(unittest.TestCase):
             r=self.get('/portal/static/'+name);self.assertEqual(r.status_code,200)
             self.assertEqual(r.data,(ROOT/'docker/static'/name).read_bytes())
         r=self.get('/viewer');self.assertIn("script-src 'self'",r.headers['Content-Security-Policy'])
+        self.assertIn('./mobile_gestures.js',r.text)
+        self.assertLess(r.text.index('./mobile_gestures.js'),r.text.index('./app.js'))
+        gesture=self.get('/mobile_gestures.js')
+        self.assertEqual(gesture.status_code,200)
+        self.assertEqual(gesture.data,(ROOT/'offline_anatomy_viewer/mobile_gestures.js').read_bytes())
     def test_04_standalone_is_unchanged(self):
         self.assertNotIn('viewerHomeLink',(ROOT/'offline_anatomy_viewer/index.html').read_text(encoding='utf-8'))
         self.assertNotIn('has-website-navigation',(ROOT/'offline_anatomy_viewer/styles.css').read_text(encoding='utf-8'))

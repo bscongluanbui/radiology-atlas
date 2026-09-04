@@ -55,6 +55,7 @@ class DistributionTests(unittest.TestCase):
         names={p.relative_to(ROOT).as_posix() for p in sources()}
         self.assertIn('.github/workflows/publish-viewer.yml',names)
         self.assertIn('docker/compose.build.yaml',names)
+        self.assertIn('offline_anatomy_viewer/mobile_gestures.js',names)
         for image in ('doctor-infographics.jpg','medical-dashboard.jpg','pelvis-muscles.webp','radiology-infographics.jpg','skeleton-hud.jpg'):
             self.assertIn(f'docker/static/images/{image}',names)
         self.assertNotIn('docker/.env',names)

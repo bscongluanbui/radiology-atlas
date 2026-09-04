@@ -1130,3 +1130,28 @@ select:focus-visible,
 .anatomy-language-control select { width: 100%; min-width: 0; padding: 8px; border-radius: 6px; border: 1px solid var(--line); background: #0a1216; color: var(--text); font: inherit; }
 .anatomy-language-control small { color: var(--muted); font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
 .preload-status { display: block; color: var(--text-muted, #91a3ac); font-size: 10px; line-height: 1.2; min-height: 12px; }
+
+/* Touch viewport owns gestures; menus retain native vertical scrolling. */
+.viewport, .annotation-layer { -webkit-touch-callout: none; -webkit-user-select: none; }
+.compact-switch { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; touch-action: manipulation; }
+.compact-switch > input { inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: auto; z-index: 1; cursor: pointer; }
+.compact-switch > .switch-control { pointer-events: none; }
+.switch-row, .menu-filter-group-expand, .filter-highlight-button { touch-action: manipulation; }
+
+@media (pointer: coarse), (max-width: 720px) {
+  .app-shell { height: 100dvh; --menu-width: min(330px, 85vw); }
+  .app-shell .workspace { height: calc(100dvh - var(--topbar-h)); }
+  .app-shell.hide-filmstrip { --timeline-h: 70px; }
+  .app-shell.hide-filmstrip .timeline { grid-template-columns: auto 48px minmax(0,1fr); gap: 6px; padding: 4px 8px; }
+  .app-shell:not(.layout-ready) { --menu-track: 0px; --details-track: 0px; --mpr-w: 0px; }
+  .app-shell:not(.layout-ready) .options-menu,
+  .app-shell:not(.layout-ready) .detail-panel,
+  .app-shell:not(.layout-ready) .mpr-panel { visibility: hidden; }
+  .workspace > .options-menu { touch-action: pan-y; overscroll-behavior: contain; }
+  .workspace > .options-menu .menu-filter-row { min-height: 48px; }
+  .workspace > .options-menu .filter-highlight-button { flex: 0 0 44px; width: 44px; height: 44px; opacity: 1; }
+  .workspace > .options-menu .menu-filter-group-expand b { font-size: 12px; }
+  .workspace > .detail-panel { max-width: 88vw; }
+  .definition-close-button, .options-menu .close-button, .pin-button { min-width: 44px; min-height: 44px; }
+  .viewer-toolbar .tool-button { min-height: 44px; }
+}

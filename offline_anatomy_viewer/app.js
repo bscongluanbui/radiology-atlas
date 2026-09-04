@@ -19,6 +19,21 @@ const slicePriorityHints = new Map();
 const DRAG_THRESHOLD = 4;
 const DRAG_SLICE_PIXELS = 8;
 const DRAG_ZOOM_RATE = 0.006;
+const anatomyTouchItems = new WeakMap();
+let touchGestures = null;
+
+function isMobileViewer() {
+  return Boolean(window.matchMedia?.("(pointer: coarse)").matches
+    || window.matchMedia?.("(max-width: 720px)").matches);
+}
+
+function applyMobileDefaults() {
+  if (!isMobileViewer()) return;
+  for (const field of ["detailsVisible", "definitionPeek", "mprVisible", "filmstripVisible", "adjustmentsVisible", "menuPinned"]) state[field] = false;
+  closeOptionsMenu({ force: true, focus: false });
+  closeModuleCatalogue();
+  el.optionsMenu.querySelectorAll("details[open]").forEach((node) => { node.open = false; });
+}
 
 const sliceCaptureCache = new Map();
 const sliceImageCache = new Map();
@@ -72,6 +87,7 @@ const state = {
   pinnedHighlightFilterId: null,
   expandedFilterGroups: new Set(),
   selectedStructure: null,
+  selectionHighlightOnly: false,
   structureMode: "slice",
   searchResults: [],
   zoom: 1,
@@ -1105,6 +1121,7 @@ function renderHoverTarget(target, selectionKey = null) {
 }
 
 function bindAnatomyElement(node, item) {
+  anatomyTouchItems.set(node, item);
   const activate = (event) => { event.stopPropagation(); selectStructure(item, { toggle: true }); };
   node.addEventListener("click", activate);
   node.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); activate(event); } });
@@ -1114,7 +1131,7 @@ function bindAnatomyElement(node, item) {
 }
 
 function showTooltip(event, item) {
-  if (state.dragging) return;
+  if (state.dragging || event.pointerType === "touch") return;
   el.anatomyTooltip.replaceChildren();
   const strong = document.createElement("strong"); strong.textContent = anatomyDisplayName(item);
   el.anatomyTooltip.append(strong);
@@ -1155,15 +1172,25 @@ function renderStructureRows(rows) {
   if (!filtered.length) el.structureEmpty.textContent = query ? "No matching structures." : "No structures available on this slice.";
 }
 
-function selectStructure(item, { toggle = false } = {}) {
+function selectStructure(item, { toggle = false, highlightOnly = false } = {}) {
   hideTooltip();
   const previous = state.selectedStructure;
-  if (toggle && previous?.key === item.key && (item.key?.startsWith("taxon:")
+  if (toggle && !highlightOnly && !state.selectionHighlightOnly && previous?.key === item.key && (item.key?.startsWith("taxon:")
     || (item.label && item.label === previous.label) || (item.target && item.target === previous.target))) {
     closeDefinition();
     return;
   }
   state.selectedStructure = item;
+  state.selectionHighlightOnly = highlightOnly;
+  if (highlightOnly) {
+    // Long press focuses verified label/leader identity, without an annotation panel.
+    state.detailsVisible = false;
+    state.definitionPeek = false;
+    syncDetailPanel();
+    renderSliceStructures();
+    renderOverlay();
+    return;
+  }
   const openingPeek = !state.detailsVisible && !state.definitionPeek;
   if (!state.detailsVisible) state.definitionPeek = true;
   renderDefinition(item);
@@ -1244,6 +1271,7 @@ function clearDefinition() {
   const closingPeek = state.definitionPeek;
   state.definitionPeek = false;
   state.selectedStructure = null;
+  state.selectionHighlightOnly = false;
   if (closingPeek) {
     syncDetailPanel();
     requestAnimationFrame(() => { if (state.capture) fitView(); });
@@ -1342,6 +1370,13 @@ function filterGroupSelection(group) {
 }
 
 function afterFilterChange() {
+  // Touch browsers synthesize hover without mouse leave. A stale preview used
+  // to override a disabled checkbox, making the switch look unresponsive.
+  state.previewFilterIds.clear();
+  if (state.pinnedHighlightFilterId && ![...state.highlightFilterIds].some((id) => state.activeFilters.has(id))) {
+    state.pinnedHighlightFilterId = null;
+    state.highlightFilterIds.clear();
+  }
   if (state.selectedStructure?.filterId && !filterEnabled(state.selectedStructure.filterId)) clearDefinition();
   renderFilters(); renderOverlay(); renderSliceStructures();
 }
@@ -1451,8 +1486,9 @@ function makeHighlightButton(filter) {
   left.style.setProperty("--filter-ring", colours[0] || "#8a8d91");
   right.style.setProperty("--filter-ring", colours[1] || colours[0] || "#c7c9cc");
   button.append(left, right);
-  button.addEventListener("pointerenter", (event) => { event.stopPropagation(); setHighlightFilter(filter); });
+  button.addEventListener("pointerenter", (event) => { if (event.pointerType !== "mouse") return; event.stopPropagation(); setHighlightFilter(filter); });
   button.addEventListener("pointerleave", (event) => {
+    if (event.pointerType !== "mouse") return;
     event.stopPropagation();
     if (state.pinnedHighlightFilterId) setHighlightFilter(state.pinnedHighlightFilterId);
     else setHighlightFilter(null);
@@ -1463,8 +1499,8 @@ function makeHighlightButton(filter) {
 
 function bindFilterPreview(node, filter) {
   node.dataset.previewFilterId = String(filter.id);
-  node.addEventListener("pointerenter", () => setPreviewFilter(filter));
-  node.addEventListener("pointerleave", () => setPreviewFilter(null));
+  node.addEventListener("pointerenter", (event) => { if (event.pointerType === "mouse") setPreviewFilter(filter); });
+  node.addEventListener("pointerleave", (event) => { if (event.pointerType === "mouse") setPreviewFilter(null); });
 }
 
 function updateFilterInteractionState() {
@@ -1529,6 +1565,7 @@ function renderFilters() {
     const groupHighlight = makeHighlightButton(group.root);
     const masterLabel = document.createElement("label"); masterLabel.className = "compact-switch"; masterLabel.title = `Show or hide all ${group.name} layers`;
     const master = document.createElement("input"); master.type = "checkbox"; master.checked = selection.all; master.indeterminate = !selection.all && !selection.none;
+    master.setAttribute("aria-label", `Show or hide ${group.name}`);
     const masterControl = document.createElement("i"); masterControl.className = "switch-control";
     master.addEventListener("change", () => toggleFilterGroup(group, master.checked));
     masterLabel.append(master, masterControl); header.append(expand, groupHighlight, masterLabel);
@@ -1548,11 +1585,13 @@ function renderFilters() {
       childCopy.append(icon, childTitle, childMeta);
       const highlight = makeHighlightButton(filter);
       const input = document.createElement("input"); input.type = "checkbox"; input.checked = state.activeFilters.has(id); input.dataset.filterId = id;
+      input.setAttribute("aria-label", `Show or hide ${filterDisplayName(filter)}`);
       const control = document.createElement("i"); control.className = "switch-control";
+      const switchLabel = document.createElement("label"); switchLabel.className = "compact-switch";
       input.addEventListener("change", () => toggleFilter(id, input.checked));
-      const toggleFromRow = () => { input.checked = !input.checked; input.dispatchEvent(new Event("change", { bubbles: true })); };
-      childCopy.addEventListener("click", toggleFromRow); control.addEventListener("click", toggleFromRow);
-      row.append(childCopy, highlight, input, control); children.append(row);
+      childCopy.addEventListener("click", () => toggleFilter(id));
+      switchLabel.append(input, control);
+      row.append(childCopy, highlight, switchLabel); children.append(row);
     });
     expand.addEventListener("click", () => {
       if (standalone) { toggleFilter(group.root.id); return; }
@@ -2047,7 +2086,7 @@ function openOptionsMenu({ focus = true } = {}) {
   requestAnimationFrame(() => { applyMprWidth(state.mprWidth); if (state.capture) fitView(); });
 }
 
-function closeOptionsMenu({ force = false } = {}) {
+function closeOptionsMenu({ force = false, focus = true } = {}) {
   if (state.menuPinned && !force) return;
   el.optionsMenu.classList.remove("open");
   el.optionsMenu.hidden = true;
@@ -2057,7 +2096,7 @@ function closeOptionsMenu({ force = false } = {}) {
   state.previewFilterIds.clear();
   if (!state.pinnedHighlightFilterId) state.highlightFilterIds.clear();
   renderOverlay(); renderSliceStructures();
-  el.optionsMenuButton.focus({ preventScroll: true });
+  if (focus) el.optionsMenuButton.focus({ preventScroll: true });
   requestAnimationFrame(() => { if (state.capture) fitView(); });
 }
 
@@ -2098,6 +2137,22 @@ function stopCine() {
 function toggleCine() { if (state.cineTimer) stopCine(); else startCine(); }
 
 function bindEvents() {
+  touchGestures = new window.ViewerTouchGestures(el.anatomyViewport, {
+    ready: () => Boolean(state.capture),
+    itemAt: (node) => anatomyTouchItems.get(node),
+    begin: () => {
+      cancelDrag(); stopCine(); hideTooltip(); state.suppressDragClick = true;
+      if (state.wheelFrame) cancelAnimationFrame(state.wheelFrame);
+      state.wheelFrame = 0; state.wheelTargetPosition = null; state.wheelDelta = 0;
+    },
+    scroll: (steps) => setSlicePosition(state.slicePosition + steps, { fromWheel: true }),
+    zoom: (ratio, origin, dx, dy) => { changeZoom(ratio, origin); state.panX += dx; state.panY += dy; applyTransform(); },
+    tap: (item) => selectStructure(item, { toggle: true }),
+    hold: (item) => selectStructure(item, { highlightOnly: true }),
+  });
+  el.anatomyViewport.addEventListener("contextmenu", (event) => {
+    if (event.pointerType === "touch" || touchGestures.points.size) event.preventDefault();
+  });
   window.addEventListener("pagehide", () => { stopCine(); clearSliceCaches({ advanceDataRevision: false }); });
   window.addEventListener("pageshow", (event) => { if (event.persisted && state.variant) showCurrentSlice(); });
   el.anatomyLanguageSelect.addEventListener("change", () => {
@@ -2178,7 +2233,7 @@ function bindEvents() {
   window.addEventListener("pointermove", moveMprResize);
   window.addEventListener("pointerup", endMprResize);
   el.anatomyViewport.addEventListener("dblclick", fitView);
-  window.addEventListener("resize", () => { applyMprWidth(state.mprWidth); if (state.capture) fitView(); });
+  window.addEventListener("resize", () => { touchGestures?.cancel(); applyMprWidth(state.mprWidth); if (state.capture) fitView(); });
   document.addEventListener("pointerdown", (event) => {
     if (!el.moduleCataloguePopover.hidden && !event.target.closest(".module-catalogue-control")) closeModuleCatalogue();
   });
@@ -2216,6 +2271,7 @@ function handleWheel(event) {
 }
 
 function startDrag(event) {
+  if (event.pointerType === "touch") return;
   if (event.button !== 0 || event.isPrimary === false || !state.capture || state.dragStart) return;
   if (!['scroll', 'pan', 'zoom'].includes(state.interactionMode)) return;
   if (event.target.closest?.("button, input, select, textarea, a")) return;
@@ -2310,6 +2366,10 @@ function handleKeyboard(event) {
 async function initialize() {
   cacheElements();
   const saved = loadPreferences();
+  // Apply before asynchronous fetches, including when desktop preferences were saved.
+  applyMobileDefaults();
+  syncVisibilityControls();
+  el.app.classList.add("layout-ready");
   await initializeAnatomyLanguages();
   el.overlayOpacitySlider.value = String(state.overlayOpacity);
   el.overlayOpacityNumber.value = String(state.overlayOpacity);
@@ -2325,6 +2385,7 @@ async function initialize() {
   state.detailsVisible = saved.detailsVisible !== false;
   state.adjustmentsVisible = saved.adjustmentsVisible !== false;
   state.menuPinned = saved.menuPinned === true;
+  applyMobileDefaults();
   state.brightness = Number(saved.brightness) || 100;
   state.contrast = Number(saved.contrast) || 100;
   el.brightnessSlider.value = String(state.brightness); el.contrastSlider.value = String(state.contrast);
@@ -2336,7 +2397,7 @@ async function initialize() {
   setInteractionMode("scroll");
   try {
     await loadCatalogue({ restore: true });
-    openOptionsMenu({ focus: false });
+    if (!isMobileViewer()) openOptionsMenu({ focus: false });
     if (!state.module) { el.loadingState.hidden = true; el.emptyState.hidden = false; el.app.setAttribute("aria-busy", "false"); }
   } catch (error) { showError(error.message); }
 }
