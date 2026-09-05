@@ -60,6 +60,10 @@ class AuthStore:
                     token TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                     created REAL NOT NULL, seen REAL NOT NULL);
                 CREATE INDEX IF NOT EXISTS sessions_user ON sessions(user_id);
+                CREATE TABLE IF NOT EXISTS viewer_leases (
+                    user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                    session_token TEXT NOT NULL REFERENCES sessions(token) ON DELETE CASCADE,
+                    client_token TEXT NOT NULL, expires REAL NOT NULL);
                 CREATE TABLE IF NOT EXISTS rates (key TEXT PRIMARY KEY, started REAL NOT NULL, count INTEGER NOT NULL);
                 CREATE TABLE IF NOT EXISTS audit (
                     id INTEGER PRIMARY KEY, at REAL NOT NULL, actor TEXT NOT NULL,
@@ -367,7 +371,11 @@ class AuthStore:
             if not current or dict(current) != dict(row):
                 return None
             db.execute("INSERT INTO sessions VALUES (?,?,?,?)", (self.digest(token), row["id"], now, now))
-            db.execute("DELETE FROM sessions WHERE user_id=? AND token NOT IN (SELECT token FROM sessions WHERE user_id=? ORDER BY created DESC,rowid DESC LIMIT 5)", (row["id"], row["id"]))
+            # Repeated logins must not evict the session currently viewing images.
+            db.execute("""DELETE FROM sessions WHERE user_id=? AND token NOT IN
+                       (SELECT token FROM sessions WHERE user_id=? ORDER BY created DESC,rowid DESC LIMIT 5)
+                       AND token NOT IN (SELECT session_token FROM viewer_leases WHERE expires>?)""",
+                       (row["id"], row["id"], now))
             self._audit(db, username, "login", username)
         return token
 
@@ -393,6 +401,44 @@ class AuthStore:
             db.execute("DELETE FROM sessions WHERE user_id=?", (uid,))
             self._audit(db, actor, "revoke-sessions", uid)
 
+    def viewer_session(self, token, client, action, *, ttl=90, idle=1800, lifetime=28800):
+        """One account, one viewer document. SQLite arbitrates across workers.
+
+        Additive table: old schema/credentials stay intact on upgrade or rollback.
+        Only acquire can take a vacant/expired slot. Stale heartbeat/release never
+        replaces another document; login/logout revocation cascades via its FK.
+        """
+        if not isinstance(client, str) or not re.fullmatch(r"[a-f0-9]{32}", client):
+            return "invalid"
+        if action not in {"acquire", "heartbeat", "release", "check"}:
+            return "invalid"
+        digest = self.digest(token or "")
+        now = self.clock()
+        with self.connect() as db:
+            if action != "check":
+                db.execute("BEGIN IMMEDIATE")
+            user = db.execute("""SELECT s.user_id FROM sessions s JOIN users u ON u.id=s.user_id
+                               WHERE s.token=? AND u.active=1 AND s.seen>=? AND s.created>=?""",
+                              (digest, now-idle, now-lifetime)).fetchone()
+            if not user:
+                return "unauthenticated"
+            lease = db.execute("SELECT * FROM viewer_leases WHERE user_id=?", (user["user_id"],)).fetchone()
+            mine = lease and lease["session_token"] == digest and lease["client_token"] == client
+            if action == "release":
+                if mine:
+                    db.execute("DELETE FROM viewer_leases WHERE user_id=?", (user["user_id"],))
+                return "released"
+            if lease and lease["expires"] > now and not mine:
+                return "conflict"
+            if action == "check":
+                return "ok" if mine and lease["expires"] > now else "expired"
+            if action == "heartbeat" and (not mine or lease["expires"] <= now):
+                return "expired"
+            db.execute("""INSERT INTO viewer_leases VALUES (?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET
+                       session_token=excluded.session_token, client_token=excluded.client_token, expires=excluded.expires""",
+                       (user["user_id"], digest, client, now+ttl))
+            return "ok"
+
     def logout(self, token):
         with self.connect() as db:
             db.execute("DELETE FROM sessions WHERE token=?", (self.digest(token or ""),))
@@ -415,6 +461,7 @@ class AuthStore:
         now = self.clock()
         with self.connect() as db:
             db.execute("DELETE FROM sessions WHERE seen<? OR created<?", (now-idle, now-lifetime))
+            db.execute("DELETE FROM viewer_leases WHERE expires<=?", (now,))
             db.execute("DELETE FROM rates WHERE started<?", (now-900,))
             db.execute("DELETE FROM audit WHERE at<?", (now-30*86400,))
             db.commit()

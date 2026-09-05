@@ -11,6 +11,7 @@ from docker.auth_store import AuthStore,password_hash
 from docker.access_policy import can_view_module,can_manage
 from docker.portal import create_app
 from docker import manage
+from viewer_client import request_headers
 
 parser=ArgumentParser();parser.add_argument('--data-root',required=True);parser.add_argument('--state-dir',required=True)
 args,rest=parser.parse_known_args()
@@ -35,11 +36,13 @@ class RolesTests(unittest.TestCase):
 
     def setUp(self):self.client=self.app.test_client()
     def get(self,path,method='GET'):
-        r=self.client.open(path,method=method,base_url='https://atlas.test');r.get_data();r.close();return r
+        r=self.client.open(path,method=method,base_url='https://atlas.test',headers=request_headers(self,self.client,path));r.get_data();r.close();return r
     def csrf(self):return re.search(r'name="csrf" value="([^"]+)"',self.get('/').text).group(1)
     def post(self,path,data=None):
         form={'csrf':self.csrf(),**(data or {})};return self.client.post(path,data=form,base_url='https://atlas.test')
-    def login(self,name):self.assertEqual(self.post('/login',{'username':name,'password':PASSWORD}).status_code,302)
+    def login(self,name):
+        self.assertEqual(self.post('/login',{'username':name,'password':PASSWORD}).status_code,302)
+        self.client._viewer_logged_in=True
 
     def test_01_root_and_admin_matrix(self):
         for user,manage_status in [('chief',200),('allreader',403)]:

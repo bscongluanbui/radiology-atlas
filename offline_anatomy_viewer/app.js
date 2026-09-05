@@ -2137,6 +2137,11 @@ function stopCine() {
 function toggleCine() { if (state.cineTimer) stopCine(); else startCine(); }
 
 function bindEvents() {
+  // Only the website gateway provides this event; standalone viewer is unchanged.
+  window.addEventListener("viewer-session-suspended", () => {
+    stopCine(); cancelDrag(); touchGestures?.cancel(); hideTooltip();
+    clearSliceCaches({ advanceDataRevision: false });
+  });
   touchGestures = new window.ViewerTouchGestures(el.anatomyViewport, {
     ready: () => Boolean(state.capture),
     itemAt: (node) => anatomyTouchItems.get(node),
@@ -2346,6 +2351,7 @@ function suppressDragActivation(event) {
 }
 
 function handleKeyboard(event) {
+  if (window.viewerSession?.blocked) return;
   const typing = ["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName);
   if (typing && event.key !== "Escape") return;
   if (event.key === "ArrowLeft" || event.key === "ArrowUp") { event.preventDefault(); setSlicePosition(state.slicePosition - 1); }
@@ -2370,6 +2376,7 @@ async function initialize() {
   applyMobileDefaults();
   syncVisibilityControls();
   el.app.classList.add("layout-ready");
+  if (window.viewerSession && !(await window.viewerSession.ready)) return;
   await initializeAnatomyLanguages();
   el.overlayOpacitySlider.value = String(state.overlayOpacity);
   el.overlayOpacityNumber.value = String(state.overlayOpacity);

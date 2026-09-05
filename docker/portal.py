@@ -28,6 +28,8 @@ from server import AnatomyRepository, load_json, safe_key  # shared, unchanged a
 from anatomy_language import languages, load_pack
 
 AVATAR_MAX_BYTES = 512 * 1024
+VIEWER_CONFLICT = "Bạn đang dùng tài khoản ở nhiều nơi cùng thời điểm, vui lòng đăng xuất"
+VIEWER_LEASE_SECONDS = 90
 AVATAR_MAX_EDGE = 2048
 
 
@@ -153,6 +155,8 @@ def create_app(config=None):
         if isinstance(request.routing_exception, SecurityError):
             raise request.routing_exception
         g.user = auth.session_user(session.get("sid"), app.config["SESSION_IDLE"], app.config["SESSION_LIFETIME"])
+        if g.user is None and request.endpoint == "viewer_session":
+            return jsonify(code="login_required", error="Vui lòng đăng nhập lại."), 401
         if request.method not in ("GET", "HEAD", "OPTIONS"):
             expected = session.get("csrf", "")
             supplied = request.form.get("csrf", "") or request.headers.get("X-CSRF-Token", "")
@@ -353,6 +357,9 @@ def create_app(config=None):
 
     @app.get("/api/<operation>")
     def api(operation):
+        # Authorization still applies independently of the exclusive viewer slot.
+        if operation in {"module", "slice", "structure", "search", "translations"}:
+            require_module(request.args.get("key", ""))
         if operation == "languages":
             return jsonify(source_locale="en", languages=languages())
         if operation == "catalogue":
@@ -365,6 +372,9 @@ def create_app(config=None):
         if operation not in {"module", "slice", "structure", "search", "translations"}:
             abort(404)
         key = require_module(request.args.get("key", ""))
+        denied = viewer_access("check")
+        if denied is not None:
+            return denied
         with repo_lock:
             if operation == "module":
                 result = repository.module(key)
@@ -384,6 +394,9 @@ def create_app(config=None):
         if len(parts) < 3 or "\\" in relative or any(p in (".", "..", "") for p in parts):
             abort(404)
         key = require_module("/".join(parts[:2]))
+        denied = viewer_access("check")
+        if denied is not None:
+            return denied
         path = repository.data_file("/".join([key, *parts[2:]]))
         # Do not expose raw captures, arbitrary files or source code via /data.
         # SVG is allowed only as an image: its own CSP disallows scripts entirely.
@@ -391,6 +404,31 @@ def create_app(config=None):
             abort(404)
         response = send_file(path, conditional=False, etag=False)
         return response
+
+    def viewer_access(action):
+        result = auth.viewer_session(session.get("sid"), request.headers.get("X-Viewer-ID", ""), action,
+                                     ttl=VIEWER_LEASE_SECONDS, idle=app.config["SESSION_IDLE"], lifetime=app.config["SESSION_LIFETIME"])
+        if result in {"ok", "released"}:
+            return None
+        if result == "conflict":
+            return jsonify(code="viewer_conflict", error=VIEWER_CONFLICT), 409
+        if result == "unauthenticated":
+            return jsonify(code="login_required", error="Vui lòng đăng nhập lại."), 401
+        if result == "invalid":
+            return jsonify(code="viewer_required", error="Vui lòng mở viewer để xem dữ liệu."), 428
+        return jsonify(code="viewer_expired", error="Phiên viewer đã hết hạn. Vui lòng thử lại."), 409
+
+    @app.post("/api/viewer-session")
+    def viewer_session():
+        if not can_manage(g.user) and not g.user["regions"] and not g.user["modules"] and g.user["role"] != "admin":
+            abort(403)
+        action = request.form.get("action", "")
+        if action not in {"acquire", "heartbeat", "release"}:
+            abort(400)
+        denied = viewer_access(action)
+        if denied is not None:
+            return denied
+        return jsonify(status="ok", ttl=VIEWER_LEASE_SECONDS, heartbeat=20)
 
     @app.get("/portal/runtime.js")
     def runtime():
@@ -413,14 +451,16 @@ def create_app(config=None):
             if not available:
                 abort(404, "Module này chưa có đủ dữ liệu để mở.")
         html = (VIEWER / "index.html").read_text(encoding="utf-8")
+        html = html.replace('<html lang="en">', '<html lang="en" class="viewer-session-locked">')
         html = html.replace('class="app-shell menu-open"', 'class="app-shell menu-open has-website-navigation"')
         panel_toolbar = '<div class="left-topbar-controls" role="toolbar" aria-label="Left-side viewer panels">'
         html = html.replace(panel_toolbar, panel_toolbar + render_template("viewer_navigation.html"))
-        html = html.replace("</head>", '<link rel="stylesheet" href="/portal/static/viewer-session.css"></head>')
+        html = html.replace("</head>", '<link rel="stylesheet" href="/portal/static/viewer-session.css">'
+                            '<script src="/portal/static/viewer-session.js" defer></script></head>')
         runtime_url = "/portal/runtime.js" + ("?" + urlencode({"module": key}) if key else "")
         html = html.replace('<script src="./resource_cache.js"', f'<script src="{runtime_url}" defer></script><script src="./resource_cache.js"')
         # SSR markup only; all anatomical UI/logic still comes from the local viewer.
-        html = html.replace("</body>", render_template("session_link.html") + '<script src="/portal/static/viewer-navigation.js" defer></script></body>')
+        html = html.replace("</body>", render_template("viewer_session.html") + render_template("session_link.html") + '<script src="/portal/static/viewer-navigation.js" defer></script></body>')
         return html
 
     @app.get("/<path:asset>")

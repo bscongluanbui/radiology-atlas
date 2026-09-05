@@ -19,6 +19,9 @@ from ci_fixture import create_fixture
 from docker.portal import create_app
 from docker.preflight import validate
 from docker.release import sources
+from viewer_client import acquire
+# Keep the published-image gate exercising leases without editing workflow scopes.
+from test_single_session import SingleSessionTests, SingleSessionHTTPTests
 
 
 class DistributionTests(unittest.TestCase):
@@ -149,8 +152,9 @@ class FixtureTests(unittest.TestCase):
             csrf=re.search(r'name="csrf" value="([^"]+)"',home.text).group(1)
             login=client.post('/login',data={'csrf':csrf,'username':name,'password':password},base_url='http://bcanatomy.site',headers=headers)
             self.assertEqual(login.status_code,302)
+            viewer_headers=acquire(client,base_url='http://bcanatomy.site',headers=headers)
             def get(path):
-                response=client.get(path,base_url='http://bcanatomy.site',headers=headers)
+                response=client.get(path,base_url='http://bcanatomy.site',headers=viewer_headers)
                 response.get_data();response.close();return response
             self.assertEqual(get('/admin').status_code,200 if name=='owner' else 403)
             self.assertEqual(get('/api/catalogue').json['module_count'],1 if name=='limited' else 2)

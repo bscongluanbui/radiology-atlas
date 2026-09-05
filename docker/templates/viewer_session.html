@@ -1,0 +1,13 @@
+<dialog id="viewerSessionDialog" class="viewer-session-dialog" open aria-labelledby="viewerSessionTitle" aria-describedby="viewerSessionMessage">
+  <h2 id="viewerSessionTitle">Phiên viewer</h2>
+  <p id="viewerSessionMessage" role="status" aria-live="polite">Đang kiểm tra phiên viewer…</p>
+  <div class="viewer-session-actions">
+    <button id="viewerSessionRetry" type="button" hidden>Thử lại</button>
+    <a href="/anatomy">Về Anatomy</a>
+    <form id="viewerSessionLogout" method="post" action="/logout">
+      <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+      <button type="submit">Đăng xuất</button>
+    </form>
+  </div>
+  <noscript>Hãy bật JavaScript để kiểm tra phiên và mở viewer.</noscript>
+</dialog>

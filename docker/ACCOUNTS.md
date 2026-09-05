@@ -108,3 +108,28 @@ Thiết kế mặc định không cấp quyền và kiểm tra mỗi request the
 [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html).
 Schema dùng thao tác thêm cột trong transaction, không ghi trực tiếp schema hay dựng lại bảng;
 xem [SQLite ALTER TABLE](https://www.sqlite.org/lang_altertable.html).
+# Một tài khoản, một phiên viewer
+
+Mỗi tài khoản (Root, Admin hoặc Standard) có tối đa **một trang viewer đang hoạt động**.
+Trang mở sau — kể cả tab khác của cùng trình duyệt — bị chặn trước khi tải ảnh và hiện:
+
+> Bạn đang dùng tài khoản ở nhiều nơi cùng thời điểm, vui lòng đăng xuất
+
+Phiên đang xem không bị đẩy ra. Website, Anatomy và trang tài khoản vẫn dùng bình thường;
+đăng nhập ở nơi khác không tự chiếm phiên viewer. Popup có nút Đăng xuất, Thử lại và Về Anatomy.
+
+Viewer kiểm tra phiên mỗi 20 giây. Slot tự hết hạn sau 90 giây nếu trang bị đóng đột ngột,
+mất mạng hoặc hệ điều hành dừng tab. Rời trang gửi yêu cầu trả slot; logout, đổi mật khẩu,
+vô hiệu hóa hoặc thu hồi phiên giải phóng slot trong cùng giao dịch. Nếu tải lại quá nhanh
+trước khi yêu cầu trả slot cũ tới server, bấm Thử lại trong popup.
+
+Khóa nằm trong bảng SQLite `viewer_leases` của volume `/state`; khóa vẫn có hiệu lực khi
+restart container và được phân xử bằng giao dịch giữa các worker. Header `X-Viewer-ID`
+gắn với cả session đăng nhập và trang viewer, không thay cho quyền vùng/module hay CSRF.
+Ảnh, slice, cấu trúc, tìm kiếm và bản dịch đều kiểm tra khóa ở server, kể cả HTTP HEAD.
+Khi mất kết nối kiểm tra phiên, viewer che ảnh và ngừng thao tác; quay lại tab sẽ kiểm tra
+lại trước khi dùng cache. Standalone viewer không có tài khoản giữ nguyên cách hoạt động.
+
+Không cần đổi `.env`. Table bổ sung không đổi schema version, password, profile hay data;
+rollback code cũ bỏ qua table này. Chỉ chạy một cụm viewer dùng chung volume `/state`;
+các bản cài đặt với database riêng không chia sẻ khóa tài khoản.

@@ -8,6 +8,7 @@ import re
 import subprocess
 import sys
 import time
+import secrets
 from urllib.parse import urlencode
 
 sys.path.insert(0,'/app')
@@ -25,10 +26,12 @@ store.create_user('ciowner','CI-test-only!54','root')
 assert AuthStore('/state').users()[0]['username']=='ciowner'
 proc=subprocess.Popen(['gunicorn','--bind=127.0.0.1:8080','--workers=1','--threads=2','docker.portal:create_app()'])
 cookies={}
+viewer_headers={}
 def request(path,method='GET',data=None):
     conn=HTTPConnection('127.0.0.1',8080,timeout=5)
     headers={'Host':'bcanatomy.site','X-Forwarded-Proto':'https','X-Forwarded-For':'203.0.113.9',
              'Cookie':'; '.join(k+'='+v for k,v in cookies.items())}
+    headers.update(viewer_headers)
     if data is not None: headers['Content-Type']='application/x-www-form-urlencoded'
     conn.request(method,path,urlencode(data) if data is not None else None,headers)
     response=conn.getresponse();body=response.read()
@@ -51,7 +54,10 @@ try:
     csrf=re.search(rb'name="csrf" value="([^"]+)"',body).group(1).decode()
     assert request('/login','POST',{'username':'ciowner','password':'CI-test-only!54','csrf':csrf})[0]==302
     assert request('/admin')[0]==200
-    assert request('/viewer?key=BRAIN/mri-brain')[0]==200
+    status,body=request('/viewer?key=BRAIN/mri-brain');assert status==200
+    csrf=re.search(rb'name="csrf" value="([^"]+)"',body).group(1).decode()
+    viewer_headers.update({'X-Viewer-ID':secrets.token_hex(16),'X-CSRF-Token':csrf})
+    assert request('/api/viewer-session','POST',{'action':'acquire'})[0]==200
     assert request('/data/BRAIN/mri-brain/rendered/1_Axial/default_Default/slice_0001.png')[0]==200
     print(f'IMAGE_SMOKE=PASS; arch={arch}; uid=10001; gunicorn=HTTP200; login=302; admin=200; image=200; accounts=persistent',flush=True)
 finally:

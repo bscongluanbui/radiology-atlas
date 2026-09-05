@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from docker.portal import create_app
 from docker.cache_store import BoundedCache
+from viewer_client import request_headers
 
 parser = ArgumentParser()
 parser.add_argument("--data-root", required=True)
@@ -49,6 +50,7 @@ class PortalTests(unittest.TestCase):
         self.client = self.app.test_client()
 
     def get(self, path, client=None, **kw):
+        kw['headers'] = {**request_headers(self, client or self.client, path), **kw.get('headers', {})}
         response = (client or self.client).get(path, base_url="https://atlas.test", **kw)
         response.get_data()
         response.close()
@@ -71,6 +73,7 @@ class PortalTests(unittest.TestCase):
     def login(self, username="reader", client=None):
         response = self.post("/login", {"username": username, "password": PASS}, client)
         self.assertEqual(response.status_code, 302)
+        (client or self.client)._viewer_logged_in = True
         return response
 
     def test_01_anonymous_and_static(self):
