@@ -22,6 +22,8 @@ from docker.release import sources
 from viewer_client import acquire
 # Keep the published-image gate exercising leases without editing workflow scopes.
 from test_single_session import SingleSessionTests, SingleSessionHTTPTests
+from test_anatomy_language import AnatomyLanguageTests
+from test_translation_sync import TranslationSyncTests
 
 
 class DistributionTests(unittest.TestCase):

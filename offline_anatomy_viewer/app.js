@@ -381,48 +381,74 @@ function normalizeText(value) {
   return AnatomyLanguage.searchText(value);
 }
 
-function localizedField(collection, key, field, original) {
-  return AnatomyLanguage.field(state.languagePack, collection, key, field, original);
+function localizedValue(collection, key, field, original) {
+  return AnatomyLanguage.resolve(state.languagePack, collection, key, field, original);
 }
 
-function definitionName(definition) {
-  return localizedField("structures", definition?.identity_key, "name", definition?.name || "");
+function definitionValue(definition) {
+  return localizedValue("structures", definition?.identity_key, "name", definition?.name || "");
 }
 
-function displayLabelText(label) {
+function labelValue(label) {
   const slice = state.capture?.slice || {};
   const key = AnatomyLanguage.labelKey(state.series?.directory, state.variant?.directory,
     slice.active_id ?? slice.id, label.canvas, label.label_index);
-  const translated = localizedField("labels", key, "text", label.text);
-  if (translated !== label.text) return translated;
-  const freeText = localizedField("texts", key, "text", label.text);
-  if (freeText !== label.text) return freeText;
+  const translated = localizedValue("labels", key, "text", label.text);
+  if (translated.translated) return translated;
+  const freeText = localizedValue("texts", key, "text", label.text);
+  if (freeText.translated) return freeText;
   // Only whole, exact source names may reuse a scoped structure translation.
   // Captured wrapped fragments/abbreviations need their own occurrence entry.
   return label.binding_verified === true && label.definition?.name === label.text
-    ? definitionName(label.definition) : label.text;
+    ? definitionValue(label.definition) : { text: label.text, translated: false };
 }
 
-function anatomyDisplayName(item) {
+function anatomySourceName(item) {
+  return item.target?.semantic_primary_ambiguous && item.target.coincident_definitions?.length && !item.definition
+    ? item.target.coincident_definitions.map((row) => row.name).join(" / ") : item.name;
+}
+
+function anatomyValue(item) {
+  if (item.definition) return definitionValue(item.definition);
   if (item.target?.semantic_primary_ambiguous && item.target.coincident_definitions?.length) {
-    return item.target.coincident_definitions.map(definitionName).join(" / ");
+    const values = item.target.coincident_definitions.map(definitionValue);
+    return { text: values.map((row) => row.text).join(" / "), translated: values.some((row) => row.translated) };
   }
-  if (item.definition) return definitionName(item.definition);
-  if (item.label) return displayLabelText(item.label);
+  if (item.label) return labelValue(item.label);
   if (item.target) {
     const slice = state.capture?.slice || {};
     const key = AnatomyLanguage.targetKey(state.series?.directory, state.variant?.directory,
       slice.active_id ?? slice.id, item.target);
-    return localizedField("texts", key, "text", item.name);
+    return localizedValue("texts", key, "text", item.name);
   }
-  return item.name;
+  return { text: item.name, translated: false };
+}
+
+function anatomyDisplayName(item) {
+  return AnatomyLanguage.lines(state.anatomyLanguage, anatomySourceName(item), anatomyValue(item)).map((row) => row.text).join("\n");
+}
+
+function setLanguageName(node, original, value) {
+  node.replaceChildren();
+  const lines = AnatomyLanguage.lines(state.anatomyLanguage, original, value);
+  node.classList.toggle("bilingual-name", lines.length === 2);
+  lines.forEach((row) => {
+    const span = document.createElement("span"); span.lang = row.lang;
+    span.className = `anatomy-name-line${row.missing ? " translation-missing" : ""}`;
+    span.textContent = row.text; node.append(span);
+  });
+}
+
+function setAnatomyName(node, item) {
+  setLanguageName(node, anatomySourceName(item), anatomyValue(item));
 }
 
 function repaintAnatomyLanguage() {
   hideTooltip();
   renderFilters(); renderOverlay();
   if (state.structureMode === "slice") renderSliceStructures(); else searchStructures();
-  if (state.selectedStructure) renderDefinition(state.selectedStructure); else clearDefinition();
+  // A language repaint must not reset selection, peek visibility or hold-only mode.
+  if (state.selectedStructure && !state.selectionHighlightOnly) renderDefinition(state.selectedStructure);
 }
 
 async function loadAnatomyLanguage({ repaint = true } = {}) {
@@ -435,13 +461,15 @@ async function loadAnatomyLanguage({ repaint = true } = {}) {
   if (repaint) repaintAnatomyLanguage();
   if (!moduleKey) return;
   let pack;
-  try { pack = await api("/api/translations", {key: moduleKey, lang: language}); }
+  try { pack = await api("/api/translations", {key: moduleKey, lang: AnatomyLanguage.locale(language)}); }
   catch (_) { pack = {status: "unavailable"}; }
   if (token !== state.languageRequest || language !== state.anatomyLanguage || moduleKey !== currentModuleKey()) return;
   state.languagePack = pack;
   const reviewed = ["structures", "filters", "labels", "texts"].reduce((count, key) => count
-    + Object.values(pack[key] || {}).filter((row) => row?.status === "reviewed").length, 0);
+    + Object.values(pack[key] || {}).reduce((total, row) => total + Object.keys(row?.source || {}).filter((field) =>
+      AnatomyLanguage.fieldStatus(row, field) === "reviewed" && typeof row?.translation?.[field] === "string" && row.translation[field].trim()).length, 0), 0);
   el.anatomyLanguageStatus.textContent = language === "en" ? "Original anatomical content"
+    : language === "en-vi" ? "English ở trên · Tiếng Việt ở dưới. Mục chưa dịch được đánh dấu rõ."
     : language === "vi" ? reviewed
       ? "Tiếng Việt · Mục chưa dịch giữ nguyên bản gốc."
       : "Chưa có bản dịch tiếng Việt · Đang hiển thị bản gốc."
@@ -456,7 +484,12 @@ async function initializeAnatomyLanguages() {
     const option = document.createElement("option"); option.value = language.code;
     option.textContent = language.label; el.anatomyLanguageSelect.append(option);
   });
-  if (!config.languages.some((row) => row.code === state.anatomyLanguage)) state.anatomyLanguage = "en";
+  const bilingual = config.languages.some((row) => row.code === "vi");
+  if (bilingual) {
+    const option = document.createElement("option"); option.value = "en-vi";
+    option.textContent = "Song ngữ"; el.anatomyLanguageSelect.append(option);
+  }
+  if (!(bilingual && state.anatomyLanguage === "en-vi") && !config.languages.some((row) => row.code === state.anatomyLanguage)) state.anatomyLanguage = "en";
   el.anatomyLanguageSelect.value = state.anatomyLanguage;
 }
 
@@ -618,8 +651,9 @@ async function selectModule(key, options = {}) {
     state.module = module;
     state.capture = null;
     state.selectedStructure = null;
-    await loadAnatomyLanguage({repaint: false});
-    if (token !== state.requestToken) return;
+    // A full occurrence pack can be several MiB. Load it alongside the first
+    // slice, using source English until it arrives, rather than blocking images.
+    const languageTask = loadAnatomyLanguage({repaint: false});
     // Show the captured labels on first open. Source defaults remain an explicit option.
     state.activeFilters = new Set((module.filters || []).map((item) => String(item.id)));
     state.previewFilterIds = new Set();
@@ -646,6 +680,9 @@ async function selectModule(key, options = {}) {
     if (!chosenSeries) throw new Error("This module has no complete image/label slice pair yet.");
     const wantedSlice = options.preserveSlice ? currentSliceNumber() : (options.restore ? saved.sliceNumber : null);
     await selectVariant(chosenSeries.directory, chosenVariant.directory, { wantedSlice, resetView: true });
+    languageTask.then(() => {
+      if (token === state.requestToken && state.capture) repaintAnatomyLanguage();
+    });
     closeModuleCatalogue();
   } catch (error) {
     if (token !== state.requestToken) return;
@@ -868,7 +905,7 @@ function sliceStructures() {
     const item = structureFromTarget(target);
     if (!map.has(item.key)) map.set(item.key, item);
   });
-  return [...map.values()].sort((a, b) => anatomyDisplayName(a).localeCompare(anatomyDisplayName(b), state.anatomyLanguage));
+  return [...map.values()].sort((a, b) => anatomyDisplayName(a).localeCompare(anatomyDisplayName(b), AnatomyLanguage.locale(state.anatomyLanguage)));
 }
 
 function filterEnabled(filterId) {
@@ -1085,8 +1122,21 @@ function renderVisibleLabel(label, selectionKey = null) {
   text.setAttribute("class", `annotation-label${interactionClass}`);
   text.setAttribute("role", "button"); text.setAttribute("tabindex", "0"); text.setAttribute("aria-label", anatomyDisplayName(item));
   text.setAttribute("aria-pressed", String(selected));
-  text.textContent = displayLabelText(label);
-  text.setAttribute("lang", text.textContent === label.text ? "en" : state.anatomyLanguage);
+  const lines = AnatomyLanguage.lines(state.anatomyLanguage, label.text, labelValue(label));
+  text.classList.toggle("bilingual-label", lines.length === 2);
+  if (lines.length === 2) {
+    const fontSize = AnatomyLanguage.labelFontSize(label, (state.capture?.labels || []).filter(labelFilterEnabled));
+    text.style.fontSize = `${fontSize}px`;
+    text.style.strokeWidth = `${fontSize * (selected ? .24 : .18)}px`;
+  }
+  lines.forEach((row, index) => {
+    const line = document.createElementNS(SVG_NS, "tspan");
+    line.setAttribute("x", label.x);
+    line.setAttribute("dy", lines.length === 1 ? "0" : index === 0 ? "-0.35em" : "1.1em");
+    line.setAttribute("lang", row.lang);
+    if (row.missing) line.setAttribute("class", "translation-missing");
+    line.textContent = row.text; text.append(line);
+  });
   setFilterData(text, label.filter_id);
   bindAnatomyElement(text, item);
   el.annotationLayer.append(text);
@@ -1130,10 +1180,19 @@ function bindAnatomyElement(node, item) {
   node.addEventListener("pointerleave", hideTooltip);
 }
 
+function anatomyItemAt(node) {
+  // SVG tspans and nested bilingual HTML lines share their parent's identity.
+  for (let current = node; current && current !== el.anatomyViewport; current = current.parentNode) {
+    const item = anatomyTouchItems.get(current);
+    if (item) return item;
+  }
+  return undefined;
+}
+
 function showTooltip(event, item) {
   if (state.dragging || event.pointerType === "touch") return;
   el.anatomyTooltip.replaceChildren();
-  const strong = document.createElement("strong"); strong.textContent = anatomyDisplayName(item);
+  const strong = document.createElement("strong"); setAnatomyName(strong, item);
   el.anatomyTooltip.append(strong);
   if (item.latin) { const small = document.createElement("small"); small.textContent = item.latin; el.anatomyTooltip.append(small); }
   el.anatomyTooltip.hidden = false;
@@ -1152,7 +1211,8 @@ function renderSliceStructures() {
 
 function renderStructureRows(rows) {
   const query = normalizeText(el.structureSearch.value);
-  const filtered = rows.filter((item) => !query || normalizeText(`${item.name} ${anatomyDisplayName(item)} ${item.latin}`).includes(query));
+  // Module results already match names OR description text on the server.
+  const filtered = state.structureMode === "search" ? rows : rows.filter((item) => !query || normalizeText(`${item.name} ${anatomyValue(item).text} ${item.latin}`).includes(query));
   el.structureList.replaceChildren();
   filtered.forEach((item) => {
     const button = document.createElement("button"); button.type = "button";
@@ -1160,7 +1220,7 @@ function renderStructureRows(rows) {
     button.setAttribute("role", "listitem");
     const colour = document.createElement("span"); colour.className = "structure-colour"; colour.style.color = item.color || "#8fa8b0";
     const name = document.createElement("span"); name.className = "structure-name";
-    const strong = document.createElement("strong"); strong.textContent = anatomyDisplayName(item);
+    const strong = document.createElement("strong"); setAnatomyName(strong, item);
     const latin = document.createElement("small"); latin.textContent = item.latin || "Anatomical structure";
     name.append(strong, latin);
     const kind = document.createElement("span"); kind.className = "structure-kind"; kind.textContent = item.kind;
@@ -1204,16 +1264,43 @@ function selectStructure(item, { toggle = false, highlightOnly = false } = {}) {
 function safeFragment(markup, fallback = "No anatomical definition is available for this structure.") {
   const template = document.createElement("template");
   template.innerHTML = String(markup || `<p>${fallback}</p>`);
-  template.content.querySelectorAll("script,style,iframe,img,video,audio,object,embed,form,input,button").forEach((node) => node.remove());
+  template.content.querySelectorAll("script,style,iframe,img,video,audio,object,embed,form,input,button,svg,math,template,link,meta,base").forEach((node) => node.remove());
+  const allowed = new Set(["P", "BR", "DIV", "SPAN", "STRONG", "B", "EM", "I", "U", "SUB", "SUP", "UL", "OL", "LI", "H2", "H3", "H4", "H5", "BLOCKQUOTE", "TABLE", "THEAD", "TBODY", "TR", "TH", "TD", "HR"]);
   template.content.querySelectorAll("*").forEach((node) => {
-    [...node.attributes].forEach((attribute) => {
-      if (attribute.name.startsWith("on") || attribute.name === "style") node.removeAttribute(attribute.name);
-    });
-  });
-  template.content.querySelectorAll("a").forEach((anchor) => {
-    const span = document.createElement("span"); span.textContent = anchor.textContent; anchor.replaceWith(span);
+    [...node.attributes].forEach((attribute) => node.removeAttribute(attribute.name));
+    if (!allowed.has(node.tagName)) node.replaceWith(...node.childNodes);
   });
   return template.content;
+}
+
+function definitionContent(definition, references = false) {
+  const htmlField = references ? "sources_html" : "description_html";
+  const html = localizedValue("structures", definition.identity_key, htmlField, definition[htmlField]);
+  const text = references ? { translated: false } : localizedValue("structures", definition.identity_key, "description_text", definition.description_text);
+  const translated = html.translated || text.translated;
+  const container = document.createElement("div"); container.className = "definition-copy";
+  const appendCopy = (target, useTranslation) => {
+    const htmlValue = useTranslation && html.translated ? html.text : !useTranslation ? definition[htmlField] : "";
+    const textValue = useTranslation && text.translated ? text.text : !useTranslation ? definition.description_text : "";
+    if (htmlValue) target.append(safeFragment(htmlValue));
+    else if (!references && textValue) {
+      const p = document.createElement("p"); p.textContent = textValue; target.append(p);
+    } else target.append(safeFragment("", references ? "No references available." : undefined));
+  };
+  if (state.anatomyLanguage === "en-vi") {
+    for (const lang of ["en", "vi"]) {
+      const section = document.createElement("section"); section.lang = lang; section.className = "definition-language-block";
+      const title = document.createElement("h4"); title.textContent = lang === "en" ? "English" : "Tiếng Việt"; section.append(title);
+      if (lang === "vi" && !translated) {
+        const p = document.createElement("p"); p.className = "translation-missing"; p.textContent = "Chưa có bản dịch"; section.append(p);
+      } else appendCopy(section, lang === "vi");
+      container.append(section);
+    }
+  } else {
+    container.lang = translated ? AnatomyLanguage.locale(state.anatomyLanguage) : "en";
+    appendCopy(container, translated);
+  }
+  return container;
 }
 
 function renderDefinition(item) {
@@ -1230,26 +1317,24 @@ function renderDefinition(item) {
     el.definitionPanel.append(close, title, note);
     item.target.coincident_definitions.forEach((definition) => {
       const button = document.createElement("button"); button.type = "button";
-      button.textContent = definitionName(definition); button.className = "tool-button";
-      button.addEventListener("click", () => renderDefinition({...item, definition, name: definition.name}));
+      setLanguageName(button, definition.name, definitionValue(definition)); button.classList.add("tool-button");
+      button.addEventListener("click", () => {
+        state.selectedStructure = {...item, definition, name: definition.name};
+        renderDefinition(state.selectedStructure);
+      });
       el.definitionPanel.append(button);
     });
     return;
   }
   const category = document.createElement("div"); category.className = "definition-category"; category.style.color = item.color || "#24d5c6"; category.textContent = `${item.kind} · Anatomical structure`;
-  const heading = document.createElement("h3"); heading.textContent = definition.name ? definitionName(definition) : anatomyDisplayName(item);
+  const heading = document.createElement("h3"); setAnatomyName(heading, item);
   const latin = document.createElement("p"); latin.className = "definition-latin"; latin.textContent = definition.latin || item.latin || "Latin term unavailable";
-  const copy = document.createElement("div"); copy.className = "definition-copy";
-  const localizedHtml = localizedField("structures", definition.identity_key, "description_html", definition.description_html);
-  const localizedText = localizedField("structures", definition.identity_key, "description_text", definition.description_text);
-  if (localizedHtml === definition.description_html && localizedText !== definition.description_text) {
-    const paragraph = document.createElement("p"); paragraph.textContent = localizedText; copy.append(paragraph);
-  } else copy.append(safeFragment(localizedHtml));
+  const copy = definitionContent(definition);
   el.definitionPanel.append(close, category, heading, latin, copy);
   if (definition.sources_html) {
     const details = document.createElement("details"); details.className = "definition-sources";
     const summary = document.createElement("summary"); summary.textContent = "Scientific references";
-    const sources = document.createElement("div"); sources.className = "definition-copy"; sources.append(safeFragment(localizedField("structures", definition.identity_key, "sources_html", definition.sources_html), "No references available."));
+    const sources = definitionContent(definition, true);
     details.append(summary, sources); el.definitionPanel.append(details);
   }
   const meta = document.createElement("div"); meta.className = "definition-meta";
@@ -1286,7 +1371,7 @@ async function searchStructures() {
   const language = state.anatomyLanguage;
   const query = el.structureSearch.value.trim();
   if (!query) { state.searchResults = []; renderSearchRows(); return; }
-  const body = await api("/api/search", { key: moduleKey, q: query, lang: language });
+  const body = await api("/api/search", { key: moduleKey, q: query, lang: AnatomyLanguage.locale(language) });
   if (token !== state.searchRequest || moduleKey !== currentModuleKey() || language !== state.anatomyLanguage) return;
   state.searchResults = body.results.map((definition) => ({
     key: `taxon:${definition.identity_key || `${definition.ta_id ?? "legacy"}:${definition.taxon_id}`}`, taxonId: definition.taxon_id, name: definition.name,
@@ -1310,7 +1395,15 @@ function setStructureMode(mode) {
 }
 
 function filterDisplayName(filter) {
-  return String(localizedField("filters", filter.id, "name", filter.name) || "").trim() || `Name unavailable (filter ${filter.id})`;
+  return AnatomyLanguage.lines(state.anatomyLanguage, filter.name || `Name unavailable (filter ${filter.id})`, filterValue(filter)).map((row) => row.text).join("\n");
+}
+
+function filterValue(filter) {
+  return localizedValue("filters", filter.id, "name", filter.name || `Name unavailable (filter ${filter.id})`);
+}
+
+function setFilterName(node, filter) {
+  setLanguageName(node, filter.name || `Name unavailable (filter ${filter.id})`, filterValue(filter));
 }
 
 function displayFilters() {
@@ -1470,7 +1563,10 @@ function filterColoursOnSlice(filter) {
 function makeFilterIcon(filter) {
   const icon = document.createElement("i"); icon.className = "menu-filter-icon";
   if (filter.icon_url) {
-    const image = document.createElement("img"); image.src = filter.icon_url; image.alt = ""; image.loading = "lazy";
+    const image = document.createElement("img"); image.alt = "";
+    // Data icons need the same authenticated fetch/cache path as images. A raw
+    // <img src=/data/...> cannot carry the viewer-session header on the website.
+    assignCachedImage(image, versionedDataUrl(filter.icon_url), { priority: 1 });
     icon.append(image);
   } else icon.textContent = filterDisplayName(filter).slice(0, 3).toUpperCase();
   return icon;
@@ -1535,7 +1631,7 @@ function renderFilters() {
     button.dataset.state = selection.all ? "all" : selection.none ? "none" : "mixed";
     bindFilterPreview(button, group.root);
     const check = document.createElement("span"); check.className = "filter-check";
-    const name = document.createElement("span"); name.textContent = group.name;
+    const name = document.createElement("span"); setFilterName(name, group.root);
     const count = document.createElement("small"); count.textContent = `${selection.selected}/${selection.total}`;
     button.append(check, name, count);
     button.addEventListener("click", () => toggleFilterGroup(group));
@@ -1557,7 +1653,7 @@ function renderFilters() {
     const chevron = document.createElement("i"); chevron.className = "filter-chevron"; chevron.textContent = standalone ? "" : "›";
     const rootIcon = makeFilterIcon(group.root); rootIcon.classList.add("menu-filter-root-icon");
     const copy = document.createElement("span");
-    const title = document.createElement("b"); title.textContent = group.name;
+    const title = document.createElement("b"); setFilterName(title, group.root);
     title.title = group.name;
     const meta = document.createElement("small"); meta.textContent = `${selection.selected} of ${selection.total} visible`;
     copy.append(title, meta); expand.append(chevron, rootIcon, copy);
@@ -1577,7 +1673,7 @@ function renderFilters() {
       bindFilterPreview(row, filter);
       const childCopy = document.createElement("span");
       const icon = makeFilterIcon(filter);
-      const childTitle = document.createElement("b"); childTitle.textContent = filterDisplayName(filter);
+      const childTitle = document.createElement("b"); setFilterName(childTitle, filter);
       childTitle.title = filterDisplayName(filter);
       const childMeta = document.createElement("small");
       childMeta.textContent = filter.effective_taxon_count == null ? `Filter ${id}`
@@ -2144,7 +2240,7 @@ function bindEvents() {
   });
   touchGestures = new window.ViewerTouchGestures(el.anatomyViewport, {
     ready: () => Boolean(state.capture),
-    itemAt: (node) => anatomyTouchItems.get(node),
+    itemAt: anatomyItemAt,
     begin: () => {
       cancelDrag(); stopCine(); hideTooltip(); state.suppressDragClick = true;
       if (state.wheelFrame) cancelAnimationFrame(state.wheelFrame);

@@ -1129,6 +1129,16 @@ select:focus-visible,
 .anatomy-language-control label { font-size: 11px; color: var(--text); }
 .anatomy-language-control select { width: 100%; min-width: 0; padding: 8px; border-radius: 6px; border: 1px solid var(--line); background: #0a1216; color: var(--text); font: inherit; }
 .anatomy-language-control small { color: var(--muted); font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
+.anatomy-name-line { display: block; }
+.bilingual-name { white-space: normal; }
+.bilingual-name > .anatomy-name-line + .anatomy-name-line { margin-top: 3px; font-size: .94em; font-weight: 500; }
+.structure-name strong.bilingual-name { white-space: normal; overflow-wrap: anywhere; }
+.translation-missing { opacity: .65; font-style: italic; }
+.annotation-label.bilingual-label { font-size: 16px; }
+.annotation-label tspan { pointer-events: auto; }
+.labels-hidden .annotation-label tspan { pointer-events: none; }
+.definition-language-block + .definition-language-block { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 10px; }
+.definition-language-block h4 { margin: 0 0 6px; color: var(--muted); font-size: 10px; font-weight: 600; }
 .preload-status { display: block; color: var(--text-muted, #91a3ac); font-size: 10px; line-height: 1.2; min-height: 12px; }
 
 /* Touch viewport owns gestures; menus retain native vertical scrolling. */

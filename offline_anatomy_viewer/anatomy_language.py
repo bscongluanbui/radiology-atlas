@@ -46,13 +46,21 @@ def load_pack(module_key, locale):
 
 def translated_field(pack, collection, key, field, original):
     row = pack.get(collection, {}).get(str(key), {})
-    if not isinstance(row, dict) or row.get("status") != "reviewed":
+    if not isinstance(row, dict) or field_status(row, field) != "reviewed":
         return original
     source, translated = row.get("source"), row.get("translation")
     if not isinstance(source, dict) or not isinstance(translated, dict):
         return original
     value = translated.get(field)
     return value if field in source and source[field] == original and isinstance(value, str) and value.strip() else original
+
+
+def field_status(row, field):
+    """Legacy row approval is supported; explicit per-field approval takes precedence."""
+    if "field_status" in row:
+        statuses = row["field_status"]
+        return statuses.get(field, "draft") if isinstance(statuses, dict) else "draft"
+    return row.get("status", "draft")
 
 
 def localized_definition(pack, definition):
@@ -65,16 +73,18 @@ def localized_definition(pack, definition):
 
 def search_text(value):
     text = unicodedata.normalize("NFD", str(value or "").casefold().replace("đ", "d"))
-    return " ".join(re.sub(r"[^a-z0-9]+", " ", "".join(c for c in text if not unicodedata.combining(c))).split())
+    text = "".join(c for c in text if not unicodedata.category(c).startswith("M"))
+    return " ".join("".join(c if c.isalnum() else " " for c in text).split())
 
 
 def label_key(series, variant, slice_id, canvas, index):
-    return json.dumps([str(series), str(variant), str(slice_id), str(canvas), int(index)], ensure_ascii=False, separators=(",", ":"))
+    return json.dumps(["" if value is None else str(value) for value in (series, variant, slice_id, canvas)] + [int(index)], ensure_ascii=False, separators=(",", ":"))
 
 
 def target_key(series, variant, slice_id, target):
     def number(value):
         value = float(value)
         return int(value) if value.is_integer() else value
-    return json.dumps(["target", str(series), str(variant), str(slice_id), str(target.get("point_id") or ""),
+    parts = ["" if value is None else str(value) for value in (series, variant, slice_id, target.get("point_id"))]
+    return json.dumps(["target", *parts,
                        number(target["x"]), number(target["y"])], ensure_ascii=False, separators=(",", ":"))
