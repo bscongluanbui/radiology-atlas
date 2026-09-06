@@ -26,6 +26,21 @@ function context(memory=8){
 }
 async function main(){
  const h=context(),{ctx}=h;
+ // The native Series dropdown is deliberately flat: directly selectable child
+ // variants carry their slice counts and no optgroup header consumes a row.
+ vm.runInContext(`state.module.series=[
+   {directory:'10_Sagittal',label:'Sagittal T1 T2 TSE',variants:[
+     {directory:'1_T1',label:'T1',slice_count:15,slices:[1]},
+     {directory:'2_T2',label:'T2',slice_count:15,slices:[1]}]},
+   {directory:'20_Coronal',label:'Coronal T2 MPR',variants:[
+     {directory:'default_Default',label:'Default',slice_count:116,slices:[1]}]},
+   {directory:'empty',label:'Empty',variants:[{directory:'none',label:'None',slice_count:0,slices:[]}]}
+ ]; el.toolbarWeightingSelect=new Element('select'); renderSeriesSelectors();`,ctx);
+ assert.deepEqual(vm.runInContext('el.toolbarWeightingSelect.children.map(x=>x.tagName)',ctx),['option','option','option']);
+ assert.deepEqual(vm.runInContext('el.toolbarWeightingSelect.children.map(x=>x.textContent)',ctx),[
+   'Sagittal T1 T2 TSE - T1 (15 slices)','Sagittal T1 T2 TSE - T2 (15 slices)','Coronal T2 MPR - 116 slices']);
+ assert.equal(vm.runInContext('el.toolbarWeightingSelect.children.some(x=>x.tagName==="optgroup")',ctx),false);
+ assert.equal(vm.runInContext('el.toolbarWeightingSelect.disabled',ctx),false);
  const url=vm.runInContext('sliceImageUrl(11)',ctx);
  await vm.runInContext('warmSliceImageBytes(sliceImageUrl(11))',ctx);
  const before=h.calls.filter(c=>c.url===url).length;
@@ -83,6 +98,6 @@ async function main(){
  // Low-memory clients use a balanced 10-forward/5-back window and 16 decoded frames.
  const low=context(4).ctx.window.viewerSliceCacheDiagnostics();assert.equal(low.imageLimit,16);assert.equal(low.decodeForward,10);assert.equal(low.decodeBackward,5);assert.equal(low.encoded.maxBytes,256*1024**2);
  const markup=fs.readFileSync(root+'/offline_anatomy_viewer/index.html','utf8');assert(markup.indexOf('./request_queue.js')<markup.indexOf('./resource_cache.js'));
- console.log('UNIFIED_PRELOAD=PASS; series=60/60; JSON_requests=60; image_requests=60; warm_repeat_requests=0; main_filmstrip_MPR_overlay=shared; stale_detached=blocked; low_memory=16_frames; preload_status=PASS');
+ console.log('UNIFIED_PRELOAD=PASS; series_dropdown=flat_child_options_with_slice_counts; series=60/60; JSON_requests=60; image_requests=60; warm_repeat_requests=0; main_filmstrip_MPR_overlay=shared; stale_detached=blocked; low_memory=16_frames; preload_status=PASS');
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

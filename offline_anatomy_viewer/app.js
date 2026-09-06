@@ -701,21 +701,17 @@ function renderSeriesSelectors() {
   (state.module?.series || []).forEach((series) => {
     const variants = series.variants.filter((variant) => variant.slice_count);
     if (!variants.length) return;
-    const groups = selectors.map(() => {
-      const group = document.createElement("optgroup"); group.label = series.label; return group;
-    });
     variants.forEach((variant) => {
       available += 1;
-      selectors.forEach((select, selectorIndex) => {
+      selectors.forEach((select) => {
         const option = document.createElement("option");
         option.value = seriesOptionValue(series, variant);
         option.textContent = variants.length === 1 && /^default$/i.test(variant.label)
           ? `${series.label} - ${variant.slice_count} slices`
           : `${series.label} - ${variant.label} (${variant.slice_count} slices)`;
-        groups[selectorIndex].append(option);
+        select.append(option);
       });
     });
-    selectors.forEach((select, index) => select.append(groups[index]));
   });
   selectors.forEach((select) => {
     select.disabled = available === 0;
