@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import gzip
 import re
 import unicodedata
 from pathlib import Path
@@ -12,8 +13,11 @@ COLLECTIONS = ("structures", "filters", "labels", "texts")
 
 def read_json(path, fallback):
     try:
+        if str(path).endswith('.json.gz'):
+            with gzip.open(path, 'rt', encoding='utf-8') as stream:
+                return json.load(stream)
         return json.loads(Path(path).read_text(encoding="utf-8"))
-    except (OSError, ValueError):
+    except (OSError, ValueError, EOFError):
         return fallback
 
 
@@ -36,6 +40,8 @@ def load_pack(module_key, locale):
     if locale == "en":
         return empty
     path = TRANSLATIONS_DIR / locale / parts[0] / (parts[1] + ".json")
+    if not path.is_file():
+        path = path.with_suffix('.json.gz')
     raw = read_json(path, None)
     if not isinstance(raw, dict):
         return {**empty, "status": "pending"}

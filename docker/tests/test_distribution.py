@@ -24,6 +24,7 @@ from viewer_client import acquire
 from test_single_session import SingleSessionTests, SingleSessionHTTPTests
 from test_anatomy_language import AnatomyLanguageTests
 from test_translation_sync import TranslationSyncTests
+from test_catalogue_translation import CatalogueTranslationTests
 
 
 class DistributionTests(unittest.TestCase):

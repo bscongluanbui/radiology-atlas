@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 from copy import deepcopy
 import hashlib
+import gzip
 import json
 from pathlib import Path
 import sys
@@ -188,16 +189,17 @@ def main(argv=None):
         if out.exists():
             raise ValueError("Output directory already exists; choose a new path")
         raw = args.pack.read_bytes() if args.pack else None
+        compressed = bool(args.pack and args.pack.name.endswith('.json.gz'))
         current = strict_json(args.template.read_bytes()) if args.template else build_template(
             AnatomyRepository(args.data_root), args.key, args.locale, not args.definitions_only)
         if current.get("module_key") != args.key or current.get("locale") != args.locale:
             raise ValueError("Source template does not match --key/--locale")
-        previous = strict_json(raw) if raw is not None else {
+        previous = strict_json(gzip.decompress(raw) if compressed else raw) if raw is not None else {
             **{k: current[k] for k in ("schema_version", "module_key", "locale", "source_locale")},
             **{c: {} for c in COLLECTIONS}}
         merged, report = merge_pack(previous, current)
         files = {"pack.json": encode(merged), "report.json": encode(report),
-                 "previous.json": raw if raw is not None else encode(previous)}
+                 ("previous.json.gz" if compressed else "previous.json"): raw if raw is not None else encode(previous)}
         # Refuse changes made to the input pack while a large source scan ran.
         if args.pack and args.pack.read_bytes() != raw:
             raise ValueError("Input translation pack changed during synchronization; retry")
@@ -216,7 +218,7 @@ def main(argv=None):
         print("COUNTS=" + json.dumps(report["counts"], sort_keys=True))
         print("BUNDLE=" + str(out))
         return 0
-    except (OSError, ValueError, KeyError, TypeError) as error:
+    except (OSError, ValueError, KeyError, TypeError, EOFError) as error:
         print("SYNC=FAIL; " + str(error), file=sys.stderr)
         return 2
 

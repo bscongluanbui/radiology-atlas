@@ -16,7 +16,7 @@ def sources():
     top = {".py", ".js", ".html", ".css", ".md", ".bat", ".command"}
     files = [p for p in viewer.iterdir() if p.is_file() and p.suffix in top]
     for folder in (viewer/"assets/module-icons", viewer/"translations"):
-        files += [p for p in folder.rglob("*") if p.is_file() and p.suffix in {".png", ".json", ".md"}]
+        files += [p for p in folder.rglob("*") if p.is_file() and (p.suffix in {".png", ".json", ".md"} or p.name.endswith('.json.gz'))]
     files += [ROOT/n for n in ("anatomy_identity.py", "overlay_capture.py", "overlay_capture.js", "overlay_runtime.js")]
     for path in (ROOT/"docker").rglob("*"):
         rel = path.relative_to(ROOT/"docker")

@@ -1,7 +1,7 @@
 # Anatomy language packs
 
-This directory belongs to the **viewer**, not the capture pipeline. No anatomical
-translations have been supplied yet. The default source language is English;
+This directory belongs to the **viewer**, not the capture pipeline. Vietnamese
+packs are stored separately from the English capture data. The default source language is English;
 The menu has three modes: **English**, **Tiếng Việt**, and **Song ngữ**.
 `vi` uses source-English fallback. **Song ngữ** shows English above Vietnamese
 in labels, tooltips, structure lists, Anatomical Parts and definition headings.
@@ -180,3 +180,36 @@ necessary. The two-meaning rule does not truncate description paragraphs or refe
 Completion automatically enables fields per the user's publishing preference.
 The same Vietnamese packs are mirrored into the local viewer and included by the
 existing Dockerfile when the next image is built; no capture-data changes are needed.
+
+## Translate the remaining catalogue
+
+`translate_catalogue_openai.py` selects the catalogue's exact module keys and
+excludes BRAIN by default, preserving its installed translations. It preserves
+space-named region keys (for example `HEAD AND NECK`); do not rename these pack
+folders to capture-data directory slugs such as `HEAD_AND_NECK`.
+
+Large new repository packs use lossless `.json.gz` storage to keep each file
+manageable for GitHub/image delivery. The viewer supports both `.json` and
+`.json.gz` with the same schema/API; an existing `.json` takes precedence.
+The local mirror remains ordinary JSON, including for an already-running viewer.
+Compression does not change source strings, translations, or anatomical keys.
+Incremental synchronization accepts either format and retains a byte-exact
+`previous.json.gz` backup for compressed input; its editable result is `pack.json`.
+
+The translator uses organ-specific context, not brain-specific definitions of
+ambiguous terms such as ventricle, sinus or cortex. Deduplication stays within
+each region. Synonyms use at most two ranked meanings separated by ` / `;
+descriptions remain complete and bibliographic references stay original.
+
+```powershell
+# Set the existing TRANSLATOR_BASE_URL, TRANSLATOR_API_KEY and TRANSLATOR_MODEL
+# in the current process environment. The tool does not persist the key.
+python E:/coding/radiology/web/radiology-atlas-github/offline_anatomy_viewer/translate_catalogue_openai.py --data-root E:/coding/radiology/web/imaios_data/all_modules --work-dir E:/coding/radiology/web/viewer_all_vi_v65/work --output-root E:/coding/radiology/web/radiology-atlas-github/offline_anatomy_viewer/translations/vi --mirror-root E:/coding/radiology/web/offline_anatomy_viewer/translations/vi --workers 6
+```
+
+Reuse the same work directory to resume pending requests. A new source-data
+snapshot needs a new work directory. Source-file hashes and file lists are
+checked before installation. Every output retains exact source fields, identity
+keys and bindings. The `previous` directory and `install_manifest.json` journal
+retain original packs before replacement. No image, capture JSON or English
+metadata file is changed by this command.
