@@ -125,7 +125,7 @@ def validate_output(template, pack):
                         raise ValueError('Pending field: ' + key + '/' + field)
                     counts['enabled_fields'] += 1
                 if field in ('name', 'text') and value:
-                    if ';' in value or len(term_meanings(value)) > 2:
+                    if ';' in value or len(term_meanings(value)) > 1:
                         raise ValueError('Invalid synonym separator/count')
                     counts['term_fields'] += 1
     return counts

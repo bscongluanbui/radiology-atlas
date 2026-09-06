@@ -181,6 +181,7 @@ def main():
                         count+=1
                     if field in ('name','text'):
                         assert ';' not in row['translation'].get(field,'')
+                        assert len(term_meanings(row['translation'].get(field,''))) <= 1
         out=args.work_dir/'packs'/(key+'.json'); write(out,pack)
         report['modules'][key]={'counts':spec['counts'],'enabled_fields':count,'sha256':hash_file(out)}
     # Publish only after all source bindings and all output packs have passed.

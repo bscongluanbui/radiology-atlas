@@ -171,12 +171,13 @@ English files are read-only; the run checks their SHA256 before installing outpu
 python E:/coding/radiology/web/radiology-atlas-github/offline_anatomy_viewer/translate_region_openai.py --data-root E:/coding/radiology/web/imaios_data/all_modules --work-dir E:/coding/radiology/web/viewer_brain_vi_v63/work --output-root E:/coding/radiology/web/radiology-atlas-github/offline_anatomy_viewer/translations/vi --mirror-root E:/coding/radiology/web/offline_anatomy_viewer/translations/vi --workers 4
 ```
 
-For one anatomical term, AI ranks the two closest meanings, with the best first.
-The output uses `meaning 1 / meaning 2`; one precise meaning remains one.
-Semicolons separating alternatives are normalized to `/`. More than two synonyms
-are not displayed. Parenthetical qualifiers, numeric fractions and Latin identifiers
-are preserved. Distinct grouped structures are not synonyms and use commas when
-necessary. The two-meaning rule does not truncate description paragraphs or references.
+For one anatomical term, only the first (best-ranked) Vietnamese meaning is
+retained. Alternative synonyms after `/`, `;` or `hoặc` are removed from term
+fields, not from description paragraphs or bibliographic references.
+Parenthetical qualifiers, numeric fractions, URLs and anatomical codes remain
+intact. Distinct grouped structures remain a single comma-separated phrase.
+Existing checkpoint identifiers are retained for resume compatibility; cached
+translations pass through the current first-meaning normalizer on publication.
 Completion automatically enables fields per the user's publishing preference.
 The same Vietnamese packs are mirrored into the local viewer and included by the
 existing Dockerfile when the next image is built; no capture-data changes are needed.
@@ -198,7 +199,7 @@ Incremental synchronization accepts either format and retains a byte-exact
 
 The translator uses organ-specific context, not brain-specific definitions of
 ambiguous terms such as ventricle, sinus or cortex. Deduplication stays within
-each region. Synonyms use at most two ranked meanings separated by ` / `;
+each region. Only the first ranked meaning is retained;
 descriptions remain complete and bibliographic references stay original.
 
 ```powershell

@@ -29,17 +29,17 @@ def pack():
 class TranslationSyncTests(unittest.TestCase):
     def test_ranked_term_separator_policy_does_not_truncate_descriptions(self):
         from translate_with_openai import normalize_term, apply_translations
-        self.assertEqual(normalize_term('Mẫu A; Mẫu B; Mẫu C'),'Mẫu A / Mẫu B')
-        self.assertEqual(normalize_term('Mẫu A hoặc Mẫu B'),'Mẫu A / Mẫu B')
-        self.assertEqual(normalize_term('Mẫu A / Mẫu A / Mẫu B'),'Mẫu A / Mẫu B')
+        self.assertEqual(normalize_term('Mẫu A; Mẫu B; Mẫu C'),'Mẫu A')
+        self.assertEqual(normalize_term('Mẫu A hoặc Mẫu B'),'Mẫu A')
+        self.assertEqual(normalize_term('Mẫu A / Mẫu A / Mẫu B'),'Mẫu A')
         self.assertEqual(normalize_term('Phần (V/VI)'),'Phần (V/VI)')
         self.assertEqual(normalize_term('Phần 1/3'),'Phần 1/3')
-        self.assertEqual(normalize_term('Mẫu A; Mẫu B; Mẫu C (M1)', 'Source; M1 segment'),'Mẫu A / Mẫu B (M1)')
+        self.assertEqual(normalize_term('Mẫu A; Mẫu B; Mẫu C (M1)', 'Source; M1 segment'),'Mẫu A (M1)')
         self.assertEqual(normalize_term('Mẫu (A; B)'),'Mẫu (A / B)')
         p=pack();p['structures']['1:7']=row({'name':'Fixture','description_text':'Paragraph'})
         cache={'structures|name|Fixture':'A; B; C','structures|description_text|Paragraph':'Đoạn một; đoạn hai; đoạn ba.'}
         result=apply_translations(p,cache,'test')
-        self.assertEqual(result['structures']['1:7']['translation']['name'],'A / B')
+        self.assertEqual(result['structures']['1:7']['translation']['name'],'A')
         self.assertEqual(result['structures']['1:7']['translation']['description_text'],'Đoạn một; đoạn hai; đoạn ba.')
         self.assertEqual(p['structures']['1:7']['source']['name'],'Fixture')
 

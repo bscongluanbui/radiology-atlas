@@ -41,13 +41,29 @@ class CatalogueTranslationTests(unittest.TestCase):
 
     def test_capitalization_alone_is_not_a_second_meaning(self):
         self.assertEqual(normalize_term('tĩnh mạch / Tĩnh mạch'), 'tĩnh mạch')
-        self.assertEqual(normalize_term('Mẫu A; mẫu a; Mẫu B; Mẫu C'), 'Mẫu A / Mẫu B')
+        self.assertEqual(normalize_term('Mẫu A; mẫu a; Mẫu B; Mẫu C'), 'Mẫu A')
+
+    def test_first_meaning_preserves_descriptions_identifiers_and_source(self):
+        template = self.template()
+        template['structures']['12'] = dict(source={'name': 'Fixture', 'description_text': 'A / B; C'},
+                                           translation={}, status='draft', binding={'structure_id': 12})
+        before = deepcopy(template)
+        result = apply_translations(template, {'labels|text|Fixture': 'Nghĩa đầu / Nghĩa sau',
+            'structures|name|Fixture': 'Nghĩa đầu / Nghĩa sau',
+            'structures|description_text|A / B; C': 'Đoạn A / B; đoạn C'}, 'test')
+        self.assertEqual(result['structures']['12']['translation']['name'], 'Nghĩa đầu')
+        self.assertEqual(result['structures']['12']['translation']['description_text'], 'Đoạn A / B; đoạn C')
+        self.assertEqual(result['labels']['exact-key']['translation']['text'], 'Nghĩa đầu')
+        self.assertEqual(result['translation_meta']['term_policy'], 'first_ranked_meaning_only')
+        self.assertEqual(template, before)
+        self.assertEqual(normalize_term('Phần 1/3 (V/VI)'), 'Phần 1/3 (V/VI)')
+        self.assertEqual(normalize_term(normalize_term('A / B')), 'A')
 
     def test_translation_preserves_bindings_and_source_exactly(self):
         template = self.template(); before = deepcopy(template)
         result = apply_translations(template, {'labels|text|Fixture': 'Mẫu A; Mẫu B; Mẫu C'}, 'test')
         self.assertEqual(pipeline.validate_output(template, result)['enabled_fields'], 1)
-        self.assertEqual(result['labels']['exact-key']['translation']['text'], 'Mẫu A / Mẫu B')
+        self.assertEqual(result['labels']['exact-key']['translation']['text'], 'Mẫu A')
         self.assertEqual(template, before)
         for change in ('source', 'binding'):
             bad = deepcopy(result); bad['labels']['exact-key'][change]['text' if change == 'source' else 'point_id'] = 'wrong'
