@@ -11,7 +11,9 @@ window.AnatomyLanguage = Object.freeze({
     const status = this.fieldStatus(row, field);
     const translated = status === "reviewed" && row.source && Object.hasOwn(row.source, field) && row.source[field] === original
       && typeof value === "string" && Boolean(value.trim());
-    return { text: translated ? value : original, translated: Boolean(translated) };
+    const text = translated && pack.locale === "vi" && (field === "name" || field === "text")
+      ? value.replace(/\p{L}/u, letter => letter.toLocaleUpperCase("vi")) : value;
+    return { text: translated ? text : original, translated: Boolean(translated) };
   },
   field(pack, collection, key, field, original) {
     return this.resolve(pack, collection, key, field, original).text;

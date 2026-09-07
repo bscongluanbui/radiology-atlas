@@ -17,6 +17,23 @@ ctx.AnatomyLanguage=ctx.window.AnatomyLanguage;
 vm.runInContext(fs.readFileSync(path.join(root,'offline_anatomy_viewer/app.js'),'utf8').replace(/\ninitialize\(\);\s*$/,'\n'),ctx);
 const run=code=>vm.runInContext(code,ctx), A=ctx.AnatomyLanguage;
 let tests=0; function test(name,fn) { fn(); tests++; console.log('PASS '+name); }
+test('Vietnamese term initial only; immutable source, fallback and bilingual English',()=>{
+  for(const collection of ['structures','labels','texts','filters']) {
+    const field=collection==='structures'?'name':'text';
+    for(const [value,expected] of [['khoang dưới nhện','Khoang dưới nhện'],['động mạch MRI','Động mạch MRI'],['  (ống T2)','  (Ống T2)'],['MRI T2','MRI T2']]) {
+      const p={locale:'vi',[collection]:{k:{status:'reviewed',source:{[field]:'english source'},translation:{[field]:value}}}};
+      const before=JSON.stringify(p), resolved=A.resolve(p,collection,'k',field,'english source');
+      assert.equal(resolved.text,expected);
+      assert.equal(A.lines('en-vi','english source',resolved)[0].text,'english source');
+      assert.equal(A.lines('en-vi','english source',resolved)[1].text,expected);
+      assert.equal(A.field(p,collection,'k',field,'stale source'),'stale source');
+      assert.equal(JSON.stringify(p),before);
+      p.locale='fr';assert.equal(A.field(p,collection,'k',field,'english source'),value);
+    }
+  }
+  const p={locale:'vi',structures:{k:{status:'reviewed',source:{description_text:'source'},translation:{description_text:'nội dung gốc'}}}};
+  assert.equal(A.field(p,'structures','k','description_text','source'),'nội dung gốc');
+});
 test('reviewed + exact source; stale/draft/malformed fields fall back',()=>{
   const p={structures:{'1:7':{status:'reviewed',source:{name:'Source'},translation:{name:'Mẫu thử'}}}};
   assert.equal(A.field(p,'structures','1:7','name','Source'),'Mẫu thử');

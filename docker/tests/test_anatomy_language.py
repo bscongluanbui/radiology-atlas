@@ -37,6 +37,25 @@ class AnatomyLanguageTests(unittest.TestCase):
         p.write_text(json.dumps(self.pack, ensure_ascii=False), encoding='utf-8')
         return p
 
+    def test_vietnamese_term_initial_only_without_mutation(self):
+        for collection in ('structures', 'labels', 'texts', 'filters'):
+            field = 'name' if collection == 'structures' else 'text'
+            for value, expected in [('khoang dưới nhện', 'Khoang dưới nhện'),
+                                    ('động mạch MRI', 'Động mạch MRI'),
+                                    ('  (ống T2)', '  (Ống T2)'), ('MRI T2', 'MRI T2')]:
+                pack = {'locale': 'vi', collection: {'k': {'status': 'reviewed',
+                    'source': {field: 'source'}, 'translation': {field: value}}}}
+                before = json.dumps(pack)
+                self.assertEqual(language.translated_field(pack, collection, 'k', field, 'source'), expected)
+                self.assertEqual(language.translated_field(pack, collection, 'k', field, 'stale'), 'stale')
+                self.assertEqual(json.dumps(pack), before)
+                pack['locale'] = 'fr'
+                self.assertEqual(language.translated_field(pack, collection, 'k', field, 'source'), value)
+        row = self.pack['structures']['1:7']
+        row['translation']['description_text'] = 'nội dung riêng'
+        self.assertEqual(language.translated_field(self.pack, 'structures', '1:7',
+            'description_text', self.source['description_text']), 'nội dung riêng')
+
     def test_exact_identity_review_and_source_guard(self):
         self.assertEqual(language.translated_field(self.pack, 'structures', '1:7', 'name', 'Fixture Alpha'), 'Mẫu thử')
         for key, original in [('2:7','Fixture Alpha'), ('1:7','New source')]:

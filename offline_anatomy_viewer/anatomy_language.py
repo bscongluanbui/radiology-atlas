@@ -58,7 +58,13 @@ def translated_field(pack, collection, key, field, original):
     if not isinstance(source, dict) or not isinstance(translated, dict):
         return original
     value = translated.get(field)
-    return value if field in source and source[field] == original and isinstance(value, str) and value.strip() else original
+    if not (field in source and source[field] == original and isinstance(value, str) and value.strip()):
+        return original
+    if pack.get("locale") == "vi" and field in ("name", "text"):
+        for index, letter in enumerate(value):
+            if letter.isalpha():
+                return value[:index] + letter.upper() + value[index + 1:]
+    return value
 
 
 def field_status(row, field):
