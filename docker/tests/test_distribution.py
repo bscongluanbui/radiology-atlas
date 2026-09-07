@@ -25,6 +25,8 @@ from test_single_session import SingleSessionTests, SingleSessionHTTPTests
 from test_anatomy_language import AnatomyLanguageTests
 from test_translation_sync import TranslationSyncTests
 from test_catalogue_translation import CatalogueTranslationTests
+from test_glossary_translation import FreshGlossaryTests
+from test_translation_glossary import TranslationGlossaryTests
 
 
 class DistributionTests(unittest.TestCase):
