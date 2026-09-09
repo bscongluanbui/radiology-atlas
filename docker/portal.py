@@ -265,6 +265,16 @@ def create_app(config=None):
     def account():
         return render_template("account.html")
 
+    @app.post("/account/logout-all")
+    def logout_all_sessions():
+        # Always derive the target from the authenticated session, never form data.
+        # Revocation also removes viewer leases through the sessions foreign key.
+        auth.revoke(g.user["id"], g.user["username"])
+        session.clear()
+        response = redirect(url_for("login"))
+        response.headers["Clear-Site-Data"] = '"cache"'
+        return response
+
     @app.post("/account/profile")
     def update_account_profile():
         try:

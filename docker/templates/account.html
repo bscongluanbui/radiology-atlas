@@ -85,6 +85,16 @@
       </form>
       <p class="account-session-note">Đổi mật khẩu sẽ đăng xuất tất cả thiết bị, kể cả thiết bị hiện tại.</p>
     </article>
+    <article class="account-card" id="account-sessions">
+      <div class="account-card-heading">
+        <span class="account-card-icon" aria-hidden="true">04</span>
+        <div><h2>Phiên đăng nhập</h2><p>Đăng xuất tài khoản trên tất cả thiết bị và trình duyệt, kể cả phiên hiện tại.</p></div>
+      </div>
+      <form action="/account/logout-all" method="post" class="account-form">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <button type="submit">Đăng xuất tất cả phiên</button>
+      </form>
+    </article>
   </div>
 </section>
 {% endblock %}
