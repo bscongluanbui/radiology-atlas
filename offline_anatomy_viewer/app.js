@@ -46,6 +46,8 @@ const sliceCacheStats = {
   resourceHits: 0, resourceMisses: 0,
 };
 let sliceLoadWorker = null;
+let wakeSliceWorker = null;
+const foregroundSliceJobs = new Map();
 let foregroundSliceFailureKey = null;
 let pendingSliceResetView = false;
 let decodePrefetchQueue = [];
@@ -213,6 +215,8 @@ function activeSeriesKey() {
 }
 
 function clearSliceCaches({ advanceDataRevision = true } = {}) {
+  cancelAdaptivePreloadTimers();
+  labelLayoutCache = null;
   sliceRequestQueue.clear(); slicePriorityHints.clear();
   sliceCaptureCache.clear(); sliceImageCache.clear(); sliceResourceCache.clear();
   window.viewerResourceCache?.clear();
@@ -745,6 +749,10 @@ async function applySliceDescriptor(descriptor, { resetView = false } = {}) {
   if (!descriptorIsCurrent(descriptor)) return false;
   const decodedImage = await decodeSliceImage(versionedDataUrl(capture.image_url));
   if (!descriptorIsCurrent(descriptor)) return false;
+  // Commit only the newest decoded frame at a paint boundary. Labels/overlays
+  // are rebuilt synchronously below, never carried over onto a different image.
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+  if (!descriptorIsCurrent(descriptor)) return false;
 
   // Keep the previous frame painted until the replacement has decoded. Assigning
   // a warm image URL now becomes an atomic frame swap instead of a blank/spinner.
@@ -784,20 +792,30 @@ async function showCurrentSlice({ resetView = false } = {}) {
   // Full-screen loading is reserved for the initial frame or a series change.
   // Normal scrolling leaves the last diagnostic frame visible.
   el.loadingState.hidden = !(pendingSliceResetView || !state.capture);
-  if (sliceLoadWorker) return sliceLoadWorker;
+  if (sliceLoadWorker) { wakeSliceWorker?.(); return sliceLoadWorker; }
 
   sliceLoadWorker = (async () => {
+    const inFlight = foregroundSliceJobs;
     while (true) {
       const descriptor = sliceDescriptor();
-      const shouldReset = pendingSliceResetView;
-      pendingSliceResetView = false;
       if (!descriptor) return;
-      try {
-        await applySliceDescriptor(descriptor, { resetView: shouldReset });
-      } catch (error) {
-        if (descriptorIsCurrent(descriptor)) throw error;
+      // A slow obsolete frame must not hold up the newest target. Keep at most
+      // two jobs; shared resource requests are not aborted out from under preload.
+      if (!inFlight.has(descriptor.key) && inFlight.size < 2) {
+        const shouldReset = pendingSliceResetView;
+        const job = applySliceDescriptor(descriptor, { resetView: shouldReset })
+          .then((committed) => ({ descriptor, committed }), (error) => ({ descriptor, error }));
+        inFlight.set(descriptor.key, job);
+        job.then(() => { if (inFlight.get(descriptor.key) === job) inFlight.delete(descriptor.key); });
       }
-      if (descriptorIsCurrent(descriptor)) return;
+      const changed = new Promise((resolve) => { wakeSliceWorker = () => resolve(null); });
+      const result = await Promise.race([...inFlight.values(), changed]);
+      wakeSliceWorker = null;
+      if (!result) continue;
+      inFlight.delete(result.descriptor.key);
+      if (!descriptorIsCurrent(result.descriptor)) continue;
+      if (result.error) throw result.error;
+      if (result.committed) { pendingSliceResetView = false; return; }
     }
   })().catch((error) => {
     const descriptor = sliceDescriptor();
@@ -805,6 +823,7 @@ async function showCurrentSlice({ resetView = false } = {}) {
     showError(error.message);
   }).finally(() => {
     sliceLoadWorker = null;
+    wakeSliceWorker = null;
     el.loadingState.hidden = true;
     el.app.classList.remove("slice-fetching");
     el.app.setAttribute("aria-busy", "false");
@@ -1071,6 +1090,8 @@ function renderPixelOverlays() {
   });
 }
 
+let labelLayoutCache = null;
+
 function renderOverlay() {
   el.annotationLayer.replaceChildren();
   updateAnatomyNameStatus();
@@ -1080,6 +1101,13 @@ function renderOverlay() {
   el.annotationLayer.classList.toggle("leaders-hidden", !state.leadersVisible);
   el.annotationLayer.classList.toggle("targets-hidden", !state.targetsVisible);
   const labels = (state.capture.labels || []).filter(labelFilterEnabled);
+  // Geometry/font layout is independent of hover/selection and language text.
+  // Cache only the current capture and exact visible label objects, not names/IDs.
+  if (!labelLayoutCache || labelLayoutCache.capture !== state.capture
+      || labels.length !== labelLayoutCache.labels.length
+      || labels.some((label, index) => label !== labelLayoutCache.labels[index])) {
+    labelLayoutCache = { capture: state.capture, labels, sizes: new Map() };
+  }
   const targets = (state.capture.hover_targets || []).filter(targetVerified).filter(targetFilterEnabled);
   const selectionKey = overlaySelectionKey(labels, targets);
   const geometryLabels = geometryLabelGroups(state.capture);
@@ -1103,13 +1131,13 @@ function renderOverlay() {
     if (filterIds.length === 1) setFilterData(path, filterIds[0]);
     el.annotationLayer.append(path);
   });
-  labels.forEach((label) => renderVisibleLabel(label, selectionKey));
+  labels.forEach((label) => renderVisibleLabel(label, selectionKey, labels, labelLayoutCache.sizes));
   targets.forEach((target) => renderHoverTarget(target, selectionKey));
   // Remove the empty overlay from painting/hit testing when every part is off.
   el.annotationLayer.toggleAttribute("hidden", el.annotationLayer.childElementCount === 0);
 }
 
-function renderVisibleLabel(label, selectionKey = null) {
+function renderVisibleLabel(label, selectionKey = null, visibleLabels = null, fontSizes = null) {
   if (!labelFilterEnabled(label)) return;
   const item = structureFromLabel(label);
   const selected = item.key === selectionKey;
@@ -1131,7 +1159,11 @@ function renderVisibleLabel(label, selectionKey = null) {
   const lines = AnatomyLanguage.lines(state.anatomyLanguage, label.text, labelValue(label));
   text.classList.toggle("bilingual-label", lines.length === 2);
   if (lines.length === 2) {
-    const fontSize = AnatomyLanguage.labelFontSize(label, (state.capture?.labels || []).filter(labelFilterEnabled));
+    let fontSize = fontSizes?.get(label);
+    if (fontSize == null) {
+      fontSize = AnatomyLanguage.labelFontSize(label, visibleLabels || (state.capture?.labels || []).filter(labelFilterEnabled));
+      fontSizes?.set(label, fontSize);
+    }
     text.style.fontSize = `${fontSize}px`;
     text.style.strokeWidth = `${fontSize * (selected ? .24 : .18)}px`;
   }
@@ -1210,7 +1242,7 @@ function showTooltip(event, item) {
 function hideTooltip() { el.anatomyTooltip.hidden = true; }
 
 function renderSliceStructures() {
-  if (state.structureMode !== "slice") return;
+  if (state.structureMode !== "slice" || !state.detailsVisible) return;
   renderStructureRows(sliceStructures());
   el.structureListTitle.textContent = "Structures on this slice";
 }
@@ -1731,6 +1763,7 @@ async function setSlicePosition(position, { fromWheel = false } = {}) {
   if (!total || next === state.slicePosition) return sliceLoadWorker;
   lastSliceDirection = Math.sign(next - state.slicePosition) || lastSliceDirection;
   state.slicePosition = next;
+  noteViewerInteraction();
   updateTimeline({ pending: true });
   await showCurrentSlice();
 }
@@ -1786,6 +1819,71 @@ function scheduleSeriesPreloadTimeout(callback, delay) {
   if (typeof window.setTimeout === "function") return window.setTimeout(callback, delay);
   if (typeof setTimeout === "function") return setTimeout(callback, delay);
   return null;
+}
+
+const SERIES_PRELOAD_INTERACTION_PAUSE_MS = 180;
+const SERIES_PRELOAD_SLOW_JOB_MS = 1500;
+const SERIES_PRELOAD_ADAPTIVE_COOLDOWN_MS = 3000;
+const SERIES_PRELOAD_EWMA_ALPHA = .25;
+const preloadInteraction = { key: "", active: false, timer: null };
+
+function preloadClock() {
+  const now = window.performance?.now?.();
+  return Number.isFinite(now) ? now : Date.now();
+}
+
+function clearPreloadTimer(timer) {
+  if (timer == null) return;
+  if (typeof window.clearTimeout === "function") window.clearTimeout(timer);
+  else if (typeof clearTimeout === "function") clearTimeout(timer);
+}
+
+function cancelAdaptivePreloadTimers() {
+  clearPreloadTimer(preloadInteraction.timer);
+  preloadInteraction.timer = null; preloadInteraction.active = false; preloadInteraction.key = "";
+}
+
+function preloadInteractionActive(session) {
+  return Boolean(session && preloadInteraction.active && preloadInteraction.key === session.key);
+}
+
+function noteViewerInteraction() {
+  const key = activeSeriesKey();
+  clearPreloadTimer(preloadInteraction.timer);
+  preloadInteraction.key = key; preloadInteraction.active = Boolean(key);
+  preloadInteraction.timer = key ? scheduleSeriesPreloadTimeout(() => {
+    if (preloadInteraction.key !== key) return;
+    preloadInteraction.timer = null; preloadInteraction.active = false;
+    pumpDecodePrefetch(); pumpSeriesPreload();
+  }, SERIES_PRELOAD_INTERACTION_PAUSE_MS) : null;
+}
+
+function recordSeriesPreloadJob(session, elapsed, failed) {
+  if (!activeSeriesPreloadSession(session)) return;
+  const adaptive = session.adaptive;
+  const alpha = SERIES_PRELOAD_EWMA_ALPHA;
+  adaptive.elapsedEwma = adaptive.samples ? alpha * elapsed + (1 - alpha) * adaptive.elapsedEwma : elapsed;
+  adaptive.failureEwma = adaptive.samples
+    ? alpha * (failed ? 1 : 0) + (1 - alpha) * adaptive.failureEwma : Number(failed);
+  adaptive.samples += 1;
+  if (failed || elapsed > SERIES_PRELOAD_SLOW_JOB_MS) {
+    adaptive.concurrency = 1;
+    adaptive.cooldownUntil = preloadClock() + SERIES_PRELOAD_ADAPTIVE_COOLDOWN_MS;
+    adaptive.successes = 0;
+  } else if (adaptive.concurrency < SERIES_PRELOAD_CONCURRENCY) {
+    adaptive.successes += 1;
+    const now = preloadClock();
+    if (now >= adaptive.cooldownUntil || adaptive.successes >= 2) {
+      adaptive.concurrency += 1;
+      adaptive.successes = 0;
+      adaptive.cooldownUntil = now + SERIES_PRELOAD_ADAPTIVE_COOLDOWN_MS;
+    }
+  }
+}
+
+function seriesPreloadLimit(session) {
+  if (preloadInteractionActive(session)) return 0;
+  return Math.max(1, Math.min(SERIES_PRELOAD_CONCURRENCY, session.adaptive?.concurrency || SERIES_PRELOAD_CONCURRENCY));
 }
 
 function activeSeriesPreloadSession(session) {
@@ -1878,17 +1976,19 @@ function pumpSeriesPreload() {
   const session = seriesPreloadSession;
   if (!session) return;
   while (session === seriesPreloadSession
-      && session.active < SERIES_PRELOAD_CONCURRENCY && session.queue.length) {
+      && session.active < seriesPreloadLimit(session) && session.queue.length) {
     const descriptor = session.queue.shift();
     session.queuedKeys.delete(descriptor.key);
     if (!activeSeriesPreloadSession(session) || !descriptorBelongsToActiveSeries(descriptor)
         || session.completedKeys.has(descriptor.key) || session.activeDescriptors.has(descriptor.key)) continue;
     session.active += 1;
+    const jobStarted = preloadClock();
     session.activeDescriptors.set(descriptor.key, descriptor);
     fetchSliceCapture(descriptor, { prefetch: true })
       .then((capture) => session === seriesPreloadSession && descriptorBelongsToActiveSeries(descriptor)
         ? warmSliceImageBytes(versionedDataUrl(capture.image_url)) : null)
       .then(() => {
+        recordSeriesPreloadJob(session, preloadClock() - jobStarted, false);
         if (activeSeriesPreloadSession(session) && descriptorBelongsToActiveSeries(descriptor)
           && !session.completedKeys.has(descriptor.key)) {
           session.completedKeys.add(descriptor.key);
@@ -1897,6 +1997,7 @@ function pumpSeriesPreload() {
         }
       })
       .catch(() => {
+        recordSeriesPreloadJob(session, preloadClock() - jobStarted, true);
         if (!activeSeriesPreloadSession(session) || !descriptorBelongsToActiveSeries(descriptor)
             || session.completedKeys.has(descriptor.key)) return;
         // The failed job is still counted as active until finally(); release its
@@ -1934,6 +2035,8 @@ function ensureFullSeriesPreload(direction = 1) {
       completedKeys: new Set(), failedDescriptors: new Map(), activeDescriptors: new Map(),
       total: queue.length, completed: 0, failed: 0, active: 0,
       recoveryRounds: 0, recoveryTimer: null,
+      adaptive: { concurrency: SERIES_PRELOAD_CONCURRENCY, elapsedEwma: 0, failureEwma: 0,
+        samples: 0, successes: 0, cooldownUntil: 0 },
     };
   } else prioritizeSeriesPreload(direction);
   updatePreloadStatus();
@@ -1948,7 +2051,8 @@ function updatePreloadStatus() {
 }
 
 function pumpDecodePrefetch() {
-  while (decodePrefetchActive < SLICE_DECODE_CONCURRENCY && decodePrefetchQueue.length) {
+  const limit = preloadInteractionActive({ key: activeSeriesKey() }) ? 1 : SLICE_DECODE_CONCURRENCY;
+  while (decodePrefetchActive < limit && decodePrefetchQueue.length) {
     const descriptor = decodePrefetchQueue.shift();
     if (!descriptorBelongsToActiveSeries(descriptor)) continue;
     decodePrefetchActive += 1;
@@ -2248,6 +2352,7 @@ function syncDetailPanel() {
   el.detailDrawerButton.setAttribute("aria-expanded", String(visible));
   el.detailDrawerButton.classList.toggle("active", visible);
   el.detailDrawerButton.title = visible ? "Hide Detail" : "Show Detail";
+  if (state.detailsVisible && state.capture) renderSliceStructures();
 }
 
 function syncVisibilityControls() {

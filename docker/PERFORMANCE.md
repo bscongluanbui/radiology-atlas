@@ -2,6 +2,19 @@
 
 # Cache và preload — profile VPS ARM64/AMD64, 2 core, 12 GB RAM
 
+## Cuộn và preload thích ứng
+
+- Tối đa hai công việc slice foreground; slice đích mới được bắt đầu trong khi
+  request cũ chậm. Kiểm tra lại khóa series/revision/slice trước khi đổi frame.
+  Ảnh và lớp chú thích được cập nhật cùng lượt dựng hình, không ghép nhãn cũ lên ảnh mới.
+- Tái sử dụng tính toán kích thước chữ song ngữ cho đúng capture và tập nhãn đang
+  hiển thị; thay capture hoặc tập nhãn sẽ làm mới. Panel Detail đóng không dựng danh sách.
+- Khi đổi slice, tạm ngừng nhận thêm preload xa trong 180 ms; decode lân cận giảm
+  còn một công việc nền. Khi dừng, tiếp tục toàn series trong giới hạn cấu hình.
+- Job preload chậm trên 1,5 giây hoặc thất bại hạ mức song song còn một;
+  phục hồi dần sau các lần thành công/khoảng nghỉ. Không tăng trần cache hoặc số request.
+- Các ngưỡng trên là chính sách điều phối có kiểm thử, chưa phải benchmark FPS trên VPS.
+
 ## Mạng chậm — cập nhật 12/09/2026
 
 - Kiểm tra phiên chờ tối đa 30 giây thay vì 8 giây. Timeout, mất mạng và lỗi

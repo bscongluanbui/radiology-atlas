@@ -12,9 +12,10 @@ import test_single_session
 class LogoutAllTests(test_single_session.SingleSessionHTTPTests):
     @unittest.skipUnless(shutil.which('node'), 'Node.js is required for the frontend regression')
     def test_viewer_session_frontend(self):
-        result = subprocess.run([shutil.which('node'), str(Path(__file__).with_name('test_viewer_session.cjs'))],
-                                capture_output=True, text=True, timeout=30)
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        for name in ('test_viewer_session.cjs', 'test_latest_frame.cjs', 'test_adaptive_preload.cjs'):
+            result = subprocess.run([shutil.which('node'), str(Path(__file__).with_name(name))],
+                                    capture_output=True, text=True, timeout=30)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_all_own_sessions_and_lease_revoked_other_user_unchanged(self):
         auth = self.app.extensions['auth']

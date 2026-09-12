@@ -140,4 +140,5 @@ async function main(){
  const markup=fs.readFileSync(root+'/offline_anatomy_viewer/index.html','utf8');assert(markup.indexOf('./request_queue.js')<markup.indexOf('./resource_cache.js'));
  console.log('UNIFIED_PRELOAD=PASS; series_dropdown=flat_child_options_with_slice_counts; series=60/60; JSON_requests=60; image_requests=60; warm_repeat_requests=0; main_filmstrip_MPR_overlay=shared; stale_detached=blocked; low_memory=16_frames; preload_status=PASS');
 }
-main().catch(e=>{console.error(e);process.exitCode=1;});
+module.exports={context,Element,flush};
+if(require.main===module)main().catch(e=>{console.error(e);process.exitCode=1;});
