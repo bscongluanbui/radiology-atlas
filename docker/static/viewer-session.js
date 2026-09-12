@@ -14,11 +14,27 @@
   const conflict = "Bạn đang dùng tài khoản ở nhiều nơi cùng thời điểm, vui lòng đăng xuất";
   let active = false, leaving = false, deadline = 0, timer, watchdog, pending, resolveReady, epoch = 0;
   let queuedAcquire = null, currentAcquire = null;
+  let recovering = false, retryTimer, retryDelay = 2000;
   const ready = new Promise(resolve => { resolveReady = resolve; });
   window.viewerSession = { ready, get blocked() { return !active; } };
 
-  function clearTimers() { clearTimeout(timer); clearTimeout(watchdog); }
+  function clearTimers() { clearTimeout(timer); clearTimeout(watchdog); clearTimeout(retryTimer); }
+  function connectionStatus(text) {
+    const notice = document.getElementById("viewerConnectionStatus");
+    if (notice) { notice.textContent = text; notice.hidden = !text; }
+  }
+  function transientFailure() {
+    if (leaving) return;
+    recovering = true;
+    // Preserve work/cache. Never extend the server lease on a network failure.
+    if (Date.now() >= deadline) { active = false; app.inert = true; }
+    connectionStatus("Mạng chậm hoặc gián đoạn. Đang tự kết nối lại; dữ liệu đã tải được giữ nguyên.");
+    clearTimeout(timer); clearTimeout(retryTimer);
+    retryTimer = setTimeout(() => acquire(), retryDelay);
+    retryDelay = Math.min(15000, retryDelay * 2);
+  }
   function suspend(text, canRetry = true) {
+    recovering = false; connectionStatus("");
     active = false; clearTimers();
     document.documentElement.classList.add("viewer-session-locked");
     app.inert = true;
@@ -29,12 +45,16 @@
   }
   function activate(started, ttl, interval) {
     deadline = started + (ttl - 5) * 1000;
-    if (leaving || Date.now() >= deadline) return false;
+    if (leaving) return false;
+    if (Date.now() >= deadline) { transientFailure(); return false; }
+    const resumed = recovering;
+    recovering = false; retryDelay = 2000; connectionStatus("");
     clearTimers(); active = true; app.inert = false;
     dialog.close(); document.documentElement.classList.remove("viewer-session-locked");
     resolveReady(true);
     watchdog = setTimeout(() => acquire(), Math.max(0, deadline - Date.now()));
     timer = setTimeout(() => check("heartbeat"), interval * 1000);
+    if (resumed) window.dispatchEvent(new Event("viewer-session-resumed"));
     return true;
   }
   function release() {
@@ -57,22 +77,24 @@
       return queuedAcquire;
     }
     const version = epoch, started = Date.now(), controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
+    const timeout = setTimeout(() => controller.abort(), 30000);
     let reacquire = false;
     const promise = (async () => {
       try {
-        const response = await request("/api/viewer-session", { method: "POST", credentials: "same-origin", cache: "no-store",
+        const response = await request("/api/viewer-session", { method: "POST", credentials: "same-origin", cache: "no-store", priority: "high",
           signal: controller.signal, headers: { "X-CSRF-Token": csrf, "X-Viewer-ID": client },
           body: new URLSearchParams({ action }) });
-        const data = await response.json();
         if (version !== epoch || leaving) { if (response.ok) release(); return false; }
+        if (response.status === 401) { suspend("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.", false); return false; }
+        if (response.status >= 500 || response.status === 429 || response.status === 408) { transientFailure(); return false; }
+        const data = await response.json();
         if (response.ok) return activate(started, Number(data.ttl) || 90, Number(data.heartbeat) || 20);
         if (data.code === "viewer_conflict") suspend(conflict);
         else if (action === "heartbeat" && data.code === "viewer_expired") reacquire = true;
         else if (response.status === 401) suspend("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.", false);
         else suspend(data.error || "Cần kiểm tra lại phiên viewer. Vui lòng thử lại.");
       } catch {
-        if (!leaving && version === epoch) suspend("Mất kết nối kiểm tra phiên viewer. Vui lòng thử lại.");
+        if (!leaving && version === epoch) transientFailure();
       }
       return false;
     })();
@@ -107,7 +129,7 @@
     if (!active || Date.now() >= deadline) {
       const renewed = active ? await acquire() : false;
       if (!renewed || !active || Date.now() >= deadline) {
-        if (active) suspend("Cần kiểm tra lại phiên viewer. Vui lòng thử lại.");
+        if (active) transientFailure();
         throw new DOMException("Viewer session is inactive", "AbortError");
       }
     }
@@ -146,7 +168,7 @@
   }
   dialog.addEventListener("cancel", event => event.preventDefault());
   retry.addEventListener("click", () => { suspend("Đang kiểm tra phiên viewer…", false); acquire(); });
-  window.addEventListener("offline", () => suspend("Mất kết nối kiểm tra phiên viewer. Vui lòng thử lại."));
+  window.addEventListener("offline", transientFailure);
   window.addEventListener("online", () => { if (!leaving) acquire(); });
   function revalidateOnReturn() {
     if (!leaving && document.visibilityState !== "hidden") acquire();

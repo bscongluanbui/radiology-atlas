@@ -1,6 +1,8 @@
 .atlas-session-nav{position:fixed;right:12px;bottom:5px;z-index:90;display:flex;gap:6px}.atlas-account-link,.atlas-library-link{border:1px solid #36515d;border-radius:6px;background:#111c25e8;color:#b8e9e2;padding:4px 9px;font:11px system-ui;text-decoration:none}.atlas-session-nav a:hover,.atlas-session-nav a:focus{background:#18463f;color:white;outline:1px solid #42cdb9}
 
 .viewer-session-locked #app,.viewer-session-locked .atlas-session-nav{visibility:hidden;pointer-events:none}
+.viewer-connection-status{position:fixed;left:50%;bottom:42px;transform:translateX(-50%);z-index:10001;max-width:calc(100vw - 32px);width:max-content;padding:8px 12px;border:1px solid #927839;border-radius:8px;background:#242116;color:#fff0be;font:13px/1.5 system-ui;pointer-events:none}
+.viewer-connection-status[hidden]{display:none}
 .viewer-session-dialog{position:fixed;inset:0;margin:auto;box-sizing:border-box;width:min(460px,calc(100vw - 32px));max-height:90dvh;overflow:auto;padding:26px;border:1px solid #36515d;border-radius:14px;background:#111c25;color:#e2f0ee;font:16px/1.6 system-ui;box-shadow:0 24px 80px #0008;z-index:10000}
 .viewer-session-dialog:not([open]){display:none}
 .viewer-session-dialog::backdrop{background:#071012f5}

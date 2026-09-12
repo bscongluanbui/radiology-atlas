@@ -11,9 +11,9 @@ const sourcePath = process.env.VIEWER_SESSION_SOURCE || path.join(root, "docker/
 const source = fs.readFileSync(sourcePath, "utf8");
 
 function deferred() {
-  let resolve;
-  const promise = new Promise((res) => { resolve = res; });
-  return { promise, resolve };
+  let resolve, reject;
+  const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
+  return { promise, resolve, reject };
 }
 
 function response(status = 200, body = {}) {
@@ -29,6 +29,7 @@ function harness() {
   let now = 0;
   let timerId = 0;
   const timers = new Map();
+  const timeoutDelays = [];
   const listeners = new Map();
   const documentListeners = new Map();
   const sessionQueue = [];
@@ -90,7 +91,7 @@ function harness() {
     AbortController,
     URLSearchParams,
     Date: FakeDate,
-    setTimeout: (fn) => { const id = ++timerId; timers.set(id, fn); return id; },
+    setTimeout: (fn, delay) => { timeoutDelays.push(delay); const id = ++timerId; timers.set(id, fn); return id; },
     clearTimeout: (id) => { timers.delete(id); },
     crypto: { getRandomValues: (bytes) => crypto.randomFillSync(bytes) },
     Event,
@@ -123,6 +124,7 @@ function harness() {
     emitDocument,
     emitWindow,
     runTimer,
+    timeoutDelays,
     setNow: (value) => { now = value; },
     resetMetrics: () => { suspended = 0; cacheClears = 0; },
     get suspended() { return suspended; },
@@ -251,6 +253,59 @@ async function testReacquireFailureKeepsReasonAndNoRetryWrites() {
   assert.equal(w.sessionCalls.length, 1); assert.equal(w.protectedCalls.length, 1);
 }
 
+async function testSlowNetworkRecoveryPreservesCache() {
+  for (const failure of ['timeout', '503', 'offline']) {
+    const h = harness(); h.initialSession.resolve(response()); await settle(); h.resetMetrics();
+    let resumed = 0;
+    h.window.addEventListener('viewer-session-resumed', () => { resumed++; });
+    if (failure === 'offline') h.emitWindow('offline');
+    else {
+      const heartbeat = h.queueSession();
+      h.runTimer(fn => String(fn).includes('check("heartbeat")'));
+      if (failure === '503') heartbeat.resolve(response(503));
+      else heartbeat.reject(new DOMException('slow network', 'AbortError'));
+      await settle();
+    }
+    assert.equal(h.dialog.matches(':modal'), false);
+    assert.equal(h.cacheClears, 0); assert.equal(h.suspended, 0);
+    assert.equal(h.window.viewerSession.blocked, false, 'valid lease retained');
+    h.setNow(100000);
+    const renewed = h.queueSession();
+    h.runTimer(fn => String(fn).includes('acquire()'));
+    renewed.resolve(response()); await settle();
+    assert.equal(h.window.viewerSession.blocked, false);
+    assert.equal(h.cacheClears, 0); assert.equal(resumed, 1);
+  }
+}
+
+async function testExpiredConnectionFailureNoProtectedReads() {
+  const h = harness(); h.initialSession.resolve(response()); await settle(); h.resetMetrics();
+  h.setNow(100000);
+  h.queueSession().reject(new TypeError('network down'));
+  await assert.rejects(h.window.fetch('/api/module'), {name:'AbortError'});
+  assert.equal(h.window.viewerSession.blocked, true);
+  assert.equal(h.protectedCalls.length, 0);
+  assert.equal(h.dialog.matches(':modal'), false);
+  assert.equal(h.cacheClears, 0);
+  h.queueSession().resolve(response(401)); h.emitWindow('online'); await settle();
+  assert.equal(h.dialog.matches(':modal'), true);
+  assert.equal(h.cacheClears, 1, 'revoked login still clears protected cache');
+}
+
+async function testSlowHandshakeAndBoundedBackoff() {
+  const h = harness();
+  assert.equal(h.timeoutDelays[0], 30000);
+  h.setNow(12000); h.initialSession.resolve(response()); await settle(); h.resetMetrics();
+  assert.equal(h.window.viewerSession.blocked, false);
+  assert.equal(h.dialog.matches(':modal'), false);
+  for (let i=0; i<8; i++) {
+    h.queueSession().reject(new TypeError('slow'));
+    h.emitWindow('online'); await settle();
+    assert.equal(h.timeoutDelays.at(-1), Math.min(15000, 2000 * 2**i));
+    assert.equal(h.cacheClears, 0);
+  }
+}
+
 (async () => {
   await testHideKeepsLeaseAndHeartbeat();
   await testResumeGatesProtectedFetch();
@@ -258,5 +313,8 @@ async function testReacquireFailureKeepsReasonAndNoRetryWrites() {
   await testConflictAnd401StillBlock();
   await testThrottledHeartbeatAndConcurrentResume();
   await testReacquireFailureKeepsReasonAndNoRetryWrites();
-  console.log("VIEWER_SESSION=PASS; hide_no_suspend,heartbeat_hidden,resume_gate,expired_read_retry,conflict_block,unauthorized_block,throttled_heartbeat,resume_dedupe,no_write_retry");
+  await testSlowNetworkRecoveryPreservesCache();
+  await testExpiredConnectionFailureNoProtectedReads();
+  await testSlowHandshakeAndBoundedBackoff();
+  console.log("VIEWER_SESSION=PASS; focus,lease_recovery,slow_handshake,transient_cache_preserved,bounded_backoff,expired_reads_blocked,401_conflict_enforced");
 })().catch((error) => { console.error(error); process.exitCode = 1; });

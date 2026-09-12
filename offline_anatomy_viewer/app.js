@@ -14,6 +14,8 @@ const SLICE_DECODE_BACKWARD = Math.min(SLICE_IMAGE_CACHE_LIMIT - SLICE_DECODE_FO
 const SLICE_DECODE_CONCURRENCY = runtimeSetting("decodeConcurrency", 2, 1, 4);
 const SERIES_PRELOAD_CONCURRENCY = runtimeSetting("preloadConcurrency", 2, 1, 4);
 const SERIES_PRELOAD_RETRIES = 1;
+const SERIES_PRELOAD_RECOVERY_ROUNDS = 3;
+const SERIES_PRELOAD_RECOVERY_DELAY_MS = 2000;
 const sliceRequestQueue = new window.ViewerRequestQueue({ concurrency: 2, background: 1 });
 const slicePriorityHints = new Map();
 const DRAG_THRESHOLD = 4;
@@ -44,6 +46,7 @@ const sliceCacheStats = {
   resourceHits: 0, resourceMisses: 0,
 };
 let sliceLoadWorker = null;
+let foregroundSliceFailureKey = null;
 let pendingSliceResetView = false;
 let decodePrefetchQueue = [];
 let decodePrefetchActive = 0;
@@ -214,6 +217,8 @@ function clearSliceCaches({ advanceDataRevision = true } = {}) {
   sliceCaptureCache.clear(); sliceImageCache.clear(); sliceResourceCache.clear();
   window.viewerResourceCache?.clear();
   decodePrefetchQueue = [];
+  cancelSeriesPreloadRecovery(seriesPreloadSession);
+  foregroundSliceFailureKey = null;
   seriesPreloadGeneration += 1;
   seriesPreloadSession = null;
   state.seriesRevision += 1;
@@ -745,6 +750,7 @@ async function applySliceDescriptor(descriptor, { resetView = false } = {}) {
   // a warm image URL now becomes an atomic frame swap instead of a blank/spinner.
   el.anatomyImage.src = decodedImage.src;
   state.capture = capture;
+  foregroundSliceFailureKey = null;
   const width = Number(capture.image?.width) || decodedImage.naturalWidth || 1890;
   const height = Number(capture.image?.height) || decodedImage.naturalHeight || 1091;
   el.scene.style.width = `${width}px`;
@@ -793,7 +799,11 @@ async function showCurrentSlice({ resetView = false } = {}) {
       }
       if (descriptorIsCurrent(descriptor)) return;
     }
-  })().catch((error) => showError(error.message)).finally(() => {
+  })().catch((error) => {
+    const descriptor = sliceDescriptor();
+    if (descriptor) foregroundSliceFailureKey = descriptor.key;
+    showError(error.message);
+  }).finally(() => {
     sliceLoadWorker = null;
     el.loadingState.hidden = true;
     el.app.classList.remove("slice-fetching");
@@ -1765,9 +1775,98 @@ function seriesPreloadOrder(center = state.slicePosition, direction = 1) {
   return positions;
 }
 
+function cancelSeriesPreloadRecovery(session) {
+  if (!session || session.recoveryTimer == null) return;
+  if (typeof window.clearTimeout === "function") window.clearTimeout(session.recoveryTimer);
+  else if (typeof clearTimeout === "function") clearTimeout(session.recoveryTimer);
+  session.recoveryTimer = null;
+}
+
+function scheduleSeriesPreloadTimeout(callback, delay) {
+  if (typeof window.setTimeout === "function") return window.setTimeout(callback, delay);
+  if (typeof setTimeout === "function") return setTimeout(callback, delay);
+  return null;
+}
+
+function activeSeriesPreloadSession(session) {
+  return Boolean(session && session === seriesPreloadSession && session.key === activeSeriesKey());
+}
+
+function enqueueSeriesPreloadDescriptor(session, descriptor, { resetAttempts = false } = {}) {
+  if (!activeSeriesPreloadSession(session) || !descriptorBelongsToActiveSeries(descriptor)) return false;
+  if (resetAttempts) descriptor.preloadAttempts = 0;
+  if (session.completedKeys.has(descriptor.key) || session.activeDescriptors.has(descriptor.key)
+      || session.queuedKeys.has(descriptor.key)) return false;
+  session.queue.push(descriptor); session.queuedKeys.add(descriptor.key);
+  return true;
+}
+
+function requeueFailedSeriesPreload(session) {
+  if (!activeSeriesPreloadSession(session)) return 0;
+  let queued = 0;
+  for (const descriptor of [...session.failedDescriptors.values()]) {
+    if (session.completedKeys.has(descriptor.key)) {
+      session.failedDescriptors.delete(descriptor.key);
+      session.failed = Math.max(0, session.failed - 1);
+      continue;
+    }
+    if (enqueueSeriesPreloadDescriptor(session, descriptor, { resetAttempts: true })) {
+      session.failedDescriptors.delete(descriptor.key);
+      session.failed = Math.max(0, session.failed - 1);
+      queued += 1;
+    }
+  }
+  return queued;
+}
+
+function scheduleSeriesPreloadRecovery(session) {
+  if (!activeSeriesPreloadSession(session) || !session.failed
+      || session.recoveryTimer != null || session.recoveryRounds >= SERIES_PRELOAD_RECOVERY_ROUNDS) return;
+  const delay = SERIES_PRELOAD_RECOVERY_DELAY_MS * (2 ** Math.min(session.recoveryRounds, 2));
+  session.recoveryTimer = scheduleSeriesPreloadTimeout(() => {
+    session.recoveryTimer = null;
+    if (!activeSeriesPreloadSession(session) || !session.failed
+        || session.recoveryRounds >= SERIES_PRELOAD_RECOVERY_ROUNDS) return;
+    requeueFailedSeriesPreload(session);
+    // Count every delayed sweep, including a sweep that found an in-flight or
+    // otherwise already queued descriptor, so a malformed/stale entry cannot
+    // create an unbounded retry loop.
+    session.recoveryRounds += 1;
+    updatePreloadStatus();
+    pumpSeriesPreload();
+    if (session.failed) scheduleSeriesPreloadRecovery(session);
+  }, delay);
+}
+
+function resumeSeriesPreload({ reset = false } = {}) {
+  const session = seriesPreloadSession;
+  if (!activeSeriesPreloadSession(session)) return;
+  if (reset) {
+    cancelSeriesPreloadRecovery(session);
+    session.recoveryRounds = 0;
+  }
+  const queued = requeueFailedSeriesPreload(session);
+  if (queued) session.recoveryRounds = Math.min(
+    SERIES_PRELOAD_RECOVERY_ROUNDS, session.recoveryRounds + 1,
+  );
+  updatePreloadStatus();
+  pumpSeriesPreload();
+  if (session.failed) scheduleSeriesPreloadRecovery(session);
+}
+
+function bindSeriesPreloadRecoveryEvents() {
+  const recover = () => {
+    resumeSeriesPreload({ reset: true });
+    const descriptor = sliceDescriptor();
+    if (foregroundSliceFailureKey && descriptor?.key === foregroundSliceFailureKey && !sliceLoadWorker) showCurrentSlice();
+  };
+  window.addEventListener("viewer-session-resumed", recover);
+  window.addEventListener("online", recover);
+}
+
 function prioritizeSeriesPreload(direction = 1) {
   const session = seriesPreloadSession;
-  if (!session || session.key !== activeSeriesKey() || !session.queue.length) return;
+  if (!activeSeriesPreloadSession(session) || !session.queue.length) return;
   const pending = new Map(session.queue.map((descriptor) => [descriptor.key, descriptor]));
   session.queue = seriesPreloadOrder(state.slicePosition, direction)
     .map((position) => sliceDescriptor(position))
@@ -1781,26 +1880,41 @@ function pumpSeriesPreload() {
   while (session === seriesPreloadSession
       && session.active < SERIES_PRELOAD_CONCURRENCY && session.queue.length) {
     const descriptor = session.queue.shift();
-    if (!descriptorBelongsToActiveSeries(descriptor)) continue;
+    session.queuedKeys.delete(descriptor.key);
+    if (!activeSeriesPreloadSession(session) || !descriptorBelongsToActiveSeries(descriptor)
+        || session.completedKeys.has(descriptor.key) || session.activeDescriptors.has(descriptor.key)) continue;
     session.active += 1;
+    session.activeDescriptors.set(descriptor.key, descriptor);
     fetchSliceCapture(descriptor, { prefetch: true })
       .then((capture) => session === seriesPreloadSession && descriptorBelongsToActiveSeries(descriptor)
         ? warmSliceImageBytes(versionedDataUrl(capture.image_url)) : null)
       .then(() => {
-        if (session === seriesPreloadSession && descriptorBelongsToActiveSeries(descriptor)) {
+        if (activeSeriesPreloadSession(session) && descriptorBelongsToActiveSeries(descriptor)
+          && !session.completedKeys.has(descriptor.key)) {
+          session.completedKeys.add(descriptor.key);
           session.completed += 1;
+          if (session.failedDescriptors.delete(descriptor.key)) session.failed = Math.max(0, session.failed - 1);
         }
       })
       .catch(() => {
-        if (session !== seriesPreloadSession || !descriptorBelongsToActiveSeries(descriptor)) return;
+        if (!activeSeriesPreloadSession(session) || !descriptorBelongsToActiveSeries(descriptor)
+            || session.completedKeys.has(descriptor.key)) return;
+        // The failed job is still counted as active until finally(); release its
+        // key here so the bounded retry can be queued for the next pump turn.
+        session.activeDescriptors.delete(descriptor.key);
         if (descriptor.preloadAttempts < SERIES_PRELOAD_RETRIES) {
           descriptor.preloadAttempts += 1;
-          session.queue.push(descriptor);
-        } else session.failed += 1;
+          enqueueSeriesPreloadDescriptor(session, descriptor);
+        } else if (!session.failedDescriptors.has(descriptor.key)) {
+          session.failedDescriptors.set(descriptor.key, descriptor);
+          session.failed += 1;
+          scheduleSeriesPreloadRecovery(session);
+        }
       })
       .finally(() => {
-        if (session !== seriesPreloadSession) return;
+        session.activeDescriptors.delete(descriptor.key);
         session.active -= 1;
+        if (!activeSeriesPreloadSession(session)) return;
         updatePreloadStatus();
         pumpSeriesPreload();
       });
@@ -1811,11 +1925,15 @@ function ensureFullSeriesPreload(direction = 1) {
   const key = activeSeriesKey();
   if (!key) return;
   if (!seriesPreloadSession || seriesPreloadSession.key !== key) {
+    cancelSeriesPreloadRecovery(seriesPreloadSession);
     const queue = seriesPreloadOrder(state.slicePosition, direction)
       .map((position) => sliceDescriptor(position)).filter(Boolean);
     seriesPreloadSession = {
       key, generation: ++seriesPreloadGeneration, queue,
+      queuedKeys: new Set(queue.map((descriptor) => descriptor.key)),
+      completedKeys: new Set(), failedDescriptors: new Map(), activeDescriptors: new Map(),
       total: queue.length, completed: 0, failed: 0, active: 0,
+      recoveryRounds: 0, recoveryTimer: null,
     };
   } else prioritizeSeriesPreload(direction);
   updatePreloadStatus();
@@ -2234,6 +2352,7 @@ function bindEvents() {
     stopCine(); cancelDrag(); touchGestures?.cancel(); hideTooltip();
     clearSliceCaches({ advanceDataRevision: false });
   });
+  bindSeriesPreloadRecoveryEvents();
   touchGestures = new window.ViewerTouchGestures(el.anatomyViewport, {
     ready: () => Boolean(state.capture),
     itemAt: anatomyItemAt,

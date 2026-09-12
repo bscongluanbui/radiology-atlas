@@ -2,6 +2,19 @@
 
 # Cache và preload — profile VPS ARM64/AMD64, 2 core, 12 GB RAM
 
+## Mạng chậm — cập nhật 12/09/2026
+
+- Kiểm tra phiên chờ tối đa 30 giây thay vì 8 giây. Timeout, mất mạng và lỗi
+  server tạm thời tự thử lại với khoảng nghỉ tăng từ 2 lên tối đa 15 giây;
+  không đăng xuất hoặc xóa cache chỉ vì một lần kiểm tra thất bại.
+- Viewer giữ nguyên hình/trạng thái đã tải. Khi quyền giữ phiên đã hết hạn,
+  tương tác và request được chặn cho tới khi server xác nhận lại; không gia hạn
+  quyền ở phía trình duyệt. Thông báo kết nối nhỏ thay cho popup lỗi mạng.
+- Server trả 401 hoặc xác nhận tài khoản dùng viewer ở nơi khác vẫn khóa viewer
+  và xóa cache như trước. Giới hạn phiên và phân quyền không được nới lỏng.
+- Preload chỉ thuộc series/variant đang mở, vẫn chịu giới hạn cache bên dưới.
+  Tải hết một lượt không có nghĩa giữ vô hạn mọi slice trong RAM.
+
 Cập nhật 31/08/2026. Nguồn local và Docker dùng chung viewer. Home/Back, tương tác,
 phân quyền và dữ liệu giải phẫu được giữ lại. Các thay đổi dưới đây đã kiểm thử trên
 Windows local; chưa đo FPS trình duyệt hay triển khai container trên VPS ARM.
