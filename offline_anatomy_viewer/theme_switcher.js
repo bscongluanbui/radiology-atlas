@@ -1,4 +1,4 @@
-﻿(function() {
+(function() {
   const STORAGE_KEY = "radiology-viewer-theme";
   const DEFAULT_THEME = "cyan";
 
@@ -75,7 +75,7 @@
         if (currentTheme === "amber") {
           seriesBadge.textContent = `[${seriesCount}-SER]`;
         } else if (currentTheme === "nordic") {
-          seriesBadge.textContent = `Â· ${seriesCount} series`;
+          seriesBadge.textContent = `\u00b7 ${seriesCount} series`;
         } else {
           seriesBadge.textContent = `${seriesCount} series`;
         }
