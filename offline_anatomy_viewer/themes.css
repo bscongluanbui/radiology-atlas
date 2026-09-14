@@ -1,0 +1,1588 @@
+/* ==========================================================================
+   Radiology Atlas Viewer — 4 Distinct Modern Themes & Layout Architectures
+   1. Medical Cyan (Clinical Pro - Tách rời các cụm công cụ lên phía trên)
+   2. Royal Violet Glassmorphic (Đảo kính nổi trôi Floating Island HUD)
+   3. Warm Amber Titanium (Bàn điều khiển PACS Hardware Console phần cứng)
+   4. Nordic Minimal Studio (Thanh HUD tối giản tinh tế Bắc Âu)
+   5. Default (Gốc)
+   
+   Hard Invariants:
+   - 0 changes to labels, leader lines, layers, or medical anatomical data
+   - Exact DOM element IDs, structure, and functional event bindings preserved
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   TOPBAR LAYOUT GRID & CONTROLS: HIDE/SHOW TOOLS, LANGUAGE, THEME DROPDOWN
+   -------------------------------------------------------------------------- */
+.topbar {
+  grid-template-columns: auto auto minmax(180px, 320px) 1fr !important;
+  gap: 14px !important;
+  padding: 0 16px !important;
+}
+
+.left-topbar-controls {
+  width: auto !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.topbar-status {
+  justify-content: flex-end !important;
+  margin-left: auto !important;
+}
+
+.topbar-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  height: 30px;
+  white-space: nowrap;
+}
+
+.topbar-tool-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.topbar-tool-btn.active {
+  background: var(--theme-accent-bg, rgba(45, 212, 191, 0.16));
+  border-color: var(--theme-border-highlight, rgba(45, 212, 191, 0.35));
+  color: var(--theme-accent, #2dd4bf);
+}
+
+.topbar-lang-control,
+.topbar-theme-dropdown-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 11px;
+  color: #e2e8f0;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  height: 30px;
+  box-sizing: border-box;
+}
+
+.topbar-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+}
+
+#anatomyLanguageStatus {
+  display: none !important;
+}
+
+.topbar-select {
+  background: rgba(0, 0, 0, 0.38) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 999px !important;
+  color: #f1f5f9 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 2px 8px !important;
+  cursor: pointer !important;
+  outline: none !important;
+  height: 22px !important;
+  line-height: 1 !important;
+}
+
+.topbar-select:focus {
+  border-color: var(--theme-accent, #2dd4bf) !important;
+}
+
+.topbar-select option {
+  background: #0d1217;
+  color: #f1f5f9;
+}
+
+.theme-reload-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #e2e8f0;
+  font-size: 11px;
+  font-weight: 700;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  line-height: 1;
+  padding: 0;
+}
+
+.theme-reload-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: rotate(45deg);
+}
+
+/* ==========================================================================
+   WORKSPACE GRID: SIDEBAR ON LEFT, VIEWER IN MIDDLE, DETAIL ON RIGHT
+   ========================================================================== */
+.app-shell .workspace,
+.app-shell.hide-details .workspace {
+  grid-template-columns: var(--menu-track) var(--mpr-w) minmax(0, 1fr) var(--details-track) !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+}
+
+.workspace > .options-menu {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+}
+
+.workspace > .mpr-panel {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+}
+
+.workspace > .viewer-column {
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+  min-width: 0 !important;
+}
+
+.workspace > .detail-panel {
+  grid-column: 4 !important;
+  grid-row: 1 !important;
+  border-left: 1px solid var(--theme-border, #1a2330) !important;
+  border-right: none !important;
+  position: relative !important;
+  inset: auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  transform: none !important;
+  overflow-y: auto !important;
+  z-index: 15 !important;
+}
+
+.app-shell.hide-details .workspace > .detail-panel {
+  display: none !important;
+}
+
+/* Detail Button inside Topbar Status (next to LOCAL badge) */
+.topbar-status .detail-toggle-button {
+  height: 30px !important;
+  border-radius: 999px !important;
+  padding: 0 10px !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #cbd5e1 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+}
+
+.topbar-status .detail-toggle-button:hover {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.topbar-status .detail-toggle-button.active {
+  background: var(--theme-accent-bg, rgba(45, 212, 191, 0.16)) !important;
+  border-color: var(--theme-border-highlight, rgba(45, 212, 191, 0.35)) !important;
+  color: var(--theme-accent, #2dd4bf) !important;
+}
+
+/* Hide/Show Viewer Toolbar */
+.app-shell.hide-viewer-toolbar {
+  --toolbar-h: 0px !important;
+}
+
+.app-shell.hide-viewer-toolbar .viewer-column {
+  grid-template-rows: 0px minmax(0, 1fr) var(--timeline-h) !important;
+}
+
+.app-shell.hide-viewer-toolbar .viewer-toolbar {
+  display: none !important;
+  grid-row: 1 !important;
+}
+
+.app-shell.hide-viewer-toolbar .viewport {
+  grid-row: 2 !important;
+  padding-top: 0px !important;
+  min-height: 0 !important;
+  height: auto !important;
+}
+
+.app-shell.hide-viewer-toolbar .timeline {
+  grid-row: 3 !important;
+}
+
+/* ==========================================================================
+   GLOBAL VARIABLES PER THEME
+   ========================================================================== */
+
+/* 1. CYAN PRO */
+html[data-viewer-theme="cyan"] {
+  --theme-accent: #2dd4bf;
+  --theme-accent-hover: #14b8a6;
+  --theme-accent-glow: rgba(45, 212, 191, 0.35);
+  --theme-accent-bg: rgba(45, 212, 191, 0.14);
+  --theme-bg-body: #070a0e;
+  --theme-bg-sidebar: #0c1117;
+  --theme-bg-card: #121820;
+  --theme-border: #1a2330;
+  --theme-border-highlight: rgba(45, 212, 191, 0.32);
+  --theme-topbar-bg: #080d12;
+  --theme-switch-checked: linear-gradient(135deg, #2dd4bf 0%, #0d9488 100%);
+  --theme-btn-primary: linear-gradient(135deg, #2dd4bf 0%, #0f766e 100%);
+}
+
+/* 2. ROYAL VIOLET GLASS */
+html[data-viewer-theme="violet"] {
+  --theme-accent: #a855f7;
+  --theme-accent-hover: #c084fc;
+  --theme-accent-glow: rgba(168, 85, 247, 0.45);
+  --theme-accent-bg: rgba(168, 85, 247, 0.18);
+  --theme-bg-body: #06050e;
+  --theme-bg-sidebar: rgba(14, 11, 28, 0.88);
+  --theme-bg-card: rgba(24, 19, 46, 0.72);
+  --theme-border: rgba(255, 255, 255, 0.1);
+  --theme-border-highlight: rgba(168, 85, 247, 0.4);
+  --theme-topbar-bg: rgba(10, 8, 22, 0.94);
+  --theme-switch-checked: linear-gradient(135deg, #a855f7 0%, #6c5ce7 100%);
+  --theme-btn-primary: linear-gradient(135deg, #a855f7 0%, #6c5ce7 100%);
+}
+
+/* 3. WARM AMBER TITANIUM */
+html[data-viewer-theme="amber"] {
+  --theme-accent: #f59e0b;
+  --theme-accent-hover: #d97706;
+  --theme-accent-glow: rgba(245, 158, 11, 0.4);
+  --theme-accent-bg: rgba(245, 158, 11, 0.14);
+  --theme-bg-body: #090a0d;
+  --theme-bg-sidebar: #12151b;
+  --theme-bg-card: #181d24;
+  --theme-border: #252b37;
+  --theme-border-highlight: rgba(245, 158, 11, 0.35);
+  --theme-topbar-bg: #0d1015;
+  --theme-switch-checked: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  --theme-btn-primary: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+}
+
+/* 4. NORDIC MINIMAL STUDIO */
+html[data-viewer-theme="nordic"] {
+  --theme-accent: #f1f5f9;
+  --theme-accent-hover: #ffffff;
+  --theme-accent-glow: rgba(241, 245, 249, 0.25);
+  --theme-accent-bg: rgba(255, 255, 255, 0.1);
+  --theme-bg-body: #0a0b0d;
+  --theme-bg-sidebar: #111215;
+  --theme-bg-card: #16171b;
+  --theme-border: #1f2126;
+  --theme-border-highlight: rgba(255, 255, 255, 0.2);
+  --theme-topbar-bg: #0d0e11;
+  --theme-switch-checked: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
+  --theme-btn-primary: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+}
+
+/* Base resets for custom themes */
+html[data-viewer-theme="cyan"] body,
+html[data-viewer-theme="violet"] body,
+html[data-viewer-theme="amber"] body,
+html[data-viewer-theme="nordic"] body {
+  background: var(--theme-bg-body) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+html[data-viewer-theme="cyan"] .topbar,
+html[data-viewer-theme="violet"] .topbar,
+html[data-viewer-theme="amber"] .topbar,
+html[data-viewer-theme="nordic"] .topbar {
+  background: var(--theme-topbar-bg) !important;
+  border-bottom: 1px solid var(--theme-border) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  height: 50px !important;
+  padding: 0 14px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* --------------------------------------------------------------------------
+   MODULE SELECTION BUTTON & CATALOGUE POPOVER (DYNAMIC PER THEME)
+   TOPBAR MODULE SELECTOR: DEDICATED PER-THEME DESIGN (CYAN, VIOLET, AMBER, NORDIC)
+   -------------------------------------------------------------------------- */
+/* Common Structure */
+.study-heading {
+  display: inline-flex !important;
+  align-items: center !important;
+  cursor: pointer !important;
+  user-select: none !important;
+}
+
+.study-icon-wrap {
+  display: flex !important;
+  align-items: center !important;
+  flex-shrink: 0 !important;
+}
+
+.study-info-wrap {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  text-align: left !important;
+}
+
+.study-title-row {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+}
+
+.study-heading strong {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.study-series-badge {
+  display: none;
+  align-items: center !important;
+  white-space: nowrap !important;
+  user-select: none !important;
+}
+
+/* 1. CYAN PRO (Clinical Pro) */
+html[data-viewer-theme="cyan"] .study-heading {
+  height: 42px !important;
+  border-radius: 10px !important;
+  padding: 4px 12px 4px 8px !important;
+  background: #081519 !important;
+  border: 1px solid rgba(45, 212, 191, 0.28) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(45, 212, 191, 0.1) !important;
+  gap: 10px !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+html[data-viewer-theme="cyan"] .study-heading:hover,
+html[data-viewer-theme="cyan"] .study-heading[aria-expanded="true"] {
+  background: #0d2229 !important;
+  border-color: #2dd4bf !important;
+  box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.25), 0 4px 16px rgba(0, 0, 0, 0.5) !important;
+}
+html[data-viewer-theme="cyan"] .study-icon-wrap {
+  display: flex !important;
+  align-items: center !important;
+}
+html[data-viewer-theme="cyan"] .study-led-dot {
+  display: none !important;
+}
+html[data-viewer-theme="cyan"] .study-icon-frame {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 6px !important;
+  background: #041014 !important;
+  border: 1px solid rgba(45, 212, 191, 0.4) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4) !important;
+}
+html[data-viewer-theme="cyan"] .study-thumb-img {
+  width: 28px !important;
+  height: 28px !important;
+  object-fit: cover !important;
+}
+html[data-viewer-theme="cyan"] .study-organ-svg {
+  width: 17px !important;
+  height: 17px !important;
+  color: #2dd4bf !important;
+}
+html[data-viewer-theme="cyan"] .study-heading .eyebrow {
+  color: #2dd4bf !important;
+  font-size: 8px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+}
+html[data-viewer-theme="cyan"] .study-heading strong {
+  color: #ffffff !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em !important;
+}
+html[data-viewer-theme="cyan"] .study-series-badge {
+  background: rgba(45, 212, 191, 0.12) !important;
+  border: 1px solid rgba(45, 212, 191, 0.3) !important;
+  color: #2dd4bf !important;
+  font-size: 9.5px !important;
+  font-weight: 600 !important;
+  border-radius: 4px !important;
+  padding: 1px 6px !important;
+  line-height: 1.3 !important;
+}
+html[data-viewer-theme="cyan"] .study-chevron {
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 6px !important;
+  background: rgba(45, 212, 191, 0.08) !important;
+  border: 1px solid rgba(45, 212, 191, 0.2) !important;
+  color: #2dd4bf !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 13px !important;
+  font-style: normal !important;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), background 0.18s ease !important;
+}
+html[data-viewer-theme="cyan"] .study-heading[aria-expanded="true"] .study-chevron {
+  transform: rotate(180deg) !important;
+  background: #2dd4bf !important;
+  color: #070a0e !important;
+}
+
+/* 2. ROYAL VIOLET GLASS (Minimalist Floating Glass) */
+html[data-viewer-theme="violet"] .study-heading {
+  height: 42px !important;
+  border-radius: 9999px !important;
+  padding: 3px 14px 3px 7px !important;
+  background: rgba(26, 16, 46, 0.72) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(168, 85, 247, 0.35) !important;
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+  gap: 10px !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+html[data-viewer-theme="violet"] .study-heading:hover,
+html[data-viewer-theme="violet"] .study-heading[aria-expanded="true"] {
+  background: rgba(38, 22, 68, 0.85) !important;
+  border-color: #c084fc !important;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.28), 0 6px 24px rgba(139, 92, 246, 0.32) !important;
+}
+html[data-viewer-theme="violet"] .study-icon-wrap {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+html[data-viewer-theme="violet"] .study-led-dot {
+  display: block !important;
+  width: 5px !important;
+  height: 5px !important;
+  border-radius: 50% !important;
+  background: #c084fc !important;
+  box-shadow: 0 0 6px #c084fc, 0 0 10px #a855f7 !important;
+  animation: violetPulse 2.4s infinite ease-in-out !important;
+}
+@keyframes violetPulse {
+  0%, 100% { opacity: 0.7; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+html[data-viewer-theme="violet"] .study-icon-frame {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.28) 0%, rgba(88, 28, 135, 0.15) 100%) !important;
+  border: 1px solid rgba(192, 132, 252, 0.45) !important;
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.35), inset 0 0 6px rgba(192, 132, 252, 0.25) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+html[data-viewer-theme="violet"] .study-organ-svg {
+  width: 17px !important;
+  height: 17px !important;
+  color: #e9d5ff !important;
+  filter: drop-shadow(0 0 4px rgba(192, 132, 252, 0.8)) !important;
+}
+html[data-viewer-theme="violet"] .study-heading .eyebrow {
+  color: #d8b4fe !important;
+  font-size: 8px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+}
+html[data-viewer-theme="violet"] .study-heading strong {
+  color: #faf5ff !important;
+  font-size: 13.5px !important;
+  font-weight: 650 !important;
+  letter-spacing: -0.01em !important;
+}
+html[data-viewer-theme="violet"] .study-series-badge {
+  background: rgba(168, 85, 247, 0.16) !important;
+  border: 1px solid rgba(192, 132, 252, 0.35) !important;
+  color: #f3e8ff !important;
+  font-size: 9px !important;
+  font-weight: 600 !important;
+  border-radius: 9999px !important;
+  padding: 1px 7px !important;
+  line-height: 1.3 !important;
+  backdrop-filter: blur(8px) !important;
+}
+html[data-viewer-theme="violet"] .study-chevron {
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 50% !important;
+  background: rgba(168, 85, 247, 0.14) !important;
+  border: 1px solid rgba(192, 132, 252, 0.28) !important;
+  color: #e9d5ff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 13px !important;
+  font-style: normal !important;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), background 0.18s ease !important;
+}
+html[data-viewer-theme="violet"] .study-heading[aria-expanded="true"] .study-chevron {
+  transform: rotate(180deg) !important;
+  background: #a855f7 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.6) !important;
+}
+
+/* 3. WARM AMBER TITANIUM (PACS Hardware Console) */
+html[data-viewer-theme="amber"] .study-heading {
+  height: 42px !important;
+  border-radius: 5px !important;
+  padding: 3px 10px 3px 6px !important;
+  background: linear-gradient(180deg, #1e1710 0%, #140f09 100%) !important;
+  border: 1px solid #543315 !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(245, 158, 11, 0.18), inset 0 -1px 0 rgba(0,0,0,0.5) !important;
+  gap: 9px !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+html[data-viewer-theme="amber"] .study-heading:hover,
+html[data-viewer-theme="amber"] .study-heading[aria-expanded="true"] {
+  background: linear-gradient(180deg, #2a2014 0%, #1a130c 100%) !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25), 0 4px 14px rgba(0, 0, 0, 0.8) !important;
+}
+html[data-viewer-theme="amber"] .study-icon-wrap {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+html[data-viewer-theme="amber"] .study-led-dot {
+  display: block !important;
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  background: #f59e0b !important;
+  box-shadow: 0 0 6px #f59e0b, 0 0 10px rgba(245, 158, 11, 0.8) !important;
+}
+html[data-viewer-theme="amber"] .study-icon-frame {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 3px !important;
+  background: #0e0a06 !important;
+  border: 1px solid #78350f !important;
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.9), 0 1px 0 rgba(245, 158, 11, 0.2) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+html[data-viewer-theme="amber"] .study-thumb-img {
+  width: 28px !important;
+  height: 28px !important;
+  object-fit: cover !important;
+  filter: sepia(25%) contrast(110%) !important;
+  display: block !important;
+}
+html[data-viewer-theme="amber"] .study-organ-svg {
+  width: 16px !important;
+  height: 16px !important;
+  color: #f59e0b !important;
+}
+html[data-viewer-theme="amber"] .study-heading .eyebrow {
+  color: #f59e0b !important;
+  font-size: 8px !important;
+  font-weight: 700 !important;
+  font-family: "SF Mono", "Roboto Mono", "Courier New", monospace !important;
+  letter-spacing: 0.16em !important;
+  text-transform: uppercase !important;
+}
+html[data-viewer-theme="amber"] .study-heading strong {
+  color: #fef3c7 !important;
+  font-size: 12.5px !important;
+  font-weight: 750 !important;
+  letter-spacing: 0.02em !important;
+}
+html[data-viewer-theme="amber"] .study-series-badge {
+  background: #241709 !important;
+  border: 1px solid #92400e !important;
+  color: #fbbf24 !important;
+  font-size: 9px !important;
+  font-family: "SF Mono", "Roboto Mono", monospace !important;
+  font-weight: 700 !important;
+  border-radius: 2px !important;
+  padding: 1px 5px !important;
+  line-height: 1.3 !important;
+}
+html[data-viewer-theme="amber"] .study-chevron {
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 3px !important;
+  background: #241709 !important;
+  border: 1px solid #78350f !important;
+  color: #f59e0b !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 13px !important;
+  font-style: normal !important;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), background 0.18s ease !important;
+}
+html[data-viewer-theme="amber"] .study-heading[aria-expanded="true"] .study-chevron {
+  transform: rotate(180deg) !important;
+  background: #f59e0b !important;
+  color: #140f09 !important;
+}
+
+/* 4. NORDIC MINIMAL STUDIO */
+html[data-viewer-theme="nordic"] .study-heading {
+  height: 40px !important;
+  border-radius: 8px !important;
+  padding: 3px 11px 3px 8px !important;
+  background: #0f141c !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25) !important;
+  gap: 9px !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+html[data-viewer-theme="nordic"] .study-heading:hover,
+html[data-viewer-theme="nordic"] .study-heading[aria-expanded="true"] {
+  background: #141c27 !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35) !important;
+}
+html[data-viewer-theme="nordic"] .study-icon-wrap {
+  display: flex !important;
+  align-items: center !important;
+}
+html[data-viewer-theme="nordic"] .study-led-dot {
+  display: none !important;
+}
+html[data-viewer-theme="nordic"] .study-icon-frame {
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+html[data-viewer-theme="nordic"] .study-organ-svg {
+  width: 15px !important;
+  height: 15px !important;
+  color: #cbd5e1 !important;
+}
+html[data-viewer-theme="nordic"] .study-heading .eyebrow {
+  color: #94a3b8 !important;
+  font-size: 8px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.15em !important;
+  text-transform: uppercase !important;
+}
+html[data-viewer-theme="nordic"] .study-heading strong {
+  color: #ffffff !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+html[data-viewer-theme="nordic"] .study-series-badge {
+  background: transparent !important;
+  border: none !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  padding: 0 !important;
+}
+html[data-viewer-theme="nordic"] .study-chevron {
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 5px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #94a3b8 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 12px !important;
+  font-style: normal !important;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), background 0.18s ease !important;
+}
+html[data-viewer-theme="nordic"] .study-heading[aria-expanded="true"] .study-chevron {
+  transform: rotate(180deg) !important;
+  background: rgba(255, 255, 255, 0.16) !important;
+  color: #ffffff !important;
+}
+
+/* Popover Panel Container */
+html[data-viewer-theme="cyan"] .module-catalogue-popover,
+html[data-viewer-theme="violet"] .module-catalogue-popover,
+html[data-viewer-theme="amber"] .module-catalogue-popover,
+html[data-viewer-theme="nordic"] .module-catalogue-popover {
+  top: calc(100% + 8px) !important;
+  border-radius: 14px !important;
+  background: var(--theme-bg-sidebar) !important;
+  border: 1px solid var(--theme-border) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 0 1px var(--theme-border-highlight) !important;
+  backdrop-filter: blur(24px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(140%) !important;
+  overflow: hidden !important;
+}
+
+/* Popover Header */
+html[data-viewer-theme="cyan"] .catalogue-popover-header,
+html[data-viewer-theme="violet"] .catalogue-popover-header,
+html[data-viewer-theme="amber"] .catalogue-popover-header,
+html[data-viewer-theme="nordic"] .catalogue-popover-header {
+  border-bottom: 1px solid var(--theme-border) !important;
+  padding: 14px 16px 12px !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+}
+
+html[data-viewer-theme="cyan"] .catalogue-popover-header .section-kicker,
+html[data-viewer-theme="violet"] .catalogue-popover-header .section-kicker,
+html[data-viewer-theme="amber"] .catalogue-popover-header .section-kicker,
+html[data-viewer-theme="nordic"] .catalogue-popover-header .section-kicker {
+  color: var(--theme-accent) !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.15em !important;
+}
+
+html[data-viewer-theme="cyan"] .catalogue-popover-header h2,
+html[data-viewer-theme="violet"] .catalogue-popover-header h2,
+html[data-viewer-theme="amber"] .catalogue-popover-header h2,
+html[data-viewer-theme="nordic"] .catalogue-popover-header h2 {
+  color: #f1f5f9 !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  margin-top: 2px !important;
+}
+
+html[data-viewer-theme="cyan"] .catalogue-popover-header .count-badge,
+html[data-viewer-theme="violet"] .catalogue-popover-header .count-badge,
+html[data-viewer-theme="amber"] .catalogue-popover-header .count-badge,
+html[data-viewer-theme="nordic"] .catalogue-popover-header .count-badge {
+  background: var(--theme-accent-bg) !important;
+  border: 1px solid var(--theme-border-highlight) !important;
+  color: var(--theme-accent) !important;
+  font-weight: 700 !important;
+  border-radius: 999px !important;
+  padding: 2px 9px !important;
+}
+
+/* Search input inside Popover */
+html[data-viewer-theme="cyan"] .module-catalogue-popover .panel-search,
+html[data-viewer-theme="violet"] .module-catalogue-popover .panel-search,
+html[data-viewer-theme="amber"] .module-catalogue-popover .panel-search,
+html[data-viewer-theme="nordic"] .module-catalogue-popover .panel-search {
+  margin: 12px 14px 10px !important;
+  background: rgba(0, 0, 0, 0.45) !important;
+  border: 1px solid var(--theme-border) !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+  box-shadow: none !important;
+}
+
+html[data-viewer-theme="cyan"] .module-catalogue-popover .panel-search:focus-within,
+html[data-viewer-theme="violet"] .module-catalogue-popover .panel-search:focus-within,
+html[data-viewer-theme="amber"] .module-catalogue-popover .panel-search:focus-within,
+html[data-viewer-theme="nordic"] .module-catalogue-popover .panel-search:focus-within {
+  border-color: var(--theme-accent) !important;
+  box-shadow: 0 0 0 3px var(--theme-accent-glow) !important;
+}
+
+html[data-viewer-theme="cyan"] .module-catalogue-popover .panel-search input,
+html[data-viewer-theme="violet"] .module-catalogue-popover .panel-search input,
+html[data-viewer-theme="amber"] .module-catalogue-popover .panel-search input,
+html[data-viewer-theme="nordic"] .module-catalogue-popover .panel-search input {
+  color: #f1f5f9 !important;
+  outline: none !important;
+}
+
+html[data-viewer-theme="cyan"] .module-catalogue-popover .panel-search input:focus,
+html[data-viewer-theme="violet"] .module-catalogue-popover .panel-search input:focus,
+html[data-viewer-theme="amber"] .module-catalogue-popover .panel-search input:focus,
+html[data-viewer-theme="nordic"] .module-catalogue-popover .panel-search input:focus {
+  outline: none !important;
+}
+
+html[data-viewer-theme="cyan"] .module-catalogue-popover .panel-search > span,
+html[data-viewer-theme="violet"] .module-catalogue-popover .panel-search > span,
+html[data-viewer-theme="amber"] .module-catalogue-popover .panel-search > span,
+html[data-viewer-theme="nordic"] .module-catalogue-popover .panel-search > span {
+  color: var(--theme-accent) !important;
+}
+
+/* Filter Chips (Available / All modules) */
+html[data-viewer-theme="cyan"] .module-catalogue-popover .chip,
+html[data-viewer-theme="violet"] .module-catalogue-popover .chip,
+html[data-viewer-theme="amber"] .module-catalogue-popover .chip,
+html[data-viewer-theme="nordic"] .module-catalogue-popover .chip {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid var(--theme-border) !important;
+  border-radius: 999px !important;
+  color: #94a3b8 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  transition: all 0.16s ease !important;
+}
+
+html[data-viewer-theme="cyan"] .module-catalogue-popover .chip:hover,
+html[data-viewer-theme="violet"] .module-catalogue-popover .chip:hover,
+html[data-viewer-theme="amber"] .module-catalogue-popover .chip:hover,
+html[data-viewer-theme="nordic"] .module-catalogue-popover .chip:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #f1f5f9 !important;
+}
+
+html[data-viewer-theme="cyan"] .module-catalogue-popover .chip.active,
+html[data-viewer-theme="violet"] .module-catalogue-popover .chip.active,
+html[data-viewer-theme="amber"] .module-catalogue-popover .chip.active,
+html[data-viewer-theme="nordic"] .module-catalogue-popover .chip.active {
+  background: var(--theme-accent-bg) !important;
+  border-color: var(--theme-accent) !important;
+  color: var(--theme-accent) !important;
+  box-shadow: 0 0 10px var(--theme-accent-glow) !important;
+}
+
+/* Refresh button */
+html[data-viewer-theme="cyan"] .module-catalogue-popover .refresh-button,
+html[data-viewer-theme="violet"] .module-catalogue-popover .refresh-button,
+html[data-viewer-theme="amber"] .module-catalogue-popover .refresh-button,
+html[data-viewer-theme="nordic"] .module-catalogue-popover .refresh-button {
+  border-color: var(--theme-border) !important;
+  color: #94a3b8 !important;
+}
+html[data-viewer-theme="cyan"] .module-catalogue-popover .refresh-button:hover,
+html[data-viewer-theme="violet"] .module-catalogue-popover .refresh-button:hover,
+html[data-viewer-theme="amber"] .module-catalogue-popover .refresh-button:hover,
+html[data-viewer-theme="nordic"] .module-catalogue-popover .refresh-button:hover {
+  border-color: var(--theme-accent) !important;
+  color: var(--theme-accent) !important;
+}
+
+/* Region Group & Headings inside Tree */
+html[data-viewer-theme="cyan"] .module-catalogue-popover .region-heading,
+html[data-viewer-theme="violet"] .module-catalogue-popover .region-heading,
+html[data-viewer-theme="amber"] .module-catalogue-popover .region-heading,
+html[data-viewer-theme="nordic"] .module-catalogue-popover .region-heading {
+  color: #94a3b8 !important;
+  border-radius: 6px !important;
+  transition: all 0.16s ease !important;
+}
+
+html[data-viewer-theme="cyan"] .module-catalogue-popover .region-heading:hover,
+html[data-viewer-theme="violet"] .module-catalogue-popover .region-heading:hover,
+html[data-viewer-theme="amber"] .module-catalogue-popover .region-heading:hover,
+html[data-viewer-theme="nordic"] .module-catalogue-popover .region-heading:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: #f1f5f9 !important;
+}
+
+html[data-viewer-theme="cyan"] .module-catalogue-popover .region-heading .chevron,
+html[data-viewer-theme="violet"] .module-catalogue-popover .region-heading .chevron,
+html[data-viewer-theme="amber"] .module-catalogue-popover .region-heading .chevron,
+html[data-viewer-theme="nordic"] .module-catalogue-popover .region-heading .chevron {
+  color: var(--theme-accent) !important;
+}
+
+/* Module Buttons inside Tree */
+html[data-viewer-theme="cyan"] .module-catalogue-popover .module-button,
+html[data-viewer-theme="violet"] .module-catalogue-popover .module-button,
+html[data-viewer-theme="amber"] .module-catalogue-popover .module-button,
+html[data-viewer-theme="nordic"] .module-catalogue-popover .module-button {
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  transition: all 0.16s ease !important;
+  margin-bottom: 2px !important;
+}
+
+html[data-viewer-theme="cyan"] .module-catalogue-popover .module-button:hover,
+html[data-viewer-theme="violet"] .module-catalogue-popover .module-button:hover,
+html[data-viewer-theme="amber"] .module-catalogue-popover .module-button:hover,
+html[data-viewer-theme="nordic"] .module-catalogue-popover .module-button:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: var(--theme-border) !important;
+}
+
+/* Active/Selected Module Button */
+html[data-viewer-theme="cyan"] .module-catalogue-popover .module-button.active,
+html[data-viewer-theme="violet"] .module-catalogue-popover .module-button.active,
+html[data-viewer-theme="amber"] .module-catalogue-popover .module-button.active,
+html[data-viewer-theme="nordic"] .module-catalogue-popover .module-button.active {
+  background: var(--theme-accent-bg) !important;
+  border-color: var(--theme-accent) !important;
+  box-shadow: 0 0 14px var(--theme-accent-glow) !important;
+}
+
+html[data-viewer-theme="cyan"] .module-catalogue-popover .module-button.active .module-copy strong,
+html[data-viewer-theme="violet"] .module-catalogue-popover .module-button.active .module-copy strong,
+html[data-viewer-theme="amber"] .module-catalogue-popover .module-button.active .module-copy strong,
+html[data-viewer-theme="nordic"] .module-catalogue-popover .module-button.active .module-copy strong {
+  color: #ffffff !important;
+}
+
+html[data-viewer-theme="cyan"] .module-catalogue-popover .module-button.active .module-icon,
+html[data-viewer-theme="violet"] .module-catalogue-popover .module-button.active .module-icon,
+html[data-viewer-theme="amber"] .module-catalogue-popover .module-button.active .module-icon,
+html[data-viewer-theme="nordic"] .module-catalogue-popover .module-button.active .module-icon {
+  border-color: var(--theme-accent) !important;
+}
+
+/* Ready State indicator dot */
+html[data-viewer-theme="cyan"] .module-catalogue-popover .module-state.ready,
+html[data-viewer-theme="violet"] .module-catalogue-popover .module-state.ready,
+html[data-viewer-theme="amber"] .module-catalogue-popover .module-state.ready,
+html[data-viewer-theme="nordic"] .module-catalogue-popover .module-state.ready {
+  background: var(--theme-accent) !important;
+  box-shadow: 0 0 8px var(--theme-accent-glow) !important;
+}
+
+/* Custom Scrollbar in Catalogue Tree */
+html[data-viewer-theme="cyan"] .catalogue-module-tree::-webkit-scrollbar,
+html[data-viewer-theme="violet"] .catalogue-module-tree::-webkit-scrollbar,
+html[data-viewer-theme="amber"] .catalogue-module-tree::-webkit-scrollbar,
+html[data-viewer-theme="nordic"] .catalogue-module-tree::-webkit-scrollbar {
+  width: 5px !important;
+}
+
+html[data-viewer-theme="cyan"] .catalogue-module-tree::-webkit-scrollbar-thumb,
+html[data-viewer-theme="violet"] .catalogue-module-tree::-webkit-scrollbar-thumb,
+html[data-viewer-theme="amber"] .catalogue-module-tree::-webkit-scrollbar-thumb,
+html[data-viewer-theme="nordic"] .catalogue-module-tree::-webkit-scrollbar-thumb {
+  background: var(--theme-border-highlight) !important;
+  border-radius: 999px !important;
+}
+
+html[data-viewer-theme="cyan"] .global-search,
+html[data-viewer-theme="violet"] .global-search,
+html[data-viewer-theme="amber"] .global-search,
+html[data-viewer-theme="nordic"] .global-search {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid var(--theme-border) !important;
+  border-radius: 999px !important;
+  height: 32px !important;
+  padding: 0 10px !important;
+  flex: 0 1 200px !important;
+  min-width: 130px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+html[data-viewer-theme="cyan"] .global-search > span,
+html[data-viewer-theme="violet"] .global-search > span,
+html[data-viewer-theme="amber"] .global-search > span,
+html[data-viewer-theme="nordic"] .global-search > span {
+  padding-left: 0 !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+  color: var(--muted) !important;
+}
+
+html[data-viewer-theme="cyan"] .global-search input,
+html[data-viewer-theme="violet"] .global-search input,
+html[data-viewer-theme="amber"] .global-search input,
+html[data-viewer-theme="nordic"] .global-search input {
+  height: 30px !important;
+  font-size: 12px !important;
+  padding: 0 6px !important;
+}
+
+html[data-viewer-theme="cyan"] .global-search kbd,
+html[data-viewer-theme="violet"] .global-search kbd,
+html[data-viewer-theme="amber"] .global-search kbd,
+html[data-viewer-theme="nordic"] .global-search kbd {
+  font-size: 10px !important;
+  padding: 1px 5px !important;
+  border-radius: 4px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid var(--theme-border) !important;
+  color: var(--muted) !important;
+}
+
+/* ==========================================================================
+   LAYOUT 1: MEDICAL CYAN (Clinical Pro — Tách rời các cụm công cụ lên trên)
+   ========================================================================== */
+html[data-viewer-theme="cyan"] .viewer-toolbar {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 10px 16px 4px 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+}
+
+/* Hide plain line dividers in Cyan to keep clusters completely detached */
+html[data-viewer-theme="cyan"] .toolbar-divider {
+  display: none !important;
+}
+
+/* Each tool cluster is an independent, detached floating pill pod */
+html[data-viewer-theme="cyan"] .tool-group,
+html[data-viewer-theme="cyan"] .series-group,
+html[data-viewer-theme="cyan"] .meta-group {
+  background: rgba(12, 17, 23, 0.95) !important;
+  border: 1px solid rgba(45, 212, 191, 0.32) !important;
+  border-radius: 999px !important;
+  padding: 3px 8px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  flex-shrink: 0 !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+html[data-viewer-theme="cyan"] .series-group {
+  padding: 3px 10px !important;
+  gap: 6px !important;
+}
+
+html[data-viewer-theme="cyan"] .meta-group {
+  padding: 3px 10px !important;
+  margin-left: auto !important;
+}
+
+html[data-viewer-theme="cyan"] .tool-button {
+  height: 28px !important;
+  border-radius: 999px !important;
+  padding: 0 10px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #cbd5e1 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+html[data-viewer-theme="cyan"] .tool-button:hover {
+  background: rgba(45, 212, 191, 0.18) !important;
+  color: #ffffff !important;
+  border-color: rgba(45, 212, 191, 0.4) !important;
+}
+
+html[data-viewer-theme="cyan"] .tool-button.active {
+  background: #14b8a6 !important;
+  color: #041014 !important;
+  font-weight: 800 !important;
+  border-color: #2dd4bf !important;
+  box-shadow: 0 0 12px rgba(45, 212, 191, 0.6) !important;
+}
+
+html[data-viewer-theme="cyan"] .toolbar-series select {
+  background: transparent !important;
+  border: none !important;
+  color: #e2e8f0 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 0 6px !important;
+}
+
+html[data-viewer-theme="cyan"] .zoom-value {
+  color: #2dd4bf !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  padding: 0 4px !important;
+}
+
+/* Timeline Scrubber for Cyan Pro */
+html[data-viewer-theme="cyan"] .timeline {
+  background: #0a0e14 !important;
+  border-top: 1px solid #1a2330 !important;
+  padding: 8px 16px !important;
+}
+
+html[data-viewer-theme="cyan"] .timeline .transport-controls button {
+  background: #0f1620 !important;
+  border: 1px solid rgba(45, 212, 191, 0.3) !important;
+  color: #2dd4bf !important;
+  border-radius: 999px !important;
+}
+
+html[data-viewer-theme="cyan"] .timeline .transport-controls button:hover {
+  background: #2dd4bf !important;
+  color: #041014 !important;
+  box-shadow: 0 0 10px rgba(45, 212, 191, 0.5) !important;
+}
+
+html[data-viewer-theme="cyan"] #sliceSlider {
+  accent-color: #2dd4bf !important;
+}
+
+
+/* ==========================================================================
+   LAYOUT 2: ROYAL VIOLET GLASSMORPHIC (Đảo kính nổi trôi Floating Island HUD)
+   ========================================================================== */
+html[data-viewer-theme="violet"] .viewer-column {
+  position: relative !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: calc(100vh - 50px) !important;
+}
+
+/* Floating Glass Island Toolbar hovering directly OVER the viewport */
+html[data-viewer-theme="violet"] .viewer-toolbar {
+  position: absolute !important;
+  top: 14px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 45 !important;
+  width: auto !important;
+  max-width: calc(100% - 28px) !important;
+  background: rgba(14, 11, 32, 0.7) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border: 1px solid rgba(168, 85, 247, 0.45) !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 16px 45px rgba(108, 92, 231, 0.35), 0 0 25px rgba(108, 92, 231, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
+  padding: 5px 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex-wrap: nowrap !important;
+}
+
+html[data-viewer-theme="violet"] .toolbar-divider {
+  background: rgba(255, 255, 255, 0.14) !important;
+  width: 1px !important;
+  height: 18px !important;
+  margin: 0 3px !important;
+}
+
+html[data-viewer-theme="violet"] .tool-button {
+  height: 28px !important;
+  border-radius: 999px !important;
+  padding: 0 10px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #f3e8ff !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+html[data-viewer-theme="violet"] .tool-button:hover {
+  background: rgba(168, 85, 247, 0.24) !important;
+  border-color: rgba(168, 85, 247, 0.5) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+html[data-viewer-theme="violet"] .tool-button.active {
+  background: linear-gradient(135deg, #a855f7 0%, #6c5ce7 100%) !important;
+  color: #ffffff !important;
+  border-color: #c084fc !important;
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.65) !important;
+  font-weight: 700 !important;
+}
+
+html[data-viewer-theme="violet"] .toolbar-series select {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 999px !important;
+  color: #f3e8ff !important;
+  padding: 2px 8px !important;
+  font-size: 11px !important;
+}
+
+/* Viewport expands behind floating controls */
+html[data-viewer-theme="violet"] .viewport {
+  height: 100% !important;
+  flex: 1 1 auto !important;
+  padding-top: 56px !important;
+  padding-bottom: 74px !important;
+}
+
+/* Floating Glass Pill Timeline at bottom */
+html[data-viewer-theme="violet"] .timeline {
+  position: absolute !important;
+  bottom: 14px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 45 !important;
+  width: min(940px, calc(100% - 28px)) !important;
+  border-radius: 22px !important;
+  background: rgba(14, 11, 32, 0.75) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border: 1px solid rgba(168, 85, 247, 0.4) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(108, 92, 231, 0.25) !important;
+  padding: 8px 16px !important;
+}
+
+html[data-viewer-theme="violet"] .timeline .transport-controls button {
+  background: rgba(168, 85, 247, 0.16) !important;
+  border: 1px solid rgba(168, 85, 247, 0.35) !important;
+  color: #f3e8ff !important;
+  border-radius: 999px !important;
+}
+
+html[data-viewer-theme="violet"] .timeline .transport-controls button:hover {
+  background: #a855f7 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.6) !important;
+}
+
+html[data-viewer-theme="violet"] #sliceSlider {
+  accent-color: #a855f7 !important;
+}
+
+
+/* ==========================================================================
+   LAYOUT 3: WARM AMBER TITANIUM (Bàn điều khiển PACS Console phần cứng)
+   ========================================================================== */
+html[data-viewer-theme="amber"] .viewer-toolbar {
+  background: linear-gradient(180deg, #1f2530 0%, #12151b 100%) !important;
+  border-top: 1px solid #333d4e !important;
+  border-bottom: 2px solid #000000 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 8px 24px rgba(0, 0, 0, 0.7) !important;
+  padding: 6px 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex-wrap: nowrap !important;
+}
+
+/* Recessed Console Bays */
+html[data-viewer-theme="amber"] .tool-group,
+html[data-viewer-theme="amber"] .series-group,
+html[data-viewer-theme="amber"] .meta-group {
+  background: #090b0e !important;
+  border: 1px solid #232a36 !important;
+  border-radius: 4px !important;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.85), 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  padding: 2px 5px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+}
+
+/* Mechanical Hardware Tactile Buttons */
+html[data-viewer-theme="amber"] .tool-button {
+  height: 26px !important;
+  border-radius: 3px !important;
+  padding: 0 9px !important;
+  border: 1px solid #3c4554 !important;
+  background: linear-gradient(180deg, #272d38 0%, #181d24 100%) !important;
+  color: #cbd5e1 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+  transition: all 0.12s ease !important;
+}
+
+html[data-viewer-theme="amber"] .tool-button:hover {
+  background: linear-gradient(180deg, #323947 0%, #202630 100%) !important;
+  color: #fbbf24 !important;
+  border-color: #f59e0b !important;
+}
+
+html[data-viewer-theme="amber"] .tool-button.active {
+  background: linear-gradient(180deg, #3d2705 0%, #1e1201 100%) !important;
+  border-color: #f59e0b !important;
+  color: #fbbf24 !important;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.45), inset 0 1px 0 rgba(251, 191, 36, 0.3) !important;
+}
+
+/* Digital Amber Segment LED Readout */
+html[data-viewer-theme="amber"] .zoom-value,
+html[data-viewer-theme="amber"] .slice-meta,
+html[data-viewer-theme="amber"] .slice-readout {
+  font-family: 'SF Mono', 'Courier New', monospace !important;
+  letter-spacing: 0.12em !important;
+  color: #f59e0b !important;
+  background: #050608 !important;
+  border: 1px solid rgba(245, 158, 11, 0.45) !important;
+  border-radius: 3px !important;
+  padding: 2px 7px !important;
+  text-shadow: 0 0 8px rgba(245, 158, 11, 0.7) !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+}
+
+html[data-viewer-theme="amber"] .toolbar-divider {
+  background: #252b37 !important;
+  width: 1px !important;
+  height: 20px !important;
+  margin: 0 2px !important;
+}
+
+html[data-viewer-theme="amber"] .toolbar-series select {
+  background: transparent !important;
+  border: none !important;
+  color: #f59e0b !important;
+  font-family: 'SF Mono', monospace !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+/* Telemetry Deck Timeline */
+html[data-viewer-theme="amber"] .timeline {
+  background: linear-gradient(180deg, #181c24 0%, #0d0f14 100%) !important;
+  border-top: 2px solid #29303d !important;
+  padding: 8px 16px !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06) !important;
+}
+
+html[data-viewer-theme="amber"] .timeline .transport-controls button {
+  background: linear-gradient(180deg, #272d38 0%, #171b22 100%) !important;
+  border: 1px solid #3c4554 !important;
+  color: #f59e0b !important;
+  border-radius: 4px !important;
+  font-weight: 800 !important;
+}
+
+html[data-viewer-theme="amber"] #sliceSlider {
+  accent-color: #f59e0b !important;
+}
+
+
+/* ==========================================================================
+   LAYOUT 4: NORDIC MINIMAL STUDIO (Thanh HUD tối giản tinh tế Bắc Âu)
+   ========================================================================== */
+html[data-viewer-theme="nordic"] .viewer-toolbar {
+  background: rgba(20, 20, 24, 0.88) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 12px !important;
+  margin: 8px 16px 6px 16px !important;
+  padding: 4px 12px !important;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.3) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+  flex-wrap: nowrap !important;
+}
+
+html[data-viewer-theme="nordic"] .toolbar-divider {
+  background: rgba(255, 255, 255, 0.08) !important;
+  width: 1px !important;
+  height: 16px !important;
+  margin: 0 2px !important;
+}
+
+html[data-viewer-theme="nordic"] .tool-button {
+  height: 26px !important;
+  border-radius: 8px !important;
+  padding: 0 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  background: transparent !important;
+  color: #94a3b8 !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  transition: all 0.16s ease !important;
+}
+
+html[data-viewer-theme="nordic"] .tool-button:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+html[data-viewer-theme="nordic"] .tool-button.active {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  font-weight: 600 !important;
+}
+
+html[data-viewer-theme="nordic"] .toolbar-series select {
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 8px !important;
+  color: #e2e8f0 !important;
+  padding: 2px 8px !important;
+  font-size: 11px !important;
+}
+
+html[data-viewer-theme="nordic"] .timeline {
+  background: #0d0e11 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+  padding: 6px 16px !important;
+}
+
+html[data-viewer-theme="nordic"] .timeline .transport-controls button {
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #cbd5e1 !important;
+  border-radius: 6px !important;
+}
+
+html[data-viewer-theme="nordic"] #sliceSlider {
+  accent-color: #cbd5e1 !important;
+}
+
+
+/* ==========================================================================
+   ANATOMICAL PARTS SIDEBAR — 100% MEDICAL & DOM INTEGRITY
+   ========================================================================== */
+html[data-viewer-theme="cyan"] .options-menu,
+html[data-viewer-theme="violet"] .options-menu,
+html[data-viewer-theme="amber"] .options-menu,
+html[data-viewer-theme="nordic"] .options-menu {
+  background: var(--theme-bg-sidebar) !important;
+  border-left: 1px solid var(--theme-border) !important;
+  box-shadow: -15px 0 45px rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+html[data-viewer-theme="cyan"] .options-menu-header,
+html[data-viewer-theme="violet"] .options-menu-header,
+html[data-viewer-theme="amber"] .options-menu-header,
+html[data-viewer-theme="nordic"] .options-menu-header {
+  border-bottom: 1px solid var(--theme-border) !important;
+  padding: 12px 14px !important;
+}
+
+html[data-viewer-theme="cyan"] .section-kicker,
+html[data-viewer-theme="violet"] .section-kicker,
+html[data-viewer-theme="amber"] .section-kicker,
+html[data-viewer-theme="nordic"] .section-kicker {
+  color: var(--theme-accent) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+}
+
+html[data-viewer-theme="cyan"] .luxury-ui-badge,
+html[data-viewer-theme="violet"] .luxury-ui-badge,
+html[data-viewer-theme="amber"] .luxury-ui-badge,
+html[data-viewer-theme="nordic"] .luxury-ui-badge {
+  background: var(--theme-accent-bg) !important;
+  color: var(--theme-accent) !important;
+  border: 1px solid var(--theme-border-highlight) !important;
+  border-radius: 999px !important;
+  padding: 2px 7px !important;
+}
+
+html[data-viewer-theme="cyan"] .options-section-card,
+html[data-viewer-theme="violet"] .options-section-card,
+html[data-viewer-theme="amber"] .options-section-card,
+html[data-viewer-theme="nordic"] .options-section-card {
+  background: var(--theme-bg-card) !important;
+  border: 1px solid var(--theme-border) !important;
+  border-radius: 12px !important;
+  padding: 12px !important;
+  margin: 10px 12px !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Modern iOS / macOS Pill Switches */
+html[data-viewer-theme="cyan"] .switch-control,
+html[data-viewer-theme="violet"] .switch-control,
+html[data-viewer-theme="amber"] .switch-control,
+html[data-viewer-theme="nordic"] .switch-control {
+  width: 38px !important;
+  height: 22px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid var(--theme-border) !important;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  position: relative !important;
+}
+
+html[data-viewer-theme="cyan"] .switch-control::after,
+html[data-viewer-theme="violet"] .switch-control::after,
+html[data-viewer-theme="amber"] .switch-control::after,
+html[data-viewer-theme="nordic"] .switch-control::after {
+  content: "" !important;
+  position: absolute !important;
+  top: 2px !important;
+  left: 2px !important;
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4) !important;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+html[data-viewer-theme="cyan"] input:checked + .switch-control,
+html[data-viewer-theme="violet"] input:checked + .switch-control,
+html[data-viewer-theme="amber"] input:checked + .switch-control,
+html[data-viewer-theme="nordic"] input:checked + .switch-control {
+  background: var(--theme-switch-checked) !important;
+  border-color: var(--theme-accent) !important;
+  box-shadow: 0 0 10px var(--theme-accent-glow) !important;
+}
+
+html[data-viewer-theme="cyan"] input:checked + .switch-control::after,
+html[data-viewer-theme="violet"] input:checked + .switch-control::after,
+html[data-viewer-theme="amber"] input:checked + .switch-control::after,
+html[data-viewer-theme="nordic"] input:checked + .switch-control::after {
+  transform: translateX(16px) !important;
+}
+
+/* Filter action buttons */
+html[data-viewer-theme="cyan"] .filter-actions button,
+html[data-viewer-theme="violet"] .filter-actions button,
+html[data-viewer-theme="amber"] .filter-actions button,
+html[data-viewer-theme="nordic"] .filter-actions button {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid var(--theme-border) !important;
+  border-radius: 8px !important;
+  color: #cbd5e1 !important;
+  padding: 6px 10px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  transition: all 0.16s ease !important;
+}
+
+html[data-viewer-theme="cyan"] .filter-actions button:hover,
+html[data-viewer-theme="violet"] .filter-actions button:hover,
+html[data-viewer-theme="amber"] .filter-actions button:hover,
+html[data-viewer-theme="nordic"] .filter-actions button:hover {
+  background: var(--theme-accent-bg) !important;
+  color: #ffffff !important;
+  border-color: var(--theme-border-highlight) !important;
+}
+
+/* Detail Panel / MPR Styles */
+html[data-viewer-theme="cyan"] .detail-panel,
+html[data-viewer-theme="violet"] .detail-panel,
+html[data-viewer-theme="amber"] .detail-panel,
+html[data-viewer-theme="nordic"] .detail-panel {
+  background: var(--theme-bg-sidebar) !important;
+  border-color: var(--theme-border) !important;
+}
+
+html[data-viewer-theme="cyan"] .mpr-panel,
+html[data-viewer-theme="violet"] .mpr-panel,
+html[data-viewer-theme="amber"] .mpr-panel,
+html[data-viewer-theme="nordic"] .mpr-panel {
+  background: var(--theme-bg-sidebar) !important;
+  border-color: var(--theme-border) !important;
+}

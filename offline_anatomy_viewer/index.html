@@ -7,18 +7,39 @@
   <meta name="description" content="Multi-module radiology and anatomy atlas for offline study.">
   <title>Radiology Atlas · Offline anatomy viewer</title>
   <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./themes.css">
 </head>
 <body>
   <div id="app" class="app-shell menu-open" aria-busy="true">
     <header class="topbar luxury-nav">
       <div class="left-topbar-controls" role="toolbar" aria-label="Left-side viewer panels">
         <button id="optionsMenuButton" class="tool-button menu-button" type="button" aria-expanded="true" aria-controls="optionsMenu"><span class="tool-icon">☰</span><span>Menu</span></button>
-        <button id="detailDrawerButton" class="tool-button detail-toggle-button" type="button" aria-expanded="true" aria-controls="detailPanel" title="Show or hide Detail"><span class="tool-icon">◉</span><span>Detail</span></button>
       </div>
       <div class="module-catalogue-control">
         <button id="moduleCatalogueButton" class="study-heading" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="moduleCataloguePopover">
-          <span><span id="studyEyebrow" class="eyebrow">LOCAL LIBRARY</span><strong id="studyTitle">Choose a module</strong></span>
-          <i aria-hidden="true">⌄</i>
+          <span class="study-icon-wrap" id="studyIconWrap" aria-hidden="true">
+            <span class="study-led-dot" id="studyLedDot"></span>
+            <span class="study-icon-frame" id="studyIconFrame">
+              <img id="studyThumbImg" class="study-thumb-img" alt="" width="28" height="28" style="display:none;" />
+              <svg id="studySvgGlyph" class="study-organ-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 4.5c-1.5-1.5-4-1.5-5.5 0-1.2 1.2-1.5 3-.7 4.5C4.2 9.4 3.5 11 4 12.8c.6 2.2 2.3 3.7 4.5 4v2.7c0 .8.7 1.5 1.5 1.5h1"/>
+                <path d="M12 4.5c1.5-1.5 4-1.5 5.5 0 1.2 1.2 1.5 3 .7 4.5 1.6.4 2.3 2 1.8 3.8-.6 2.2-2.3 3.7-4.5 4v2.7c0 .8-.7 1.5-1.5 1.5h-1"/>
+                <path d="M12 4.5v16.5"/>
+                <path d="M8.5 10c1-.5 2-.5 3 0"/>
+                <path d="M12.5 10c1-.5 2-.5 3 0"/>
+                <path d="M7.5 14c1.2-.5 2.5-.5 3.5 0"/>
+                <path d="M13 14c1-.5 2.3-.5 3.5 0"/>
+              </svg>
+            </span>
+          </span>
+          <span class="study-info-wrap">
+            <span id="studyEyebrow" class="eyebrow">LOCAL LIBRARY</span>
+            <span class="study-title-row">
+              <strong id="studyTitle">Choose a module</strong>
+              <span id="studySeriesBadge" class="study-series-badge"></span>
+            </span>
+          </span>
+          <i aria-hidden="true" class="study-chevron">⌄</i>
         </button>
         <section id="moduleCataloguePopover" class="module-catalogue-popover" aria-label="Module catalogue" hidden>
           <div class="catalogue-popover-header"><div><span class="section-kicker">CATALOGUE</span><h2>Select module</h2></div><span id="moduleCount" class="count-badge">0</span></div>
@@ -37,8 +58,36 @@
         <kbd>/</kbd>
       </label>
       <div class="topbar-status">
+        <button id="toggleViewerToolbarBtn" class="topbar-tool-btn active" type="button" aria-pressed="true" title="Ẩn hoặc hiện thanh công cụ">
+          <span class="tool-icon">🛠</span>
+          <span id="toolbarToggleLabel">Tools: Show</span>
+        </button>
+
+        <div class="topbar-lang-control" role="group" aria-label="Ngôn ngữ giải phẫu">
+          <label for="anatomyLanguageSelect" class="topbar-label">Lang:</label>
+          <select id="anatomyLanguageSelect" class="topbar-select" aria-describedby="anatomyLanguageStatus">
+            <option value="en">En</option>
+            <option value="vi">Vi</option>
+            <option value="en-vi">Dual</option>
+          </select>
+          <span id="anatomyLanguageStatus" class="sr-only" role="status">Original anatomical content</span>
+        </div>
+
+        <div class="topbar-theme-dropdown-wrap" role="toolbar" aria-label="Bộ chọn theme & bố cục">
+          <label for="themeSelect" class="topbar-label">Theme:</label>
+          <select id="themeSelect" class="topbar-select" aria-label="Chọn theme và bố cục">
+            <option value="cyan">1. Cyan Pro</option>
+            <option value="violet">2. Violet Glass</option>
+            <option value="amber">3. Amber Console</option>
+            <option value="nordic">4. Nordic Studio</option>
+            <option value="default">5. Gốc</option>
+          </select>
+          <button id="reloadThemeButton" type="button" class="theme-reload-btn" title="Tải lại trang (Reload) với theme và bố cục đã chọn">↻</button>
+        </div>
+        
         <span id="dataBadge" class="status-pill">LOADING</span>
         <span class="status-pill status-local"><i></i>LOCAL</span>
+        <button id="detailDrawerButton" class="tool-button detail-toggle-button" type="button" aria-expanded="true" aria-controls="detailPanel" title="Show or hide Detail"><span class="tool-icon">◉</span><span>Detail</span></button>
         <button id="helpButton" class="icon-button" type="button" title="Keyboard shortcuts" aria-label="Open keyboard shortcuts">?</button>
       </div>
     </header>
@@ -55,14 +104,6 @@
         <button id="optionsMenuCloseButton" class="close-button" type="button" aria-label="Close menu">×</button>
       </div>
     </header>
-
-
-
-    <div class="anatomy-language-control">
-      <label for="anatomyLanguageSelect">Anatomy language / Ngôn ngữ giải phẫu</label>
-      <select id="anatomyLanguageSelect" aria-describedby="anatomyLanguageStatus"><option value="en">English</option><option value="vi">Tiếng Việt</option><option value="en-vi">Song ngữ</option></select>
-      <small id="anatomyLanguageStatus" role="status">Original anatomical content</small>
-    </div>
     <section class="options-section options-section-card anatomy-parts-section">
       <div class="options-section-heading"><span>Anatomical parts</span><span class="heading-symbol">＋</span></div>
       <label class="switch-row select-all-row"><span><b>Select all</b><small>Show all anatomical structures</small></span><input id="menuSelectAllFilters" type="checkbox" checked><i class="switch-control"></i></label>
@@ -230,5 +271,6 @@
   <script src="./resource_cache.js" defer></script>
   <script src="./mobile_gestures.js" defer></script>
   <script src="./app.js" defer></script>
+  <script src="./theme_switcher.js" defer></script>
 </body>
 </html>
