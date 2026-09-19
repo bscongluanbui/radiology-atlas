@@ -1178,6 +1178,25 @@ function renderVisibleLabel(label, selectionKey = null, visibleLabels = null, fo
   setFilterData(text, label.filter_id);
   bindAnatomyElement(text, item);
   el.annotationLayer.append(text);
+  if (typeof document !== "undefined" && document.documentElement && typeof document.documentElement.getAttribute === "function" && document.documentElement.getAttribute("data-viewer-theme") === "atlas-pro") {
+    try {
+      const bbox = text.getBBox();
+      if (bbox && bbox.width > 0 && bbox.height > 0) {
+        const padX = 10, padY = 5;
+        const badge = document.createElementNS(SVG_NS, "rect");
+        badge.setAttribute("x", bbox.x - padX);
+        badge.setAttribute("y", bbox.y - padY);
+        badge.setAttribute("width", bbox.width + (padX * 2));
+        badge.setAttribute("height", bbox.height + (padY * 2));
+        badge.setAttribute("rx", "6");
+        badge.setAttribute("ry", "6");
+        badge.setAttribute("class", `annotation-badge${interactionClass}`);
+        setFilterData(badge, label.filter_id);
+        bindAnatomyElement(badge, item);
+        el.annotationLayer.insertBefore(badge, text);
+      }
+    } catch (_) {}
+  }
   const target = targetForLabel(label);
   if (!target) return;
   const hit = document.createElementNS(SVG_NS, "circle");

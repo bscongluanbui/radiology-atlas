@@ -1586,3 +1586,786 @@ html[data-viewer-theme="nordic"] .mpr-panel {
   background: var(--theme-bg-sidebar) !important;
   border-color: var(--theme-border) !important;
 }
+
+/* ==========================================================================
+   THEME 6: ANATOMY ATLAS PRO (Style 2 — Pure Black & Clinical Silver Titanium)
+   Anatomy Atlas & Diagnostic Education Workstation
+   ========================================================================== */
+
+/* 0. Badge component reset for other themes */
+.annotation-badge {
+  display: none;
+}
+
+/* 1. Global Variables */
+html[data-viewer-theme="atlas-pro"] {
+  --bg: #000000;
+  --surface: #080b0f;
+  --surface-2: #0c1015;
+  --surface-3: #11151c;
+  --line: #161a22;
+  --line-soft: #12151b;
+  --text: #f8fafc;
+  --muted: #8b949e;
+  --dim: #484f58;
+  --accent: #cbd5e1; /* Brushed Clinical Silver */
+  --accent-2: #ffffff; /* Crisp Pure White */
+  --accent-soft: rgba(255, 255, 255, 0.12);
+  --success: #10b981;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.85);
+
+  --theme-accent: #cbd5e1;
+  --theme-accent-hover: #ffffff;
+  --theme-accent-glow: rgba(203, 213, 225, 0.35);
+  --theme-accent-bg: rgba(255, 255, 255, 0.12);
+  --theme-bg-body: #000000;
+  --theme-bg-sidebar: #080b0f;
+  --theme-bg-card: #0c1015;
+  --theme-border: #161a22;
+  --theme-border-highlight: rgba(203, 213, 225, 0.4);
+  --theme-topbar-bg: #090c10;
+  --theme-switch-checked: #64748b;
+  --theme-btn-primary: #94a3b8;
+
+  --topbar-h: 44px !important;
+  --toolbar-h: 36px !important;
+  --timeline-h: 80px !important;
+  --theme-radius-sm: 4px;
+  --theme-radius-md: 6px;
+}
+
+/* 2. Base Resets & Workstation Shell (Pure Black) */
+html[data-viewer-theme="atlas-pro"] body,
+html[data-viewer-theme="atlas-pro"] .app-shell,
+html[data-viewer-theme="atlas-pro"] .workspace {
+  background: #000000 !important;
+  color: #f8fafc !important;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+/* 3. Topbar: Precision Pure Dark Graphite Header */
+html[data-viewer-theme="atlas-pro"] .topbar {
+  background: #090c10 !important;
+  border-bottom: 1px solid #161a22 !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  padding: 0 14px !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  gap: 12px !important;
+}
+
+/* Topbar Buttons & Controls */
+html[data-viewer-theme="atlas-pro"] .left-topbar-controls .tool-button,
+html[data-viewer-theme="atlas-pro"] .topbar-status .detail-toggle-button,
+html[data-viewer-theme="atlas-pro"] .topbar-tool-btn,
+html[data-viewer-theme="atlas-pro"] .topbar-lang-control,
+html[data-viewer-theme="atlas-pro"] .topbar-theme-dropdown-wrap {
+  height: 28px !important;
+  border-radius: 4px !important;
+  background: #11151c !important;
+  border: 1px solid #1e2430 !important;
+  color: #cbd5e1 !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  transition: all 0.12s ease !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .left-topbar-controls .tool-button:hover,
+html[data-viewer-theme="atlas-pro"] .topbar-status .detail-toggle-button:hover,
+html[data-viewer-theme="atlas-pro"] .topbar-tool-btn:hover,
+html[data-viewer-theme="atlas-pro"] .topbar-lang-control:hover,
+html[data-viewer-theme="atlas-pro"] .topbar-theme-dropdown-wrap:hover {
+  background: #181e28 !important;
+  border-color: #2e3848 !important;
+  color: #ffffff !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .topbar-tool-btn.active,
+html[data-viewer-theme="atlas-pro"] .topbar-status .detail-toggle-button.active {
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-color: #cbd5e1 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 8px rgba(203, 213, 225, 0.25) !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .topbar-select {
+  height: 22px !important;
+  border-radius: 3px !important;
+  background: #080b0f !important;
+  border: 1px solid #1e2430 !important;
+  font-size: 10.5px !important;
+  color: #f1f5f9 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .status-pill {
+  height: 24px !important;
+  border-radius: 4px !important;
+  background: #11151c !important;
+  border: 1px solid #1e2430 !important;
+  font-size: 9.5px !important;
+  font-weight: 600 !important;
+  color: #8b949e !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .status-pill.status-ok {
+  border-color: rgba(203, 213, 225, 0.3) !important;
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .status-local i {
+  background: #cbd5e1 !important;
+  box-shadow: 0 0 6px #cbd5e1 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .icon-button {
+  height: 28px !important;
+  width: 28px !important;
+  border-radius: 4px !important;
+  background: #11151c !important;
+  border: 1px solid #1e2430 !important;
+  color: #8b949e !important;
+}
+
+/* 4. Global Search */
+html[data-viewer-theme="atlas-pro"] .global-search {
+  height: 28px !important;
+  background: #06080b !important;
+  border: 1px solid #161a22 !important;
+  border-radius: 4px !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .global-search:focus-within {
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 0 0 1.5px rgba(203, 213, 225, 0.3) !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .global-search input {
+  height: 26px !important;
+  font-size: 11px !important;
+  color: #f8fafc !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .global-search kbd {
+  height: 17px !important;
+  min-width: 17px !important;
+  font-size: 9px !important;
+  border-radius: 2px !important;
+  background: #11151c !important;
+  border-color: #1e2430 !important;
+  color: #64748b !important;
+}
+
+/* 5. Module Selector Button */
+html[data-viewer-theme="atlas-pro"] .study-heading {
+  height: 32px !important;
+  border-radius: 4px !important;
+  padding: 2px 10px 2px 6px !important;
+  background: #11151c !important;
+  border: 1px solid #1e2430 !important;
+  gap: 8px !important;
+  transition: all 0.12s ease !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .study-heading:hover,
+html[data-viewer-theme="atlas-pro"] .study-heading[aria-expanded="true"] {
+  background: #181e28 !important;
+  border-color: #2e3848 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .study-led-dot {
+  position: absolute !important;
+  top: 1px !important;
+  left: 1px !important;
+  width: 5px !important;
+  height: 5px !important;
+  border-radius: 50% !important;
+  background: #cbd5e1 !important;
+  box-shadow: 0 0 6px #cbd5e1 !important;
+  display: block !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .study-icon-frame {
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 3px !important;
+  background: #080b0f !important;
+  border: 1px solid #1e2430 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #e2e8f0 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .study-thumb-img {
+  width: 24px !important;
+  height: 24px !important;
+  object-fit: cover !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .study-organ-svg {
+  width: 15px !important;
+  height: 15px !important;
+  color: #e2e8f0 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .study-heading .eyebrow {
+  color: #8b949e !important;
+  font-size: 8px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  line-height: 1 !important;
+  margin-bottom: 2px !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .study-heading strong {
+  color: #ffffff !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.1 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .study-series-badge {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(203, 213, 225, 0.3) !important;
+  border-radius: 3px !important;
+  color: #ffffff !important;
+  font-size: 9.5px !important;
+  font-weight: 500 !important;
+  padding: 1px 5px !important;
+  line-height: 1.2 !important;
+  font-family: ui-monospace, SFMono-Regular, monospace !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .study-chevron {
+  color: #8b949e !important;
+  font-size: 10px !important;
+}
+
+/* 6. Catalogue Popover */
+html[data-viewer-theme="atlas-pro"] .module-catalogue-popover {
+  background: #080b0f !important;
+  border: 1px solid #161a22 !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85) !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .catalogue-popover-header {
+  border-bottom: 1px solid #161a22 !important;
+  padding: 12px 14px !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .module-catalogue-popover .module-button.active {
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-color: #cbd5e1 !important;
+  color: #ffffff !important;
+}
+
+/* 7. Anatomical Parts Sidebar (#optionsMenu) — Pure Black Flat Structure */
+html[data-viewer-theme="atlas-pro"] .options-menu {
+  background: #080b0f !important;
+  border-right: 1px solid #161a22 !important;
+  border-left: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .options-title-line {
+  display: none !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .options-menu-header {
+  border-bottom: 1px solid #161a22 !important;
+  background: #080b0f !important;
+  padding: 10px 14px !important;
+  min-height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .options-menu-header h2 {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #f8fafc !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  margin: 0 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .pin-button {
+  display: none !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .close-button {
+  background: transparent !important;
+  border: none !important;
+  color: #8b949e !important;
+  font-size: 16px !important;
+  cursor: pointer !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .close-button:hover {
+  color: #ffffff !important;
+}
+
+/* Flat Structure: No bulky cards */
+html[data-viewer-theme="atlas-pro"] .options-section-card {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 4px 8px !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .anatomy-parts-section > .options-section-heading {
+  display: none !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .options-section-heading {
+  font-size: 10.5px !important;
+  font-weight: 600 !important;
+  color: #64748b !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  margin: 4px 0 6px !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .switch-row {
+  min-height: 28px !important;
+  height: 28px !important;
+  padding: 2px 6px !important;
+  border-radius: 3px !important;
+  margin: 1px 0 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .switch-row:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .switch-row span b {
+  font-size: 11.5px !important;
+  font-weight: 400 !important;
+  color: #cbd5e1 !important;
+}
+
+/* Precision Clinical Toggle Switch (Nút gạt Bạc - Standard Row) */
+html[data-viewer-theme="atlas-pro"] .switch-control {
+  width: 28px !important;
+  height: 16px !important;
+  border-radius: 8px !important;
+  background: #18202a !important;
+  border: 1px solid #2d3748 !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+  display: block !important;
+  position: relative !important;
+  cursor: pointer !important;
+  transition: background 0.16s ease, border-color 0.16s ease !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .switch-control::after {
+  content: "" !important;
+  position: absolute !important;
+  top: 1px !important;
+  left: 1px !important;
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 50% !important;
+  background: #64748b !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) !important;
+  border: none !important;
+  transform: translateX(0) !important;
+  transition: transform 0.16s cubic-bezier(0.4, 0, 0.2, 1), background 0.16s ease !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .switch-row input:checked + .switch-control,
+html[data-viewer-theme="atlas-pro"] .compact-switch > input:checked + .switch-control {
+  background: #64748b !important; /* Elegant Silver Slate */
+  border-color: #94a3b8 !important;
+  box-shadow: 0 0 8px rgba(203, 213, 225, 0.35) !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .switch-row input:checked + .switch-control::after,
+html[data-viewer-theme="atlas-pro"] .compact-switch > input:checked + .switch-control::after {
+  background: #ffffff !important;
+  transform: translateX(12px) !important;
+}
+
+/* Original Anatomical Filter Tree Structure — Flat Clean Dark List */
+html[data-viewer-theme="atlas-pro"] .menu-filter-list {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .menu-filter-group + .menu-filter-group {
+  border-top: none !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .menu-filter-group-header {
+  min-height: 34px !important;
+  height: 34px !important;
+  background: #0c1015 !important;
+  border-top: 1px solid #161b22 !important;
+  border-bottom: 1px solid #161b22 !important;
+  padding: 0 8px !important;
+  margin-top: 3px !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .menu-filter-group-expand {
+  height: 34px !important;
+  color: #f1f5f9 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .menu-filter-group-expand b {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: #f1f5f9 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .menu-filter-group-expand > .filter-chevron {
+  color: #cbd5e1 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .menu-filter-children {
+  background: #080b0f !important;
+  border: none !important;
+  padding: 2px 4px 4px 10px !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .menu-filter-row {
+  min-height: 28px !important;
+  height: auto !important;
+  padding: 4px 6px 4px calc(4px + (var(--filter-depth, 0) * 8px)) !important;
+  border-radius: 3px !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .menu-filter-row:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .menu-filter-row b {
+  font-size: 11.5px !important;
+  font-weight: 400 !important;
+  color: #cbd5e1 !important;
+  line-height: 1.3 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .menu-filter-row small {
+  font-size: 10px !important;
+  color: #64748b !important;
+  line-height: 1.2 !important;
+  display: block !important;
+  margin-top: 1px !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .menu-filter-row:hover b {
+  color: #f1f5f9 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .menu-filter-icon {
+  border-radius: 3px !important;
+  border: 1px solid #1e2430 !important;
+  background: #0d1117 !important;
+  box-shadow: none !important;
+}
+
+/* Compact switch for filter tree (Nút gạt trong cây giải phẫu) */
+html[data-viewer-theme="atlas-pro"] .compact-switch .switch-control {
+  width: 24px !important;
+  height: 14px !important;
+  border-radius: 7px !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .compact-switch .switch-control::after {
+  top: 1px !important;
+  left: 1px !important;
+  width: 10px !important;
+  height: 10px !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .compact-switch > input:checked + .switch-control::after {
+  transform: translateX(10px) !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .compact-switch > input:indeterminate + .switch-control {
+  background: #334155 !important;
+  border-color: #475569 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .compact-switch > input:indeterminate + .switch-control::after {
+  background: #cbd5e1 !important;
+  transform: translateX(5px) !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .filter-actions button {
+  background: #11151c !important;
+  border: 1px solid #1e2430 !important;
+  border-radius: 3px !important;
+  color: #8b949e !important;
+  padding: 4px 8px !important;
+  font-size: 10px !important;
+  font-weight: 500 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .filter-actions button:hover {
+  background: #181e28 !important;
+  border-color: #2e3848 !important;
+  color: #ffffff !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .overlay-opacity-control {
+  background: #0a0d12 !important;
+  border: 1px solid #161a22 !important;
+  border-radius: 3px !important;
+  padding: 4px 8px !important;
+}
+
+html[data-viewer-theme="atlas-pro"] #overlayOpacitySlider {
+  accent-color: #cbd5e1 !important;
+}
+
+/* 8. Viewer Toolbar */
+html[data-viewer-theme="atlas-pro"] .viewer-toolbar {
+  height: 36px !important;
+  min-height: 36px !important;
+  background: #080b0f !important;
+  border-bottom: 1px solid #161a22 !important;
+  padding: 0 10px !important;
+  gap: 4px !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .viewer-toolbar .tool-button {
+  height: 28px !important;
+  border-radius: 3px !important;
+  padding: 0 8px !important;
+  background: #11151c !important;
+  border: 1px solid #1e2430 !important;
+  color: #8b949e !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .viewer-toolbar .tool-button:hover {
+  background: #181e28 !important;
+  border-color: #2e3848 !important;
+  color: #ffffff !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .viewer-toolbar .tool-button.active {
+  background: rgba(255, 255, 255, 0.16) !important;
+  border-color: #cbd5e1 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 8px rgba(203, 213, 225, 0.25) !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .image-adjustments input {
+  accent-color: #cbd5e1 !important;
+}
+
+/* 9. Viewport & Canvas Area & Style 2 SVG Annotations (Pure Black) */
+html[data-viewer-theme="atlas-pro"] .viewport {
+  background: #000000 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .viewport-grid {
+  display: none !important;
+}
+
+/* Floating Dark Badge Cards behind SVG Labels */
+html[data-viewer-theme="atlas-pro"] .annotation-badge {
+  display: block !important;
+  fill: rgba(18, 24, 34, 0.9) !important;
+  stroke: rgba(100, 116, 139, 0.4) !important;
+  stroke-width: 1px !important;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.8)) !important;
+  cursor: pointer !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .annotation-badge:hover,
+html[data-viewer-theme="atlas-pro"] .annotation-badge.is-selected {
+  fill: rgba(30, 36, 48, 0.96) !important;
+  stroke: #ffffff !important;
+  stroke-width: 1.5px !important;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.4)) !important;
+}
+
+/* Leader Lines: Thin Sleek Slate */
+html[data-viewer-theme="atlas-pro"] .annotation-line {
+  stroke: #52657e !important;
+  stroke-width: 1px !important;
+  opacity: 0.85 !important;
+  filter: none !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .annotation-line.is-selected {
+  stroke: #ffffff !important;
+  stroke-width: 1.8px !important;
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.6)) !important;
+}
+
+/* Target Anchor Dots */
+html[data-viewer-theme="atlas-pro"] .annotation-target,
+html[data-viewer-theme="atlas-pro"] .hover-dot {
+  fill: #8197b0 !important;
+  stroke: #161f2e !important;
+  stroke-width: 1px !important;
+  r: 2.5 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .annotation-target:hover,
+html[data-viewer-theme="atlas-pro"] .annotation-target.is-selected,
+html[data-viewer-theme="atlas-pro"] .hover-dot:hover,
+html[data-viewer-theme="atlas-pro"] .hover-dot.is-selected {
+  fill: #ffffff !important;
+  stroke: #94a3b8 !important;
+  stroke-width: 1.5px !important;
+  r: 5 !important;
+  filter: drop-shadow(0 0 8px #ffffff) !important;
+}
+
+/* Annotation Labels */
+html[data-viewer-theme="atlas-pro"] .annotation-label {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  fill: #ffffff !important;
+  stroke: none !important;
+  stroke-width: 0 !important;
+  filter: none !important;
+  cursor: pointer !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .annotation-label tspan:first-child {
+  fill: #ffffff !important;
+  font-weight: 500 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .annotation-label tspan[lang="vi"],
+html[data-viewer-theme="atlas-pro"] .annotation-label tspan:last-child:not(:first-child) {
+  fill: #94a3b8 !important;
+  font-size: 0.88em !important;
+  font-weight: 400 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .annotation-label:hover,
+html[data-viewer-theme="atlas-pro"] .annotation-label.is-selected {
+  fill: #ffffff !important;
+}
+
+/* Orientation Markers */
+html[data-viewer-theme="atlas-pro"] .orientation-marker {
+  background: rgba(15, 20, 28, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #94a3b8 !important;
+  border-radius: 3px !important;
+  font-family: ui-monospace, monospace !important;
+  font-weight: 600 !important;
+}
+
+/* 10. Timeline & Filmstrip */
+html[data-viewer-theme="atlas-pro"] .timeline {
+  background: #05070a !important;
+  border-top: 1px solid #161a22 !important;
+  height: 80px !important;
+  padding: 6px 14px !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .timeline .transport-controls button {
+  background: #0d1117 !important;
+  border: 1px solid #1e2430 !important;
+  color: #cbd5e1 !important;
+  border-radius: 4px !important;
+  height: 28px !important;
+  width: 28px !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .timeline .transport-controls button:hover:not(:disabled) {
+  background: #18202c !important;
+  color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] #sliceSlider {
+  accent-color: #cbd5e1 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .filmstrip-button {
+  border: 1px solid #1a202c !important;
+  border-radius: 6px !important;
+  background: #000000 !important;
+  transition: all 0.12s ease !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .filmstrip-button:hover {
+  border-color: #475569 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .filmstrip-button.active {
+  border: 2px solid #ffffff !important;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.4) !important;
+}
+
+/* 11. Detail Panel & MPR Panel */
+html[data-viewer-theme="atlas-pro"] .detail-panel,
+html[data-viewer-theme="atlas-pro"] .mpr-panel {
+  background: #080b0f !important;
+  border-color: #161a22 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .detail-tabs,
+html[data-viewer-theme="atlas-pro"] .panel-tabs {
+  border-bottom: 1px solid #161a22 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .detail-tab,
+html[data-viewer-theme="atlas-pro"] .panel-tab {
+  color: #8b949e !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .detail-tab.active,
+html[data-viewer-theme="atlas-pro"] .panel-tab.active {
+  color: #ffffff !important;
+  border-bottom: 2px solid #cbd5e1 !important;
+  background: transparent !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .structure-row:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .structure-row.active {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: #cbd5e1 !important;
+  color: #ffffff !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .structure-colour {
+  box-shadow: 0 0 6px currentColor !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .section-kicker {
+  color: #cbd5e1 !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .definition-placeholder span {
+  color: #ffffff !important;
+}
+
+html[data-viewer-theme="atlas-pro"] .detail-panel .count-badge {
+  background: #11151c !important;
+  border: 1px solid #1e2430 !important;
+  color: #ffffff !important;
+}
+
+

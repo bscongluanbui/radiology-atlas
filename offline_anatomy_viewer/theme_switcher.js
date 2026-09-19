@@ -6,7 +6,7 @@
     try {
       const params = new URLSearchParams(window.location.search);
       const t = params.get("theme");
-      if (t && ["cyan", "violet", "amber", "nordic", "default"].includes(t)) {
+      if (t && ["cyan", "violet", "amber", "nordic", "atlas-pro", "default"].includes(t)) {
         return t;
       }
     } catch (_) {}
@@ -76,6 +76,8 @@
           seriesBadge.textContent = `[${seriesCount}-SER]`;
         } else if (currentTheme === "nordic") {
           seriesBadge.textContent = `\u00b7 ${seriesCount} series`;
+        } else if (currentTheme === "atlas-pro") {
+          seriesBadge.textContent = `[${seriesCount} SER · ATLAS PRO]`;
         } else {
           seriesBadge.textContent = `${seriesCount} series`;
         }
