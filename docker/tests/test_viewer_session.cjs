@@ -51,12 +51,14 @@ function harness() {
     addEventListener: (name, fn) => { documentListeners.set(`dialog:${name}`, fn); },
   };
   const retry = { hidden: true, addEventListener: (name, fn) => { documentListeners.set(`retry:${name}`, fn); } };
+  const takeover = { hidden: true, disabled: false, addEventListener: (name, fn) => { documentListeners.set(`takeover:${name}`, fn); } };
   const message = { textContent: "" };
   const app = { inert: true };
   const document = {
     visibilityState: "visible",
     documentElement,
-    getElementById: (id) => ({ viewerSessionDialog: dialog, viewerSessionMessage: message, viewerSessionRetry: retry, app }[id] || null),
+    getElementById: (id) => ({ viewerSessionDialog: dialog, viewerSessionMessage: message,
+      viewerSessionRetry: retry, viewerSessionTakeover: takeover, viewerSessionCsrf: { value: 'csrf-fixture' }, app }[id] || null),
     querySelector: () => ({ value: "csrf-fixture" }),
     addEventListener: (name, fn) => { documentListeners.set(name, fn); },
   };
@@ -116,6 +118,7 @@ function harness() {
     app,
     message,
     retry,
+    takeover,
     sessionCalls,
     protectedCalls,
     queueSession,
@@ -123,6 +126,7 @@ function harness() {
     queueProtected,
     emitDocument,
     emitWindow,
+    clickTakeover: () => { const fn = documentListeners.get('takeover:click'); assert.ok(fn, 'takeover handler registered'); fn({ type: 'click' }); },
     runTimer,
     timeoutDelays,
     setNow: (value) => { now = value; },
@@ -214,6 +218,44 @@ async function testConflictAnd401StillBlock() {
     assert.equal(h.cacheClears, 1);
     assert.equal(h.dialog.matches(":modal"), true);
   }
+}
+
+async function testConflictTakeoverKeepsCurrentViewer() {
+  const h = harness();
+  h.initialSession.resolve(response(409, { code: 'viewer_conflict', error: 'conflict' }));
+  await settle();
+  assert.equal(h.window.viewerSession.blocked, true);
+  assert.equal(h.dialog.matches(':modal'), true);
+  assert.equal(h.takeover.hidden, false, 'conflict offers takeover');
+  const taken = h.queueSession();
+  h.clickTakeover();
+  await settle();
+  assert.equal(h.sessionCalls.at(-1).options.body.get('action'), 'takeover');
+  assert.equal(h.sessionCalls.at(-1).options.headers['X-CSRF-Token'], 'csrf-fixture');
+  assert.match(h.sessionCalls.at(-1).options.headers['X-Viewer-ID'], /^[a-f0-9]{32}$/);
+  assert.equal(h.sessionCalls.length, 2, 'takeover uses session API, not /logout');
+  taken.resolve(response(200, { ttl: 90, heartbeat: 20 }));
+  await settle();
+  assert.equal(h.window.viewerSession.blocked, false);
+  assert.equal(h.dialog.matches(':modal'), false);
+  assert.equal(h.app.inert, false);
+  const data = h.queueProtected();
+  data.resolve(response(200));
+  assert.equal((await h.window.fetch('/api/module?key=BRAIN/mri-brain')).status, 200);
+}
+
+async function testTakeoverFailureRemainsBlocked() {
+  const h = harness();
+  h.initialSession.resolve(response(409, { code: 'viewer_conflict' }));
+  await settle();
+  const denied = h.queueSession();
+  h.clickTakeover();
+  denied.resolve(response(401, { code: 'login_required' }));
+  await settle();
+  assert.equal(h.window.viewerSession.blocked, true);
+  assert.equal(h.dialog.matches(':modal'), true);
+  assert.equal(h.takeover.hidden, true, 'login expiry cannot offer another takeover');
+  assert.equal(h.protectedCalls.length, 0);
 }
 
 async function testThrottledHeartbeatAndConcurrentResume() {
@@ -311,10 +353,12 @@ async function testSlowHandshakeAndBoundedBackoff() {
   await testResumeGatesProtectedFetch();
   await testExpiredResponseRetriesReadWithoutSuspending();
   await testConflictAnd401StillBlock();
+  await testConflictTakeoverKeepsCurrentViewer();
+  await testTakeoverFailureRemainsBlocked();
   await testThrottledHeartbeatAndConcurrentResume();
   await testReacquireFailureKeepsReasonAndNoRetryWrites();
   await testSlowNetworkRecoveryPreservesCache();
   await testExpiredConnectionFailureNoProtectedReads();
   await testSlowHandshakeAndBoundedBackoff();
-  console.log("VIEWER_SESSION=PASS; focus,lease_recovery,slow_handshake,transient_cache_preserved,bounded_backoff,expired_reads_blocked,401_conflict_enforced");
+  console.log("VIEWER_SESSION=PASS; focus,lease_recovery,slow_handshake,transient_cache_preserved,bounded_backoff,expired_reads_blocked,401_conflict_enforced,takeover");
 })().catch((error) => { console.error(error); process.exitCode = 1; });

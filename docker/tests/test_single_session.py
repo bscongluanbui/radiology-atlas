@@ -92,6 +92,35 @@ class SingleSessionTests(unittest.TestCase):
                 self.auth.update_user(uid,role,False,False,[],regions=['BRAIN'])
                 self.assertEqual(self.lease(token,self.a,'check'),'unauthenticated')
 
+    def test_09_takeover_revokes_old_login_and_keeps_new_login(self):
+        self.assertEqual(self.lease(),'ok')
+        self.assertEqual(self.lease(self.second,self.b),'conflict')
+        self.assertEqual(self.lease(self.second,self.b,'takeover'),'ok')
+        self.assertEqual(self.lease(self.first,self.a,'check'),'unauthenticated')
+        self.assertIsNone(self.auth.session_user(self.first))
+        self.assertIsNotNone(self.auth.session_user(self.second))
+        self.assertEqual(self.lease(self.second,self.b,'check'),'ok')
+        self.assertEqual(self.lease(self.second,self.b,'heartbeat'),'ok')
+        self.assertEqual(self.lease(self.first,self.a,'release'),'unauthenticated')
+        with self.auth.connect() as db:
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM viewer_leases WHERE user_id=?',(self.uid,)).fetchone()[0],1)
+
+    def test_10_takeover_same_login_moves_only_document_lease(self):
+        self.assertEqual(self.lease(),'ok')
+        self.assertEqual(self.lease(self.first,self.b,'takeover'),'ok')
+        self.assertIsNotNone(self.auth.session_user(self.first))
+        self.assertEqual(self.lease(self.first,self.a,'check'),'conflict')
+        self.assertEqual(self.lease(self.first,self.b,'check'),'ok')
+        self.assertEqual(self.lease(self.first,self.a,'release'),'released')
+        self.assertEqual(self.lease(self.first,self.b,'check'),'ok')
+
+    def test_11_takeover_rejects_invalid_or_logged_out_requester(self):
+        self.lease()
+        self.assertEqual(self.auth.viewer_session(self.second,'bad','takeover'),'invalid')
+        self.auth.logout(self.second)
+        self.assertEqual(self.lease(self.second,self.b,'takeover'),'unauthenticated')
+        self.assertEqual(self.lease(self.first,self.a,'check'),'ok')
+
 
 class SingleSessionHTTPTests(unittest.TestCase):
     def setUp(self):
@@ -110,7 +139,7 @@ class SingleSessionHTTPTests(unittest.TestCase):
         r=client.post('/login',base_url='https://atlas.test',data={'username':'reader','password':'x','csrf':csrf})
         self.assertEqual(r.status_code,302)
         page=self.get(client,'/viewer?key=BRAIN/mri-brain')
-        csrf=re.search(r'name="csrf" value="([^"]+)"',page.text).group(1)
+        csrf=re.search(r'id="viewerSessionCsrf"[^>]*value="([^"]+)"',page.text).group(1)
         return client,{'X-CSRF-Token':csrf,'X-Viewer-ID':secrets.token_hex(16)}
     def post(self,client,headers,action='acquire'):
         return client.post('/api/viewer-session',base_url='https://atlas.test',headers=headers,data={'action':action})
@@ -143,7 +172,7 @@ class SingleSessionHTTPTests(unittest.TestCase):
     def test_03_csrf_and_permissions(self):
         self.assertEqual(self.post(self.first,{'X-Viewer-ID':'a'*32}).status_code,400)
         self.assertEqual(self.post(self.first,{**self.h1,'X-Viewer-ID':'bad'}).status_code,428)
-        self.assertEqual(self.post(self.first,self.h1,'takeover').status_code,400)
+        self.assertEqual(self.post(self.first,self.h1,'unknown').status_code,400)
         self.assertEqual(self.get(self.second,'/api/module?key=THORAX/sample-lung',self.h2).status_code,403)
         self.assertEqual(self.get(self.second,'/admin').status_code,403)
         anonymous=self.app.test_client()
@@ -160,6 +189,41 @@ class SingleSessionHTTPTests(unittest.TestCase):
         paths={p.relative_to(ROOT).as_posix() for p in sources()}
         self.assertIn('docker/static/viewer-session.js',paths)
         self.assertIn('docker/templates/viewer_session.html',paths)
+
+    def test_05_takeover_keeps_current_login_and_revokes_previous(self):
+        self.assertEqual(self.post(self.first,self.h1).status_code,200)
+        self.assertEqual(self.post(self.second,self.h2).status_code,409)
+        taken=self.post(self.second,self.h2,'takeover')
+        self.assertEqual(taken.status_code,200)
+        self.assertEqual(taken.json['status'],'ok')
+        self.assertIn('no-store',taken.headers['Cache-Control'])
+        self.assertEqual(self.post(self.first,self.h1,'heartbeat').status_code,401)
+        self.assertEqual(self.get(self.first,'/api/module?key=BRAIN/mri-brain',self.h1).status_code,401)
+        self.assertEqual(self.post(self.second,self.h2,'heartbeat').status_code,200)
+        self.assertEqual(self.get(self.second,'/api/module?key=BRAIN/mri-brain',self.h2).status_code,200)
+
+    def test_06_takeover_csrf_login_and_same_cookie_tab(self):
+        self.assertEqual(self.post(self.first,self.h1).status_code,200)
+        self.assertEqual(self.post(self.second,{'X-Viewer-ID':self.h2['X-Viewer-ID']},'takeover').status_code,400)
+        self.assertEqual(self.post(self.second,{**self.h2,'X-CSRF-Token':'invalid'},'takeover').status_code,400)
+        anonymous=self.app.test_client()
+        self.assertEqual(self.post(anonymous,self.h2,'takeover').status_code,401)
+        self.assertEqual(self.post(self.first,self.h1,'check').status_code,400)
+        self.assertEqual(self.post(self.first,self.h1,'heartbeat').status_code,200)
+        clone={**self.h1,'X-Viewer-ID':'f'*32}
+        self.assertEqual(self.post(self.first,clone,'takeover').status_code,200)
+        self.assertEqual(self.post(self.first,self.h1,'heartbeat').status_code,409)
+        self.assertEqual(self.post(self.first,clone,'heartbeat').status_code,200)
+        self.assertEqual(self.get(self.first,'/api/module?key=BRAIN/mri-brain',clone).status_code,200)
+
+    def test_07_takeover_control_is_not_logout_form(self):
+        page=self.get(self.first,'/viewer').text
+        self.assertIn('id="viewerSessionTakeover"',page)
+        self.assertNotIn('id="viewerSessionLogout"',page)
+        self.assertNotIn('action="/logout"',page)
+        button=page[:page.index('id="viewerSessionTakeover"')].rsplit('<button',1)[-1]
+        button+=page[page.index('id="viewerSessionTakeover"'):].split('>',1)[0]
+        self.assertIn('type="button"',button)
 
 
 if __name__=='__main__':unittest.main()

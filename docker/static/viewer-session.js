@@ -7,13 +7,14 @@
   if (!dialog) return;
   const message = document.getElementById("viewerSessionMessage");
   const retry = document.getElementById("viewerSessionRetry");
+  const takeover = document.getElementById("viewerSessionTakeover");
   const app = document.getElementById("app");
-  const csrf = document.querySelector('#viewerSessionLogout input[name="csrf"]').value;
+  const csrf = document.getElementById("viewerSessionCsrf").value;
   const client = [...crypto.getRandomValues(new Uint8Array(16))].map(x => x.toString(16).padStart(2, "0")).join("");
   const request = window.fetch.bind(window);
-  const conflict = "Bạn đang dùng tài khoản ở nhiều nơi cùng thời điểm, vui lòng đăng xuất";
+  const conflict = "Bạn đang dùng tài khoản ở nhiều nơi cùng thời điểm. Đăng xuất phiên cũ để tiếp tục tại đây.";
   let active = false, leaving = false, deadline = 0, timer, watchdog, pending, resolveReady, epoch = 0;
-  let queuedAcquire = null, currentAcquire = null;
+  let queuedAcquire = null, queuedTakeover = null, currentAcquire = null;
   let recovering = false, retryTimer, retryDelay = 2000;
   const ready = new Promise(resolve => { resolveReady = resolve; });
   window.viewerSession = { ready, get blocked() { return !active; } };
@@ -33,12 +34,12 @@
     retryTimer = setTimeout(() => acquire(), retryDelay);
     retryDelay = Math.min(15000, retryDelay * 2);
   }
-  function suspend(text, canRetry = true) {
+  function suspend(text, canRetry = true, canTakeover = false) {
     recovering = false; connectionStatus("");
     active = false; clearTimers();
     document.documentElement.classList.add("viewer-session-locked");
     app.inert = true;
-    message.textContent = text; retry.hidden = !canRetry;
+    message.textContent = text; retry.hidden = !canRetry; takeover.hidden = !canTakeover;
     if (!dialog.matches(":modal")) { dialog.removeAttribute("open"); dialog.showModal(); }
     window.dispatchEvent(new Event("viewer-session-suspended"));
     window.viewerResourceCache?.clear();
@@ -66,6 +67,15 @@
   async function check(action) {
     if (leaving) return;
     if (pending) {
+      if (action === "takeover") {
+        if (!queuedTakeover) {
+          queuedTakeover = pending.promise.then(() => {
+            queuedTakeover = null;
+            return check("takeover");
+          });
+        }
+        return queuedTakeover;
+      }
       if (action !== "acquire") return pending.promise;
       if (pending.action === "acquire") return pending.promise;
       if (!queuedAcquire) {
@@ -89,7 +99,7 @@
         if (response.status >= 500 || response.status === 429 || response.status === 408) { transientFailure(); return false; }
         const data = await response.json();
         if (response.ok) return activate(started, Number(data.ttl) || 90, Number(data.heartbeat) || 20);
-        if (data.code === "viewer_conflict") suspend(conflict);
+        if (data.code === "viewer_conflict") suspend(conflict, true, true);
         else if (action === "heartbeat" && data.code === "viewer_expired") reacquire = true;
         else if (response.status === 401) suspend("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.", false);
         else suspend(data.error || "Cần kiểm tra lại phiên viewer. Vui lòng thử lại.");
@@ -151,7 +161,8 @@
           if (await acquire()) continue;
           throw new DOMException("Viewer session lost", "AbortError");
         }
-        suspend(data.code === "viewer_conflict" ? conflict : (data.error || "Vui lòng kiểm tra lại phiên viewer."));
+        suspend(data.code === "viewer_conflict" ? conflict : (data.error || "Vui lòng kiểm tra lại phiên viewer."),
+          true, data.code === "viewer_conflict");
         throw new DOMException("Viewer session lost", "AbortError");
       }
       return response;
@@ -168,6 +179,11 @@
   }
   dialog.addEventListener("cancel", event => event.preventDefault());
   retry.addEventListener("click", () => { suspend("Đang kiểm tra phiên viewer…", false); acquire(); });
+  takeover.addEventListener("click", () => {
+    takeover.hidden = true; retry.hidden = true;
+    message.textContent = "Đang đăng xuất phiên cũ…";
+    check("takeover");
+  });
   window.addEventListener("offline", transientFailure);
   window.addEventListener("online", () => { if (!leaving) acquire(); });
   function revalidateOnReturn() {

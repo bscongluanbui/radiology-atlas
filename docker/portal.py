@@ -28,7 +28,7 @@ from server import AnatomyRepository, load_json, safe_key  # shared, unchanged a
 from anatomy_language import languages, load_pack
 
 AVATAR_MAX_BYTES = 512 * 1024
-VIEWER_CONFLICT = "Bạn đang dùng tài khoản ở nhiều nơi cùng thời điểm, vui lòng đăng xuất"
+VIEWER_CONFLICT = "Bạn đang dùng tài khoản ở nhiều nơi cùng thời điểm. Đăng xuất phiên cũ để tiếp tục tại đây."
 VIEWER_LEASE_SECONDS = 90
 AVATAR_MAX_EDGE = 2048
 
@@ -433,7 +433,7 @@ def create_app(config=None):
         if not can_manage(g.user) and not g.user["regions"] and not g.user["modules"] and g.user["role"] != "admin":
             abort(403)
         action = request.form.get("action", "")
-        if action not in {"acquire", "heartbeat", "release"}:
+        if action not in {"acquire", "heartbeat", "release", "takeover"}:
             abort(400)
         denied = viewer_access(action)
         if denied is not None:

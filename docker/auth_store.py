@@ -405,19 +405,20 @@ class AuthStore:
         """One account, one viewer document. SQLite arbitrates across workers.
 
         Additive table: old schema/credentials stay intact on upgrade or rollback.
-        Only acquire can take a vacant/expired slot. Stale heartbeat/release never
-        replaces another document; login/logout revocation cascades via its FK.
+        Only acquire can take a vacant/expired slot. An explicit takeover revokes
+        the previous holder's login, but never the requesting login. Stale
+        heartbeat/release never replaces another document.
         """
         if not isinstance(client, str) or not re.fullmatch(r"[a-f0-9]{32}", client):
             return "invalid"
-        if action not in {"acquire", "heartbeat", "release", "check"}:
+        if action not in {"acquire", "heartbeat", "release", "check", "takeover"}:
             return "invalid"
         digest = self.digest(token or "")
         now = self.clock()
         with self.connect() as db:
             if action != "check":
                 db.execute("BEGIN IMMEDIATE")
-            user = db.execute("""SELECT s.user_id FROM sessions s JOIN users u ON u.id=s.user_id
+            user = db.execute("""SELECT s.user_id,u.username FROM sessions s JOIN users u ON u.id=s.user_id
                                WHERE s.token=? AND u.active=1 AND s.seen>=? AND s.created>=?""",
                               (digest, now-idle, now-lifetime)).fetchone()
             if not user:
@@ -428,6 +429,17 @@ class AuthStore:
                 if mine:
                     db.execute("DELETE FROM viewer_leases WHERE user_id=?", (user["user_id"],))
                 return "released"
+            if action == "takeover":
+                if lease and lease["expires"] > now and not mine:
+                    if lease["session_token"] != digest:
+                        # The FK removes the displaced lease; keep this login alive.
+                        db.execute("DELETE FROM sessions WHERE token=? AND user_id=?",
+                                   (lease["session_token"], user["user_id"]))
+                    self._audit(db, user["username"], "viewer-takeover", user["username"])
+                db.execute("""INSERT INTO viewer_leases VALUES (?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET
+                           session_token=excluded.session_token, client_token=excluded.client_token, expires=excluded.expires""",
+                           (user["user_id"], digest, client, now+ttl))
+                return "ok"
             if lease and lease["expires"] > now and not mine:
                 return "conflict"
             if action == "check":
