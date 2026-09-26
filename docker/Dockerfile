@@ -4,7 +4,7 @@ ARG BUILD_REVISION=uncommitted
 LABEL org.opencontainers.image.title="Radiology Atlas Viewer" \
       org.opencontainers.image.revision="$BUILD_REVISION" \
       org.opencontainers.image.source="https://github.com/bscongluanbui/radiology-atlas"
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PORT=8080
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PORT=8080 TZ=GMT-7
 WORKDIR /app
 COPY docker/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir --disable-pip-version-check -r /tmp/requirements.txt \

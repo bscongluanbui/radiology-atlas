@@ -6,6 +6,7 @@ services:
     environment:
       DATA_ROOT: /data
       STATE_DIR: /state
+      TZ: GMT-7
       ALLOWED_HOSTS: ${DDNS_HOST},localhost,127.0.0.1
       METADATA_CACHE_MIB: ${METADATA_CACHE_MIB:-512}
       BROWSER_CACHE_MIB: ${BROWSER_CACHE_MIB:-512}

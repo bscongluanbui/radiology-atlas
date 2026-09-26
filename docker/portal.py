@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import atexit
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import json
 import os
 from pathlib import Path
@@ -31,6 +31,7 @@ AVATAR_MAX_BYTES = 512 * 1024
 VIEWER_CONFLICT = "Bạn đang dùng tài khoản ở nhiều nơi cùng thời điểm. Đăng xuất phiên cũ để tiếp tục tại đây."
 VIEWER_LEASE_SECONDS = 90
 AVATAR_MAX_EDGE = 2048
+LOG_TIMEZONE = timezone(timedelta(hours=7))
 
 
 def avatar_format(payload):
@@ -144,11 +145,11 @@ def create_app(config=None):
     @app.context_processor
     def context():
         return {"csrf_token": csrf, "current_user": getattr(g, "user", None),
-                "role_labels": ROLE_LABELS, "current_year": datetime.now(timezone.utc).year}
+                "role_labels": ROLE_LABELS, "current_year": datetime.now(LOG_TIMEZONE).year}
 
     @app.template_filter("timestamp")
     def timestamp(value):
-        return datetime.fromtimestamp(value, timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        return datetime.fromtimestamp(value, LOG_TIMEZONE).strftime("%Y-%m-%d %H:%M GMT+7")
 
     @app.before_request
     def authentication():

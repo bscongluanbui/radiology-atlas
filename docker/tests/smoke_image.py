@@ -18,6 +18,7 @@ from docker.preflight import validate
 arch=sys.argv[1]
 assert platform.machine() in {'amd64':{'x86_64','amd64'},'arm64':{'aarch64','arm64'}}[arch], platform.machine()
 assert os.getuid()==10001
+assert time.strftime('%Y-%m-%d %H:%M %z',time.localtime(0))=='1970-01-01 07:00 +0700'
 assert not Path('/app/docker/.env').exists()
 assert not Path('/app/docker/tests').exists()
 validate('/data','/state')
@@ -59,7 +60,7 @@ try:
     viewer_headers.update({'X-Viewer-ID':secrets.token_hex(16),'X-CSRF-Token':csrf})
     assert request('/api/viewer-session','POST',{'action':'acquire'})[0]==200
     assert request('/data/BRAIN/mri-brain/rendered/1_Axial/default_Default/slice_0001.png')[0]==200
-    print(f'IMAGE_SMOKE=PASS; arch={arch}; uid=10001; gunicorn=HTTP200; login=302; admin=200; image=200; accounts=persistent',flush=True)
+    print(f'IMAGE_SMOKE=PASS; arch={arch}; uid=10001; gunicorn=HTTP200; login=302; admin=200; image=200; accounts=persistent; timezone=+0700',flush=True)
 finally:
     proc.terminate()
     try: proc.wait(timeout=15)

@@ -45,6 +45,11 @@ class DistributionTests(unittest.TestCase):
         self.assertEqual(viewer['environment']['PRELOAD_CONCURRENCY'],'${PRELOAD_CONCURRENCY:-2}')
         self.assertEqual(viewer['environment']['BROWSER_CACHE_MIB'],'${BROWSER_CACHE_MIB:-512}')
 
+    def test_viewer_process_logs_use_gmt_plus_7(self):
+        compose=yaml.safe_load((ROOT/'docker/compose.yaml').read_text())
+        self.assertEqual(compose['services']['viewer']['environment']['TZ'],'GMT-7')
+        self.assertIn('TZ=GMT-7',(ROOT/'docker/Dockerfile').read_text())
+
     def test_workflow_gates_and_pinned_actions(self):
         workflow=yaml.safe_load((ROOT/'.github/workflows/publish-viewer.yml').read_text())
         self.assertEqual(workflow['on']['push']['branches'],['main'])
@@ -126,6 +131,15 @@ class FixtureTests(unittest.TestCase):
     def app(self):
         return create_app({'TESTING':True,'DATA_ROOT':str(self.data),'STATE_DIR':str(self.state),
             'MAINTENANCE_ENABLED':False,'TRUSTED_HOSTS':['bcanatomy.site'],'PROXY_HOPS':1})
+    def test_admin_audit_displays_gmt_plus_7_without_shifting_stored_epoch(self):
+        app=self.app()
+        display=app.jinja_env.filters['timestamp']
+        self.assertEqual(display(0),'1970-01-01 07:00 GMT+7')
+        self.assertEqual(display(17*3600),'1970-01-02 00:00 GMT+7')
+        with app.extensions['auth'].connect() as db:
+            db.execute("INSERT INTO audit(at,actor,action,target) VALUES (0,'test','clock','test')")
+            stored=db.execute("SELECT at FROM audit WHERE action='clock'").fetchone()[0]
+        self.assertEqual(stored,0)
     def test_preflight_real_shape_and_no_data_mutation(self):
         before={p.relative_to(self.data).as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for p in self.data.rglob('*') if p.is_file()}
         self.assertEqual(validate(self.data,self.state),(2,2))
